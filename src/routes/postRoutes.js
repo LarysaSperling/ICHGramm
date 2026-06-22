@@ -7,6 +7,8 @@ import {
   createPost,
   getAllPosts,
   getPostById,
+  updatePost,
+  deletePost,
 } from "../controllers/postController.js";
 
 const router = express.Router();
@@ -19,6 +21,19 @@ router.post(
   authMiddleware,
   upload.single("image"),
   createPost
+);
+
+router.put(
+  "/:id",
+  authMiddleware,
+  upload.single("image"),
+  updatePost
+);
+
+router.delete(
+  "/:id",
+  authMiddleware,
+  deletePost
 );
 
 export default router;
