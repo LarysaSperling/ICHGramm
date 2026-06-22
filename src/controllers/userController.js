@@ -50,8 +50,33 @@ const updateProfile = async (req, res) => {
     });
   }
 };
+const searchUsers = async (req, res) => {
+  try {
+    const keyword = req.query.q;
+
+    if (!keyword) {
+      return res.status(400).json({
+        message: "Search keyword is required",
+      });
+    }
+
+    const users = await User.find({
+      $or: [
+        { username: { $regex: keyword, $options: "i" } },
+        { fullName: { $regex: keyword, $options: "i" } },
+      ],
+    }).select("-password");
+
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
 
 export {
   getProfile,
   updateProfile,
+  searchUsers,
 };

@@ -6,6 +6,7 @@ import upload from "../middlewares/uploadMiddleware.js";
 import {
   getProfile,
   updateProfile,
+  searchUsers,
 } from "../controllers/userController.js";
 
 const router = express.Router();
@@ -18,5 +19,6 @@ router.put(
   upload.single("avatar"),
   updateProfile
 );
+router.get("/search", authMiddleware, searchUsers);
 
 export default router;
