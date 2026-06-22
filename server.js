@@ -9,6 +9,8 @@ import userRoutes from "./src/routes/userRoutes.js";
 import postRoutes from "./src/routes/postRoutes.js";
 import likeRoutes from "./src/routes/likeRoutes.js";
 import commentRoutes from "./src/routes/commentRoutes.js";
+import followRoutes from "./src/routes/followRoutes.js";
+
 
 dotenv.config();
 
@@ -22,6 +24,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/likes", likeRoutes);
 app.use("/api/comments", commentRoutes);
+app.use("/api/follows", followRoutes);
 
 app.get("/", (req, res) => {
   res.json({
