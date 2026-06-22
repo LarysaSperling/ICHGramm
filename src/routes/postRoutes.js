@@ -5,9 +5,12 @@ import upload from "../middlewares/uploadMiddleware.js";
 
 import {
   createPost,
+  getAllPosts,
 } from "../controllers/postController.js";
 
 const router = express.Router();
+
+router.get("/", getAllPosts);
 
 router.post(
   "/",

@@ -8,8 +8,7 @@ const createPost = async (req, res) => {
       });
     }
 
-    const image =
-      `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
+    const image = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
 
     const post = await Post.create({
       caption: req.body.caption,
@@ -25,4 +24,21 @@ const createPost = async (req, res) => {
   }
 };
 
-export { createPost };
+const getAllPosts = async (req, res) => {
+  try {
+    const posts = await Post.find()
+      .populate("author", "username fullName avatar")
+      .sort({ createdAt: -1 });
+
+    res.json(posts);
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+export {
+  createPost,
+  getAllPosts,
+};
