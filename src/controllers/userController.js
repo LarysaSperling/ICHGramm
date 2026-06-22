@@ -13,4 +13,45 @@ const getProfile = async (req, res) => {
   }
 };
 
-export { getProfile };
+const updateProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    user.fullName =
+      req.body.fullName || user.fullName;
+
+    user.bio =
+      req.body.bio || user.bio;
+
+    if (req.file) {
+      user.avatar =
+        `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
+    }
+
+    const updatedUser = await user.save();
+
+    res.json({
+      _id: updatedUser._id,
+      username: updatedUser.username,
+      fullName: updatedUser.fullName,
+      email: updatedUser.email,
+      bio: updatedUser.bio,
+      avatar: updatedUser.avatar,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+export {
+  getProfile,
+  updateProfile,
+};
