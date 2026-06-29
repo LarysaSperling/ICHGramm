@@ -27,10 +27,16 @@ const sendMessage = async (req, res) => {
       },
     ]);
 
+    const chatRoom = [
+      req.user._id.toString(),
+      receiver.toString(),
+    ]
+      .sort()
+      .join("_");
+
     if (req.io) {
-      req.io
-        .to(receiver.toString())
-        .emit("newMessage", populatedMessage);
+      req.io.to(chatRoom).emit("newMessage", populatedMessage);
+      req.io.to(receiver.toString()).emit("newMessageNotification", populatedMessage);
     }
 
     res.status(201).json(populatedMessage);
