@@ -1,71 +1,72 @@
 import bcrypt from "bcrypt";
+
 import User from "../models/User.js";
 import generateToken from "../config/jwt.js";
+import ApiError from "../utils/ApiError.js";
+import asyncHandler from "../utils/asyncHandler.js";
 
-const register = async (req, res) => {
-  try {
-    const { username, fullName, email, password } = req.body;
+const register = asyncHandler(async (req, res) => {
+  const { username, fullName, email, password } = req.body;
 
-    const userExists = await User.findOne({
-      $or: [{ email }, { username }],
-    });
-
-    if (userExists) {
-      return res.status(400).json({
-        message: "User already exists",
-      });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const user = await User.create({
-      username,
-      fullName,
-      email,
-      password: hashedPassword,
-    });
-
-    res.status(201).json({
-      _id: user._id,
-      username: user.username,
-      fullName: user.fullName,
-      email: user.email,
-      token: generateToken(user._id),
-    });
-  } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
+  if (!username || !fullName || !email || !password) {
+    throw new ApiError(400, "All fields are required");
   }
-};
 
-const login = async (req, res) => {
-  try {
-    const { email, password } = req.body;
+  const userExists = await User.findOne({
+    $or: [{ email }, { username }],
+  });
 
-    const user = await User.findOne({ email });
-
-    if (
-      user &&
-      (await bcrypt.compare(password, user.password))
-    ) {
-      return res.json({
-        _id: user._id,
-        username: user.username,
-        fullName: user.fullName,
-        email: user.email,
-        token: generateToken(user._id),
-      });
-    }
-
-    res.status(401).json({
-      message: "Invalid credentials",
-    });
-  } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
+  if (userExists) {
+    throw new ApiError(400, "User already exists");
   }
-};
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  const user = await User.create({
+    username,
+    fullName,
+    email,
+    password: hashedPassword,
+  });
+
+  res.status(201).json({
+    _id: user._id,
+    username: user.username,
+    fullName: user.fullName,
+    email: user.email,
+    token: generateToken(user._id),
+  });
+});
+
+const login = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    throw new ApiError(400, "Email and password are required");
+  }
+
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    throw new ApiError(401, "Invalid credentials");
+  }
+
+  const isPasswordCorrect = await bcrypt.compare(
+    password,
+    user.password
+  );
+
+  if (!isPasswordCorrect) {
+    throw new ApiError(401, "Invalid credentials");
+  }
+
+  res.json({
+    _id: user._id,
+    username: user.username,
+    fullName: user.fullName,
+    email: user.email,
+    token: generateToken(user._id),
+  });
+});
 
 export { register, login };
