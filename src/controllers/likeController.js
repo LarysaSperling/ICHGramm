@@ -1,6 +1,6 @@
 import Like from "../models/Like.js";
 import Post from "../models/Post.js";
-import Notification from "../models/Notification.js";
+import { createNotification } from "../services/notificationService.js";
 
 const toggleLike = async (req, res) => {
   try {
@@ -25,18 +25,13 @@ const toggleLike = async (req, res) => {
     const post = await Post.findById(req.params.postId);
 
     if (post && post.author.toString() !== req.user._id.toString()) {
-      const notification = await Notification.create({
+      await createNotification({
         recipient: post.author,
         sender: req.user._id,
         type: "like",
         post: post._id,
+        io: req.io,
       });
-
-      if (req.io) {
-        req.io
-          .to(post.author.toString())
-          .emit("newNotification", notification);
-      }
     }
 
     res.json({

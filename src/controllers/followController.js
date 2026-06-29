@@ -1,6 +1,6 @@
 import Follow from "../models/Follow.js";
 import User from "../models/User.js";
-import Notification from "../models/Notification.js";
+import { createNotification } from "../services/notificationService.js";
 
 const followUser = async (req, res) => {
   try {
@@ -36,17 +36,12 @@ const followUser = async (req, res) => {
       following: targetUserId,
     });
 
-const notification = await Notification.create({
+await createNotification({
   recipient: targetUserId,
   sender: req.user._id,
   type: "follow",
+  io: req.io,
 });
-
-if (req.io) {
-  req.io
-    .to(targetUserId.toString())
-    .emit("newNotification", notification);
-}
 
     res.status(201).json({
       message: "User followed successfully",
