@@ -13,6 +13,7 @@ import likeRoutes from "./src/routes/likeRoutes.js";
 import commentRoutes from "./src/routes/commentRoutes.js";
 import followRoutes from "./src/routes/followRoutes.js";
 import notificationRoutes from "./src/routes/notificationRoutes.js";
+import messageRoutes from "./src/routes/messageRoutes.js";
 
 dotenv.config();
 
@@ -54,6 +55,7 @@ app.use("/api/likes", likeRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/follows", followRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/messages", messageRoutes);
 
 app.get("/", (req, res) => {
   res.json({
