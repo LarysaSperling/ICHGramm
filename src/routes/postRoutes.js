@@ -10,6 +10,12 @@ import {
   updatePost,
   deletePost,
 } from "../controllers/postController.js";
+import {
+  createPostValidator,
+  updatePostValidator,
+} from "../validators/postValidator.js";
+
+import validationMiddleware from "../middlewares/validationMiddleware.js";
 
 const router = express.Router();
 
@@ -20,6 +26,8 @@ router.post(
   "/",
   authMiddleware,
   upload.single("image"),
+  createPostValidator,
+  validationMiddleware,
   createPost
 );
 
@@ -27,6 +35,8 @@ router.put(
   "/:id",
   authMiddleware,
   upload.single("image"),
+  updatePostValidator,
+  validationMiddleware,
   updatePost
 );
 

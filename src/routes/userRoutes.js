@@ -8,6 +8,12 @@ import {
   updateProfile,
   searchUsers,
 } from "../controllers/userController.js";
+import {
+  updateProfileValidator,
+  searchUsersValidator,
+} from "../validators/userValidator.js";
+
+import validationMiddleware from "../middlewares/validationMiddleware.js";
 
 const router = express.Router();
 
@@ -17,8 +23,17 @@ router.put(
   "/profile",
   authMiddleware,
   upload.single("avatar"),
+  updateProfileValidator,
+  validationMiddleware,
   updateProfile
 );
-router.get("/search", authMiddleware, searchUsers);
+
+router.get(
+  "/search",
+  authMiddleware,
+  searchUsersValidator,
+  validationMiddleware,
+  searchUsers
+);
 
 export default router;
