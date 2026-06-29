@@ -9,7 +9,8 @@ const getNotifications = asyncHandler(async (req, res) => {
   })
     .populate("sender", "username fullName avatar")
     .populate("post", "image caption")
-    .sort({ createdAt: -1 });
+    .sort({ createdAt: -1 })
+    .lean();
 
   res.json(notifications);
 });

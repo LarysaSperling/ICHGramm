@@ -68,7 +68,9 @@ const unfollowUser = asyncHandler(async (req, res) => {
 const getFollowers = asyncHandler(async (req, res) => {
   const followers = await Follow.find({
     following: req.params.userId,
-  }).populate("follower", "username fullName avatar");
+  })
+  .populate("follower", "username fullName avatar")
+  .lean();
 
   res.json(followers);
 });
@@ -76,7 +78,9 @@ const getFollowers = asyncHandler(async (req, res) => {
 const getFollowing = asyncHandler(async (req, res) => {
   const following = await Follow.find({
     follower: req.params.userId,
-  }).populate("following", "username fullName avatar");
+  })
+  .populate("following", "username fullName avatar")
+  .lean();
 
   res.json(following);
 });

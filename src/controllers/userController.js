@@ -3,7 +3,9 @@ import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
 
 const getProfile = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user._id).select("-password");
+  const user = await User.findById(req.user._id)
+  .select("-password")
+  .lean();
 
   if (!user) {
     throw new ApiError(404, "User not found");
@@ -62,7 +64,8 @@ const searchUsers = asyncHandler(async (req, res) => {
       { username: { $regex: keyword.trim(), $options: "i" } },
       { fullName: { $regex: keyword.trim(), $options: "i" } },
     ],
-  }).select("-password");
+  }).select("-password")
+    .lean();
 
   res.json(users);
 });

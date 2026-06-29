@@ -29,14 +29,16 @@ const getAllPosts = asyncHandler(async (req, res) => {
   const limit = Number(req.query.limit) || 10;
   const skip = (page - 1) * limit;
 
-  const totalPosts = await Post.countDocuments();
+ const [totalPosts, posts] = await Promise.all([
+  Post.countDocuments(),
 
-  const posts = await Post.find()
+  Post.find()
     .populate("author", "username fullName avatar")
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit)
-    .lean();
+    .lean(),
+]);
 
   res.json({
     page,
@@ -48,10 +50,9 @@ const getAllPosts = asyncHandler(async (req, res) => {
 });
 
 const getPostById = asyncHandler(async (req, res) => {
-  const post = await Post.findById(req.params.id).populate(
-    "author",
-    "username fullName avatar"
-  );
+  const post = await Post.findById(req.params.id)
+  .populate("author", "username fullName avatar")
+  .lean();
 
   if (!post) {
     throw new ApiError(404, "Post not found");

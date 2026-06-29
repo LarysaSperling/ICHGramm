@@ -7,14 +7,6 @@ import { createNotification } from "../services/notificationService.js";
 const addComment = asyncHandler(async (req, res) => {
   const { text } = req.body;
 
-  if (!text || text.trim() === "") {
-    throw new ApiError(400, "Comment text is required");
-  }
-
-  if (text.trim().length > 500) {
-    throw new ApiError(400, "Comment is too long");
-  }
-
   const post = await Post.findById(req.params.postId);
 
   if (!post) {
@@ -50,7 +42,8 @@ const getPostComments = asyncHandler(async (req, res) => {
     post: req.params.postId,
   })
     .populate("user", "username fullName avatar")
-    .sort({ createdAt: -1 });
+    .sort({ createdAt: -1 })
+    .lean();
 
   res.json(comments);
 });

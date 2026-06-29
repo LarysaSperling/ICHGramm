@@ -55,7 +55,8 @@ const getMessagesWithUser = asyncHandler(async (req, res) => {
   })
     .populate("sender", "username fullName avatar")
     .populate("receiver", "username fullName avatar")
-    .sort({ createdAt: 1 });
+    .sort({ createdAt: 1 })
+    .lean();
 
   res.json(messages);
 });
