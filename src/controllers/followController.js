@@ -1,113 +1,85 @@
 import Follow from "../models/Follow.js";
 import User from "../models/User.js";
+
+import ApiError from "../utils/ApiError.js";
+import asyncHandler from "../utils/asyncHandler.js";
+
 import { createNotification } from "../services/notificationService.js";
 
-const followUser = async (req, res) => {
-  try {
-    const targetUserId = req.params.userId;
+const followUser = asyncHandler(async (req, res) => {
+  const targetUserId = req.params.userId;
 
-    if (targetUserId === req.user._id.toString()) {
-      return res.status(400).json({
-        message: "You cannot follow yourself",
-      });
-    }
+  if (targetUserId === req.user._id.toString()) {
+    throw new ApiError(400, "You cannot follow yourself");
+  }
 
-    const targetUser = await User.findById(targetUserId);
+  const targetUser = await User.findById(targetUserId);
 
-    if (!targetUser) {
-      return res.status(404).json({
-        message: "User not found",
-      });
-    }
+  if (!targetUser) {
+    throw new ApiError(404, "User not found");
+  }
 
-    const existingFollow = await Follow.findOne({
-      follower: req.user._id,
-      following: targetUserId,
-    });
+  const existingFollow = await Follow.findOne({
+    follower: req.user._id,
+    following: targetUserId,
+  });
 
-    if (existingFollow) {
-      return res.status(400).json({
-        message: "Already following this user",
-      });
-    }
+  if (existingFollow) {
+    throw new ApiError(400, "Already following this user");
+  }
 
-    const follow = await Follow.create({
-      follower: req.user._id,
-      following: targetUserId,
-    });
+  const follow = await Follow.create({
+    follower: req.user._id,
+    following: targetUserId,
+  });
 
-await createNotification({
-  recipient: targetUserId,
-  sender: req.user._id,
-  type: "follow",
-  io: req.io,
+  await createNotification({
+    recipient: targetUserId,
+    sender: req.user._id,
+    type: "follow",
+    io: req.io,
+  });
+
+  res.status(201).json({
+    message: "User followed successfully",
+    follow,
+  });
 });
 
-    res.status(201).json({
-      message: "User followed successfully",
-      follow,
-    });
-  } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
+const unfollowUser = asyncHandler(async (req, res) => {
+  const targetUserId = req.params.userId;
+
+  const follow = await Follow.findOne({
+    follower: req.user._id,
+    following: targetUserId,
+  });
+
+  if (!follow) {
+    throw new ApiError(404, "Follow relationship not found");
   }
-};
 
-const unfollowUser = async (req, res) => {
-  try {
-    const targetUserId = req.params.userId;
+  await follow.deleteOne();
 
-    const follow = await Follow.findOne({
-      follower: req.user._id,
-      following: targetUserId,
-    });
+  res.json({
+    message: "User unfollowed successfully",
+  });
+});
 
-    if (!follow) {
-      return res.status(404).json({
-        message: "Follow relationship not found",
-      });
-    }
+const getFollowers = asyncHandler(async (req, res) => {
+  const followers = await Follow.find({
+    following: req.params.userId,
+  }).populate("follower", "username fullName avatar");
 
-    await follow.deleteOne();
+  res.json(followers);
+});
 
-    res.json({
-      message: "User unfollowed successfully",
-    });
-  } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
-  }
-};
+const getFollowing = asyncHandler(async (req, res) => {
+  const following = await Follow.find({
+    follower: req.params.userId,
+  }).populate("following", "username fullName avatar");
 
-const getFollowers = async (req, res) => {
-  try {
-    const followers = await Follow.find({
-      following: req.params.userId,
-    }).populate("follower", "username fullName avatar");
-
-    res.json(followers);
-  } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
-  }
-};
-
-const getFollowing = async (req, res) => {
-  try {
-    const following = await Follow.find({
-      follower: req.params.userId,
-    }).populate("following", "username fullName avatar");
-
-    res.json(following);
-  } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
-  }
-};
+  res.json(following);
+});
 
 export {
   followUser,
