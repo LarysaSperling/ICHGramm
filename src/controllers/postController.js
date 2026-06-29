@@ -1,139 +1,95 @@
 import Post from "../models/Post.js";
+import ApiError from "../utils/ApiError.js";
+import asyncHandler from "../utils/asyncHandler.js";
 
-const createPost = async (req, res) => {
-  try {
-    const { caption } = req.body;
+const createPost = asyncHandler(async (req, res) => {
+  const { caption } = req.body;
 
-    if (!caption || caption.trim() === "") {
-      return res.status(400).json({
-        message: "Caption is required",
-      });
-    }
-
-    if (!req.file) {
-      return res.status(400).json({
-        message: "Image is required",
-      });
-    }
-
-    const image = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
-
-    const post = await Post.create({
-      caption: caption.trim(),
-      image,
-      author: req.user._id,
-    });
-
-    res.status(201).json(post);
-  } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
+  if (!caption || caption.trim() === "") {
+    throw new ApiError(400, "Caption is required");
   }
-};
 
-const getAllPosts = async (req, res) => {
-  try {
-    const posts = await Post.find()
-      .populate("author", "username fullName avatar")
-      .sort({ createdAt: -1 });
-
-    res.json(posts);
-  } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
+  if (!req.file) {
+    throw new ApiError(400, "Image is required");
   }
-};
 
-const getPostById = async (req, res) => {
-  try {
-    const post = await Post.findById(req.params.id).populate(
-      "author",
-      "username fullName avatar"
-    );
+  const image = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
 
-    if (!post) {
-      return res.status(404).json({
-        message: "Post not found",
-      });
-    }
+  const post = await Post.create({
+    caption: caption.trim(),
+    image,
+    author: req.user._id,
+  });
 
-    res.json(post);
-  } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
+  res.status(201).json(post);
+});
+
+const getAllPosts = asyncHandler(async (req, res) => {
+  const posts = await Post.find()
+    .populate("author", "username fullName avatar")
+    .sort({ createdAt: -1 });
+
+  res.json(posts);
+});
+
+const getPostById = asyncHandler(async (req, res) => {
+  const post = await Post.findById(req.params.id).populate(
+    "author",
+    "username fullName avatar"
+  );
+
+  if (!post) {
+    throw new ApiError(404, "Post not found");
   }
-};
 
-const updatePost = async (req, res) => {
-  try {
-    const post = await Post.findById(req.params.id);
+  res.json(post);
+});
 
-    if (!post) {
-      return res.status(404).json({
-        message: "Post not found",
-      });
-    }
+const updatePost = asyncHandler(async (req, res) => {
+  const post = await Post.findById(req.params.id);
 
-    if (post.author.toString() !== req.user._id.toString()) {
-      return res.status(403).json({
-        message: "Not authorized",
-      });
-    }
-
-    if (req.body.caption !== undefined) {
-      if (req.body.caption.trim() === "") {
-        return res.status(400).json({
-          message: "Caption cannot be empty",
-        });
-      }
-
-      post.caption = req.body.caption.trim();
-    }
-
-    if (req.file) {
-      post.image = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
-    }
-
-    const updatedPost = await post.save();
-
-    res.json(updatedPost);
-  } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
+  if (!post) {
+    throw new ApiError(404, "Post not found");
   }
-};
 
-const deletePost = async (req, res) => {
-  try {
-    const post = await Post.findById(req.params.id);
-
-    if (!post) {
-      return res.status(404).json({
-        message: "Post not found",
-      });
-    }
-
-    if (post.author.toString() !== req.user._id.toString()) {
-      return res.status(403).json({
-        message: "Not authorized",
-      });
-    }
-
-    await post.deleteOne();
-
-    res.json({
-      message: "Post deleted successfully",
-    });
-  } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
+  if (post.author.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, "Not authorized");
   }
-};
+
+  if (req.body.caption !== undefined) {
+    if (req.body.caption.trim() === "") {
+      throw new ApiError(400, "Caption cannot be empty");
+    }
+
+    post.caption = req.body.caption.trim();
+  }
+
+  if (req.file) {
+    post.image = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
+  }
+
+  const updatedPost = await post.save();
+
+  res.json(updatedPost);
+});
+
+const deletePost = asyncHandler(async (req, res) => {
+  const post = await Post.findById(req.params.id);
+
+  if (!post) {
+    throw new ApiError(404, "Post not found");
+  }
+
+  if (post.author.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, "Not authorized");
+  }
+
+  await post.deleteOne();
+
+  res.json({
+    message: "Post deleted successfully",
+  });
+});
 
 export {
   createPost,
