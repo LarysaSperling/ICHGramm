@@ -1,79 +1,71 @@
 import User from "../models/User.js";
+import ApiError from "../utils/ApiError.js";
+import asyncHandler from "../utils/asyncHandler.js";
 
-const getProfile = async (req, res) => {
-  try {
-    const user = await User.findById(req.user._id)
-      .select("-password");
+const getProfile = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id).select("-password");
 
-    res.json(user);
-  } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
+  if (!user) {
+    throw new ApiError(404, "User not found");
   }
-};
 
-const updateProfile = async (req, res) => {
-  try {
-    const user = await User.findById(req.user._id);
+  res.json(user);
+});
 
-    if (!user) {
-      return res.status(404).json({
-        message: "User not found",
-      });
+const updateProfile = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id);
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  const fullName = req.body?.fullName;
+  const bio = req.body?.bio;
+
+  if (fullName !== undefined) {
+    if (fullName.trim() === "") {
+      throw new ApiError(400, "Full name cannot be empty");
     }
 
-    user.fullName =
-      req.body.fullName || user.fullName;
-
-    user.bio =
-      req.body.bio || user.bio;
-
-    if (req.file) {
-      user.avatar =
-        `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
-    }
-
-    const updatedUser = await user.save();
-
-    res.json({
-      _id: updatedUser._id,
-      username: updatedUser.username,
-      fullName: updatedUser.fullName,
-      email: updatedUser.email,
-      bio: updatedUser.bio,
-      avatar: updatedUser.avatar,
-    });
-  } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
+    user.fullName = fullName.trim();
   }
-};
-const searchUsers = async (req, res) => {
-  try {
-    const keyword = req.query.q;
 
-    if (!keyword) {
-      return res.status(400).json({
-        message: "Search keyword is required",
-      });
-    }
-
-    const users = await User.find({
-      $or: [
-        { username: { $regex: keyword, $options: "i" } },
-        { fullName: { $regex: keyword, $options: "i" } },
-      ],
-    }).select("-password");
-
-    res.json(users);
-  } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
+  if (bio !== undefined) {
+    user.bio = bio.trim();
   }
-};
+
+  if (req.file) {
+    user.avatar = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
+  }
+
+  const updatedUser = await user.save();
+
+  res.json({
+    _id: updatedUser._id,
+    username: updatedUser.username,
+    fullName: updatedUser.fullName,
+    email: updatedUser.email,
+    bio: updatedUser.bio,
+    avatar: updatedUser.avatar,
+  });
+});
+
+const searchUsers = asyncHandler(async (req, res) => {
+  const keyword = req.query.q;
+
+  if (!keyword || keyword.trim() === "") {
+    throw new ApiError(400, "Search keyword is required");
+  }
+
+  const users = await User.find({
+    $or: [
+      { username: { $regex: keyword.trim(), $options: "i" } },
+      { fullName: { $regex: keyword.trim(), $options: "i" } },
+    ],
+  }).select("-password");
+
+  res.json(users);
+});
 
 export {
   getProfile,
