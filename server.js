@@ -14,6 +14,7 @@ import commentRoutes from "./src/routes/commentRoutes.js";
 import followRoutes from "./src/routes/followRoutes.js";
 import notificationRoutes from "./src/routes/notificationRoutes.js";
 import messageRoutes from "./src/routes/messageRoutes.js";
+import errorMiddleware from "./src/middlewares/errorMiddleware.js";
 
 dotenv.config();
 
@@ -37,6 +38,8 @@ app.use("/api/comments", commentRoutes);
 app.use("/api/follows", followRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/messages", messageRoutes);
+
+app.use(errorMiddleware);
 
 app.get("/", (req, res) => {
   res.json({
