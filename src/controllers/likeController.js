@@ -1,4 +1,6 @@
 import Like from "../models/Like.js";
+import Post from "../models/Post.js";
+import Notification from "../models/Notification.js";
 
 const toggleLike = async (req, res) => {
   try {
@@ -19,6 +21,17 @@ const toggleLike = async (req, res) => {
       user: req.user._id,
       post: req.params.postId,
     });
+
+    const post = await Post.findById(req.params.postId);
+
+if (post && post.author.toString() !== req.user._id.toString()) {
+  await Notification.create({
+    recipient: post.author,
+    sender: req.user._id,
+    type: "like",
+    post: post._id,
+  });
+}
 
     res.json({
       message: "Post liked",

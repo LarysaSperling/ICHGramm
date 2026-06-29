@@ -1,4 +1,6 @@
 import Comment from "../models/Comment.js";
+import Post from "../models/Post.js";
+import Notification from "../models/Notification.js";
 
 const addComment = async (req, res) => {
   try {
@@ -20,6 +22,17 @@ const addComment = async (req, res) => {
       "user",
       "username fullName avatar"
     );
+
+    const post = await Post.findById(req.params.postId);
+
+if (post && post.author.toString() !== req.user._id.toString()) {
+  await Notification.create({
+    recipient: post.author,
+    sender: req.user._id,
+    type: "comment",
+    post: post._id,
+  });
+}
 
     res.status(201).json(populatedComment);
   } catch (error) {

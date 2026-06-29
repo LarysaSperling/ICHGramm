@@ -1,5 +1,6 @@
 import Follow from "../models/Follow.js";
 import User from "../models/User.js";
+import Notification from "../models/Notification.js";
 
 const followUser = async (req, res) => {
   try {
@@ -33,6 +34,12 @@ const followUser = async (req, res) => {
     const follow = await Follow.create({
       follower: req.user._id,
       following: targetUserId,
+    });
+
+    await Notification.create({
+    recipient: targetUserId,
+    sender: req.user._id,
+    type: "follow",
     });
 
     res.status(201).json({
