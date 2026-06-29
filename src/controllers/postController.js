@@ -2,6 +2,14 @@ import Post from "../models/Post.js";
 
 const createPost = async (req, res) => {
   try {
+    const { caption } = req.body;
+
+    if (!caption || caption.trim() === "") {
+      return res.status(400).json({
+        message: "Caption is required",
+      });
+    }
+
     if (!req.file) {
       return res.status(400).json({
         message: "Image is required",
@@ -11,7 +19,7 @@ const createPost = async (req, res) => {
     const image = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
 
     const post = await Post.create({
-      caption: req.body.caption,
+      caption: caption.trim(),
       image,
       author: req.user._id,
     });
@@ -40,8 +48,10 @@ const getAllPosts = async (req, res) => {
 
 const getPostById = async (req, res) => {
   try {
-    const post = await Post.findById(req.params.id)
-      .populate("author", "username fullName avatar");
+    const post = await Post.findById(req.params.id).populate(
+      "author",
+      "username fullName avatar"
+    );
 
     if (!post) {
       return res.status(404).json({
@@ -73,7 +83,15 @@ const updatePost = async (req, res) => {
       });
     }
 
-    post.caption = req.body.caption ?? post.caption;
+    if (req.body.caption !== undefined) {
+      if (req.body.caption.trim() === "") {
+        return res.status(400).json({
+          message: "Caption cannot be empty",
+        });
+      }
+
+      post.caption = req.body.caption.trim();
+    }
 
     if (req.file) {
       post.image = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
