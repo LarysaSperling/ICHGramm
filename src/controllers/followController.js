@@ -36,11 +36,17 @@ const followUser = async (req, res) => {
       following: targetUserId,
     });
 
-    await Notification.create({
-    recipient: targetUserId,
-    sender: req.user._id,
-    type: "follow",
-    });
+const notification = await Notification.create({
+  recipient: targetUserId,
+  sender: req.user._id,
+  type: "follow",
+});
+
+if (req.io) {
+  req.io
+    .to(targetUserId.toString())
+    .emit("newNotification", notification);
+}
 
     res.status(201).json({
       message: "User followed successfully",
