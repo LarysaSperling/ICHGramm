@@ -8,10 +8,6 @@ import asyncHandler from "../utils/asyncHandler.js";
 const register = asyncHandler(async (req, res) => {
   const { username, fullName, email, password } = req.body;
 
-  if (!username || !fullName || !email || !password) {
-    throw new ApiError(400, "All fields are required");
-  }
-
   const userExists = await User.findOne({
     $or: [{ email }, { username }],
   });
@@ -29,6 +25,10 @@ const register = asyncHandler(async (req, res) => {
     password: hashedPassword,
   });
 
+  if (!user) {
+  throw new ApiError(500, "Failed to create user");
+}
+
   res.status(201).json({
     _id: user._id,
     username: user.username,
@@ -40,10 +40,6 @@ const register = asyncHandler(async (req, res) => {
 
 const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
-
-  if (!email || !password) {
-    throw new ApiError(400, "Email and password are required");
-  }
 
   const user = await User.findOne({ email });
 
