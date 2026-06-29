@@ -1,43 +1,36 @@
 import Notification from "../models/Notification.js";
 
-const getNotifications = async (req, res) => {
-  try {
-    const notifications = await Notification.find({
-      recipient: req.user._id,
-    })
-      .populate("sender", "username fullName avatar")
-      .populate("post", "image caption")
-      .sort({ createdAt: -1 });
+import ApiError from "../utils/ApiError.js";
+import asyncHandler from "../utils/asyncHandler.js";
 
-    res.json(notifications);
-  } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
+const getNotifications = asyncHandler(async (req, res) => {
+  const notifications = await Notification.find({
+    recipient: req.user._id,
+  })
+    .populate("sender", "username fullName avatar")
+    .populate("post", "image caption")
+    .sort({ createdAt: -1 });
+
+  res.json(notifications);
+});
+
+const markAsRead = asyncHandler(async (req, res) => {
+  const notification = await Notification.findById(req.params.id);
+
+  if (!notification) {
+    throw new ApiError(404, "Notification not found");
   }
-};
 
-const markAsRead = async (req, res) => {
-  try {
-    const notification = await Notification.findById(req.params.id);
-
-    if (!notification) {
-      return res.status(404).json({
-        message: "Notification not found",
-      });
-    }
-
-    notification.isRead = true;
-
-    await notification.save();
-
-    res.json(notification);
-  } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
+  if (notification.recipient.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, "Not authorized");
   }
-};
+
+  notification.isRead = true;
+
+  await notification.save();
+
+  res.json(notification);
+});
 
 export {
   getNotifications,
