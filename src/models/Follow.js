@@ -24,4 +24,7 @@ followSchema.index(
   { unique: true }
 );
 
+followSchema.index({ follower: 1 });
+followSchema.index({ following: 1 });
+
 export default mongoose.model("Follow", followSchema);

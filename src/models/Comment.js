@@ -25,4 +25,8 @@ const commentSchema = new mongoose.Schema(
   }
 );
 
+commentSchema.index({ post: 1 });
+commentSchema.index({ user: 1 });
+commentSchema.index({ createdAt: -1 });
+
 export default mongoose.model("Comment", commentSchema);

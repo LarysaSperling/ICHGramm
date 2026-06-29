@@ -19,4 +19,14 @@ const likeSchema = new mongoose.Schema(
   }
 );
 
+likeSchema.index(
+  {
+    user: 1,
+    post: 1,
+  },
+  {
+    unique: true,
+  }
+);
+
 export default mongoose.model("Like", likeSchema);
