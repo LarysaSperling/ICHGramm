@@ -1,21 +1,8 @@
 import Message from "../models/Message.js";
-import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
 
 const sendMessage = asyncHandler(async (req, res) => {
   const { receiver, text } = req.body;
-
-  if (!receiver) {
-    throw new ApiError(400, "Receiver is required");
-  }
-
-  if (!text || text.trim() === "") {
-    throw new ApiError(400, "Message cannot be empty");
-  }
-
-  if (text.trim().length > 1000) {
-    throw new ApiError(400, "Message is too long");
-  }
 
   const message = await Message.create({
     sender: req.user._id,
