@@ -1,63 +1,59 @@
 import Comment from "../models/Comment.js";
 import Post from "../models/Post.js";
+import ApiError from "../utils/ApiError.js";
+import asyncHandler from "../utils/asyncHandler.js";
 import { createNotification } from "../services/notificationService.js";
 
-const addComment = async (req, res) => {
-  try {
-    const { text } = req.body;
+const addComment = asyncHandler(async (req, res) => {
+  const { text } = req.body;
 
-    if (!text) {
-      return res.status(400).json({
-        message: "Comment text is required",
-      });
-    }
+  if (!text || text.trim() === "") {
+    throw new ApiError(400, "Comment text is required");
+  }
 
-    const comment = await Comment.create({
-      text,
-      user: req.user._id,
-      post: req.params.postId,
+  if (text.trim().length > 500) {
+    throw new ApiError(400, "Comment is too long");
+  }
+
+  const post = await Post.findById(req.params.postId);
+
+  if (!post) {
+    throw new ApiError(404, "Post not found");
+  }
+
+  const comment = await Comment.create({
+    text: text.trim(),
+    user: req.user._id,
+    post: req.params.postId,
+  });
+
+  const populatedComment = await comment.populate(
+    "user",
+    "username fullName avatar"
+  );
+
+  if (post.author.toString() !== req.user._id.toString()) {
+    await createNotification({
+      recipient: post.author,
+      sender: req.user._id,
+      type: "comment",
+      post: post._id,
+      io: req.io,
     });
+  }
 
-    const populatedComment = await comment.populate(
-      "user",
-      "username fullName avatar"
-    );
-
-    const post = await Post.findById(req.params.postId);
-
-    if (post && post.author.toString() !== req.user._id.toString()) {
-      await createNotification({
-  recipient: post.author,
-  sender: req.user._id,
-  type: "comment",
-  post: post._id,
-  io: req.io,
+  res.status(201).json(populatedComment);
 });
-    }
 
-    res.status(201).json(populatedComment);
-  } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
-  }
-};
+const getPostComments = asyncHandler(async (req, res) => {
+  const comments = await Comment.find({
+    post: req.params.postId,
+  })
+    .populate("user", "username fullName avatar")
+    .sort({ createdAt: -1 });
 
-const getPostComments = async (req, res) => {
-  try {
-    const comments = await Comment.find({
-      post: req.params.postId,
-    })
-      .populate("user", "username fullName avatar")
-      .sort({ createdAt: -1 });
-
-    res.json(comments);
-  } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
-  }
-};
+  res.json(comments);
+});
 
 export {
   addComment,
