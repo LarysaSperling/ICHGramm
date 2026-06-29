@@ -1,36 +1,33 @@
 import jwt from "jsonwebtoken";
+
 import User from "../models/User.js";
+import ApiError from "../utils/ApiError.js";
+import asyncHandler from "../utils/asyncHandler.js";
 
-const authMiddleware = async (req, res, next) => {
-  try {
-    let token;
+const authMiddleware = asyncHandler(async (req, res, next) => {
+  const authHeader = req.headers.authorization;
 
-    if (
-      req.headers.authorization &&
-      req.headers.authorization.startsWith("Bearer")
-    ) {
-      token = req.headers.authorization.split(" ")[1];
-
-      const decoded = jwt.verify(
-        token,
-        process.env.JWT_SECRET
-      );
-
-      req.user = await User.findById(
-        decoded.userId
-      ).select("-password");
-
-      next();
-    } else {
-      res.status(401).json({
-        message: "Not authorized",
-      });
-    }
-  } catch (error) {
-    res.status(401).json({
-      message: "Not authorized",
-    });
+  if (!authHeader || !authHeader.startsWith("Bearer")) {
+    throw new ApiError(401, "Not authorized");
   }
-};
+
+  const token = authHeader.split(" ")[1];
+
+  if (!token) {
+    throw new ApiError(401, "Not authorized");
+  }
+
+  const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+  const user = await User.findById(decoded.userId).select("-password");
+
+  if (!user) {
+    throw new ApiError(401, "Not authorized");
+  }
+
+  req.user = user;
+
+  next();
+});
 
 export default authMiddleware;
