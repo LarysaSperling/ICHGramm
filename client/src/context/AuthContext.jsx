@@ -1,38 +1,20 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import api from "../api/axios";
+import { createContext, useContext, useMemo, useState } from "react";
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [isAuthLoading, setIsAuthLoading] = useState(true);
-
-  useEffect(() => {
-    const getCurrentUser = async () => {
-      const token = localStorage.getItem("token");
-
-      if (!token) {
-        setIsAuthLoading(false);
-        return;
-      }
-
-      try {
-        const { data } = await api.get("/auth/me");
-        setUser(data.user);
-      } catch {
-        localStorage.removeItem("token");
-        setUser(null);
-      } finally {
-        setIsAuthLoading(false);
-      }
-    };
-
-    getCurrentUser();
-  }, []);
+  const [isAuthLoading] = useState(false);
 
   const login = (data) => {
     localStorage.setItem("token", data.token);
-    setUser(data.user);
+
+    setUser({
+      _id: data._id,
+      username: data.username,
+      fullName: data.fullName,
+      email: data.email,
+    });
   };
 
   const logout = () => {

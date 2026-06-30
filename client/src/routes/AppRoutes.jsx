@@ -11,6 +11,13 @@ import CreatePost from "../pages/CreatePost";
 import NotFound from "../pages/NotFound";
 
 import ProtectedRoute from "../components/layout/ProtectedRoute";
+import AppLayout from "../components/layout/AppLayout";
+
+const withLayout = (page) => (
+  <ProtectedRoute>
+    <AppLayout>{page}</AppLayout>
+  </ProtectedRoute>
+);
 
 const AppRoutes = () => {
   return (
@@ -20,59 +27,12 @@ const AppRoutes = () => {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
 
-      <Route
-        path="/home"
-        element={
-          <ProtectedRoute>
-            <Home />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/profile/:id"
-        element={
-          <ProtectedRoute>
-            <Profile />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/search"
-        element={
-          <ProtectedRoute>
-            <Search />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/messages"
-        element={
-          <ProtectedRoute>
-            <Messages />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/notifications"
-        element={
-          <ProtectedRoute>
-            <Notifications />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/create"
-        element={
-          <ProtectedRoute>
-            <CreatePost />
-          </ProtectedRoute>
-        }
-      />
+      <Route path="/home" element={withLayout(<Home />)} />
+      <Route path="/profile/:id" element={withLayout(<Profile />)} />
+      <Route path="/search" element={withLayout(<Search />)} />
+      <Route path="/messages" element={withLayout(<Messages />)} />
+      <Route path="/notifications" element={withLayout(<Notifications />)} />
+      <Route path="/create" element={withLayout(<CreatePost />)} />
 
       <Route path="*" element={<NotFound />} />
     </Routes>
