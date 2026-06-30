@@ -1,0 +1,143 @@
+.auth-page {
+  min-height: 100vh;
+  background: #ffffff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.auth-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 48px;
+}
+
+.auth-phone img {
+  width: 380px;
+  max-width: 100%;
+}
+
+.auth-content {
+  width: 350px;
+}
+
+.auth-card {
+  border: 1px solid #dbdbdb;
+  background: #ffffff;
+  padding: 36px 40px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.auth-logo {
+  width: 180px;
+  margin-bottom: 32px;
+}
+
+.auth-card input {
+  width: 100%;
+  height: 38px;
+  margin-bottom: 8px;
+  padding: 0 10px;
+  border: 1px solid #dbdbdb;
+  border-radius: 3px;
+  background: #fafafa;
+  font-size: 13px;
+  outline: none;
+}
+
+.auth-card input:focus {
+  border-color: #a8a8a8;
+}
+
+.auth-card button {
+  width: 100%;
+  height: 36px;
+  margin-top: 8px;
+  border: none;
+  border-radius: 8px;
+  background: #0095f6;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.auth-card button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.auth-error {
+  width: 100%;
+  color: #ed4956;
+  font-size: 13px;
+  text-align: center;
+  margin: 8px 0 4px;
+}
+
+.auth-divider {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 24px 0;
+  color: #8e8e8e;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.auth-divider span {
+  flex: 1;
+  height: 1px;
+  background: #dbdbdb;
+}
+
+.auth-forgot {
+  color: #385185;
+  font-size: 13px;
+}
+
+.auth-switch {
+  margin-top: 10px;
+  border: 1px solid #dbdbdb;
+  background: #ffffff;
+  padding: 22px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.auth-switch a {
+  color: #0095f6;
+  font-weight: 600;
+}
+
+@media (max-width: 875px) {
+  .auth-phone {
+    display: none;
+  }
+
+  .auth-wrapper {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 450px) {
+  .auth-page {
+    align-items: flex-start;
+    padding-top: 24px;
+  }
+
+  .auth-content {
+    width: 100%;
+    max-width: 350px;
+  }
+
+  .auth-card,
+  .auth-switch {
+    border-left: none;
+    border-right: none;
+  }
+}
