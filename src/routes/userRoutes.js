@@ -7,6 +7,7 @@ import {
   getProfile,
   updateProfile,
   searchUsers,
+  getMyPosts,
 } from "../controllers/userController.js";
 import {
   updateProfileValidator,
@@ -34,6 +35,12 @@ router.get(
   searchUsersValidator,
   validationMiddleware,
   searchUsers
+);
+
+router.get(
+  "/profile/posts",
+  authMiddleware,
+  getMyPosts
 );
 
 export default router;

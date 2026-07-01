@@ -1,6 +1,7 @@
 import User from "../models/User.js";
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import Post from "../models/Post.js";
 
 const getProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id)
@@ -70,8 +71,19 @@ const searchUsers = asyncHandler(async (req, res) => {
   res.json(users);
 });
 
+const getMyPosts = asyncHandler(async (req, res) => {
+  const posts = await Post.find({
+    author: req.user._id,
+  })
+    .sort({ createdAt: -1 })
+    .lean();
+
+  res.json(posts);
+});
+
 export {
   getProfile,
   updateProfile,
   searchUsers,
+  getMyPosts,
 };
