@@ -1,10 +1,15 @@
 import PostCard from "./PostCard";
 
-const PostList = () => {
+const PostList = ({ posts }) => {
+  if (!posts.length) {
+    return <p>No posts yet.</p>;
+  }
+
   return (
     <div className="post-list">
-      <PostCard />
-      <PostCard />
+      {posts.map((post) => (
+        <PostCard key={post._id} post={post} />
+      ))}
     </div>
   );
 };
