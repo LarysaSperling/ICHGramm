@@ -4,6 +4,7 @@ import api from "../../api/axios";
 import Loader from "../ui/Loader";
 import PostList from "../post/PostList";
 import Stories from "./Stories";
+import "../../styles/feed.css";
 
 const Feed = () => {
   const [posts, setPosts] = useState([]);
