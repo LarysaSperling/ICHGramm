@@ -1,11 +1,51 @@
+import { useEffect, useState } from "react";
 import { Bookmark, Heart, MessageCircle, MoreHorizontal, Send } from "lucide-react";
 
+import api from "../../api/axios";
 import Avatar from "../ui/Avatar";
 
 import "../../styles/post.css";
 
 const PostCard = ({ post }) => {
-  const { image, caption, author, createdAt } = post;
+  const { _id, image, caption, author, createdAt } = post;
+
+  const [comments, setComments] = useState([]);
+  const [commentText, setCommentText] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    const getComments = async () => {
+      try {
+        const { data } = await api.get(`/comments/${_id}`);
+        setComments(data);
+      } catch (err) {
+        console.error(err.response?.data?.message || "Failed to load comments");
+      }
+    };
+
+    getComments();
+  }, [_id]);
+
+  const handleAddComment = async (event) => {
+    event.preventDefault();
+
+    if (!commentText.trim()) return;
+
+    try {
+      setIsSubmitting(true);
+
+      const { data } = await api.post(`/comments/${_id}`, {
+        text: commentText,
+      });
+
+      setComments((prev) => [data, ...prev]);
+      setCommentText("");
+    } catch (err) {
+      console.error(err.response?.data?.message || "Failed to add comment");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <article className="post-card">
@@ -56,16 +96,31 @@ const PostCard = ({ post }) => {
         <strong>{author?.username || "unknown"}</strong> {caption}
       </p>
 
-      <form className="comment-form">
+      {comments.length > 0 && (
+        <div className="post-comments">
+          {comments.slice(0, 3).map((comment) => (
+            <p key={comment._id} className="post-comment">
+              <strong>{comment.user?.username || "unknown"}</strong>{" "}
+              {comment.text}
+            </p>
+          ))}
+        </div>
+      )}
+
+      <form className="comment-form" onSubmit={handleAddComment}>
         <input
-          id={`comment-${post._id}`}
+          id={`comment-${_id}`}
           name="comment"
           type="text"
           placeholder="Add a comment..."
+          value={commentText}
+          onChange={(event) => setCommentText(event.target.value)}
           autoComplete="off"
         />
 
-        <button type="submit">Post</button>
+        <button type="submit" disabled={isSubmitting || !commentText.trim()}>
+          Post
+        </button>
       </form>
     </article>
   );
