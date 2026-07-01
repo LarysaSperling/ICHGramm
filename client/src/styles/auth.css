@@ -3,7 +3,8 @@
   background: #ffffff;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
+  padding-top: 75px;
 }
 
 .auth-wrapper {
@@ -19,6 +20,7 @@
 
 .auth-content {
   width: 350px;
+  transform: translateY(-39px);
 }
 
 .auth-card {
@@ -43,7 +45,7 @@
   border: 1px solid #dbdbdb;
   border-radius: 3px;
   background: #fafafa;
-  font-size: 13px;
+  font-size: 12px;
   outline: none;
 }
 
@@ -103,7 +105,7 @@
   margin-top: 10px;
   border: 1px solid #dbdbdb;
   background: #ffffff;
-  padding: 22px;
+  padding: 23px;
   text-align: center;
   font-size: 14px;
 }
