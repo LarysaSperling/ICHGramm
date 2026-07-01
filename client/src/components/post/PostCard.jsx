@@ -1,5 +1,7 @@
 import { Bookmark, Heart, MessageCircle, MoreHorizontal, Send } from "lucide-react";
 
+import Avatar from "../ui/Avatar";
+
 import "../../styles/post.css";
 
 const PostCard = ({ post }) => {
@@ -9,9 +11,10 @@ const PostCard = ({ post }) => {
     <article className="post-card">
       <header className="post-header">
         <div className="post-author">
-          <img
-            src={author?.avatar || "/default-avatar.png"}
-            alt={author?.username || "User avatar"}
+          <Avatar
+            src={author?.avatar}
+            name={author?.username || author?.fullName}
+            size={36}
           />
 
           <div>
@@ -47,12 +50,21 @@ const PostCard = ({ post }) => {
         </button>
       </div>
 
+      <p className="post-likes">0 likes</p>
+
       <p className="post-caption">
         <strong>{author?.username || "unknown"}</strong> {caption}
       </p>
 
       <form className="comment-form">
-        <input type="text" placeholder="Add a comment..." />
+        <input
+          id={`comment-${post._id}`}
+          name="comment"
+          type="text"
+          placeholder="Add a comment..."
+          autoComplete="off"
+        />
+
         <button type="submit">Post</button>
       </form>
     </article>
