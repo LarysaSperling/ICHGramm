@@ -1,31 +1,33 @@
 import { useEffect, useState } from "react";
 
 import api from "../../api/axios";
-import Stories from "./Stories";
-import PostList from "../post/PostList";
 import Loader from "../ui/Loader";
+import PostList from "../post/PostList";
+import Stories from "./Stories";
 
 const Feed = () => {
   const [posts, setPosts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const getPosts = async () => {
-    try {
-      const { data } = await api.get("/posts");
-      setPosts(data.posts || data);
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to load posts");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const getPosts = async () => {
+      try {
+        const { data } = await api.get("/posts");
+        setPosts(data.posts || []);
+      } catch (err) {
+        setError(err.response?.data?.message || "Failed to load posts");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     getPosts();
   }, []);
 
-  if (isLoading) return <Loader />;
+  if (isLoading) {
+    return <Loader />;
+  }
 
   return (
     <section className="feed">
