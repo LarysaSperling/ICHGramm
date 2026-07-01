@@ -1,78 +1,59 @@
 import { useEffect, useState } from "react";
 
 import api from "../api/axios";
-import Avatar from "../components/ui/Avatar";
+
+import ProfileHeader from "../components/profile/ProfileHeader";
+import ProfileGrid from "../components/profile/ProfileGrid";
 
 import "../styles/profile.css";
 
 const Profile = () => {
   const [profile, setProfile] = useState(null);
+  const [posts, setPosts] = useState([]);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const getProfile = async () => {
+    const loadProfile = async () => {
       try {
-        const { data } = await api.get("/users/profile");
-        setProfile(data);
+        const [profileResponse, postsResponse] = await Promise.all([
+          api.get("/users/profile"),
+          api.get("/users/profile/posts"),
+        ]);
+
+        setProfile(profileResponse.data);
+        setPosts(postsResponse.data);
       } catch (err) {
-        setError(err.response?.data?.message || "Failed to load profile");
+        setError(
+          err.response?.data?.message || "Failed to load profile"
+        );
       }
     };
 
-    getProfile();
+    loadProfile();
   }, []);
 
   if (error) {
-    return <p className="profile-error">{error}</p>;
+    return <p>{error}</p>;
   }
 
   if (!profile) {
-    return <p>Loading profile...</p>;
+    return <p>Loading...</p>;
   }
 
   return (
     <section className="profile-page">
-      <header className="profile-header">
-        <Avatar
-          src={profile.avatar}
-          name={profile.username || profile.fullName}
-          size={150}
-        />
-
-        <div className="profile-info">
-          <div className="profile-top">
-            <h2>{profile.username}</h2>
-            <button type="button">Edit profile</button>
-          </div>
-
-          <div className="profile-stats">
-            <span>
-              <strong>0</strong> posts
-            </span>
-            <span>
-              <strong>0</strong> followers
-            </span>
-            <span>
-              <strong>0</strong> following
-            </span>
-          </div>
-
-          <div className="profile-bio">
-            <strong>{profile.fullName}</strong>
-            <p>{profile.bio || "No bio yet."}</p>
-          </div>
-        </div>
-      </header>
+      <ProfileHeader
+        profile={profile}
+        postsCount={posts.length}
+      />
 
       <div className="profile-tabs">
-        <button type="button">POSTS</button>
-        <button type="button">SAVED</button>
-        <button type="button">TAGGED</button>
+        <button>POSTS</button>
+        <button>SAVED</button>
+        <button>TAGGED</button>
       </div>
 
-      <div className="profile-empty">
-        <p>No posts yet.</p>
-      </div>
+      <ProfileGrid posts={posts} />
     </section>
   );
 };
