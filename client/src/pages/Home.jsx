@@ -1,9 +1,14 @@
+import Feed from "../components/feed/Feed";
+import RightSidebar from "../components/layout/RightSidebar";
+
+import "../styles/home.css";
+
 const Home = () => {
   return (
-    <div>
-      <h1>Home Feed</h1>
-      <p>Welcome to ICHGramm</p>
-    </div>
+    <main className="home-page">
+      <Feed />
+      <RightSidebar />
+    </main>
   );
 };
 

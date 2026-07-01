@@ -1,0 +1,31 @@
+.home-page {
+  display: flex;
+  justify-content: center;
+  gap: 48px;
+
+  padding: 40px 32px;
+}
+
+.feed {
+  width: 630px;
+}
+
+.right-sidebar {
+  width: 320px;
+}
+
+.stories,
+.post-card,
+.right-sidebar {
+  background: #fff;
+  border: 1px solid #dbdbdb;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.post-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
