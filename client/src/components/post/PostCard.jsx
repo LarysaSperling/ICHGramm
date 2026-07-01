@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
-import { Bookmark, Heart, MessageCircle, MoreHorizontal, Send } from "lucide-react";
+import {
+  Bookmark,
+  Heart,
+  MessageCircle,
+  MoreHorizontal,
+  Send,
+} from "lucide-react";
 
 import api from "../../api/axios";
 import Avatar from "../ui/Avatar";
@@ -13,6 +19,9 @@ const PostCard = ({ post }) => {
   const [commentText, setCommentText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [likesCount, setLikesCount] = useState(post.likesCount || 0);
+  const [isLiked, setIsLiked] = useState(false);
+
   useEffect(() => {
     const getComments = async () => {
       try {
@@ -25,6 +34,24 @@ const PostCard = ({ post }) => {
 
     getComments();
   }, [_id]);
+
+  const handleToggleLike = async () => {
+    try {
+      const { data } = await api.post(`/likes/${_id}`);
+
+      if (data.message === "Post liked") {
+        setIsLiked(true);
+        setLikesCount((prev) => prev + 1);
+      }
+
+      if (data.message === "Like removed") {
+        setIsLiked(false);
+        setLikesCount((prev) => Math.max(prev - 1, 0));
+      }
+    } catch (err) {
+      console.error(err.response?.data?.message || "Failed to like post");
+    }
+  };
 
   const handleAddComment = async (event) => {
     event.preventDefault();
@@ -72,8 +99,12 @@ const PostCard = ({ post }) => {
 
       <div className="post-actions">
         <div>
-          <button type="button">
-            <Heart size={24} />
+          <button type="button" onClick={handleToggleLike}>
+            <Heart
+              size={24}
+              fill={isLiked ? "red" : "none"}
+              color={isLiked ? "red" : "currentColor"}
+            />
           </button>
 
           <button type="button">
@@ -90,7 +121,7 @@ const PostCard = ({ post }) => {
         </button>
       </div>
 
-      <p className="post-likes">0 likes</p>
+      <p className="post-likes">{likesCount} likes</p>
 
       <p className="post-caption">
         <strong>{author?.username || "unknown"}</strong> {caption}
