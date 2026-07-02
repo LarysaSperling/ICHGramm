@@ -12,13 +12,13 @@ import Messages from "../pages/Messages";
 import Notifications from "../pages/Notifications";
 import Profile from "../pages/Profile";
 import EditProfile from "../pages/EditProfile";
-import NotFound from "../pages/NotFound";
 import UserProfile from "../pages/UserProfile";
+import NotFound from "../pages/NotFound";
 
 const AppRoutes = () => {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/login" />} />
+      <Route path="/" element={<Navigate to="/login" replace />} />
 
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
@@ -35,9 +35,11 @@ const AppRoutes = () => {
         <Route path="/create" element={<CreatePost />} />
         <Route path="/messages" element={<Messages />} />
         <Route path="/notifications" element={<Notifications />} />
-        <Route path="/profile/:id" element={<Profile />} />
+
+        <Route path="/profile" element={<Profile />} />
         <Route path="/profile/edit" element={<EditProfile />} />
-        <Route path="/profile/:id" element={<UserProfile />} />
+
+        <Route path="/users/:id" element={<UserProfile />} />
       </Route>
 
       <Route path="*" element={<NotFound />} />
