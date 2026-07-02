@@ -191,6 +191,48 @@
   color: #737373;
 }
 
+body.dark .profile-edit-btn,
+body.dark .profile-archive-btn,
+body.dark .profile-top button {
+  background: #262626;
+  color: #f5f5f5;
+}
+
+body.dark .profile-empty-icon {
+  border-color: #f5f5f5;
+}
+
+/* Dark theme */
+body.dark .profile-page {
+  color: #f5f5f5;
+}
+
+body.dark .profile-top h2,
+body.dark .profile-bio,
+body.dark .profile-bio strong,
+body.dark .profile-stats,
+body.dark .profile-stats button,
+body.dark .profile-stats span,
+body.dark .profile-stats strong {
+  color: #f5f5f5;
+}
+
+body.dark .profile-tabs {
+  border-top: 1px solid #262626;
+}
+
+body.dark .profile-tabs button {
+  color: #a8a8a8;
+}
+
+body.dark .profile-tabs button.active {
+  color: #ffffff;
+}
+
+body.dark .profile-header {
+  border-bottom: 1px solid #262626;
+}
+
 @media (max-width: 768px) {
   .profile-header {
     gap: 24px;

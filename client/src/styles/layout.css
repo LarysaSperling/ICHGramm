@@ -1,14 +1,15 @@
-.app-layout{
-    display:flex;
-    min-height:100vh;
-    background:#fff;
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg-color);
 }
 
-.app-main{
-    flex:1;
-    display:flex;
-    justify-content:center;
-    padding:32px;
+.app-main {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding: 32px;
+  margin-left: 245px;
 }
 
 .sidebar {
@@ -41,26 +42,23 @@
   display: flex;
   align-items: center;
   gap: 16px;
-
   width: 100%;
   padding: 12px 14px;
-
   border-radius: 12px;
-  color: #262626;
+  color: var(--text-color);
   text-decoration: none;
   background: transparent;
   border: none;
-
   font-size: 16px;
   font-weight: 500;
-
   cursor: pointer;
   transition: 0.2s;
 }
 
 .sidebar-nav a:hover,
+.sidebar-nav a.active,
 .sidebar-bottom button:hover {
-  background: #f2f2f2;
+  background: var(--hover-bg);
 }
 
 .sidebar-nav .active {
@@ -74,71 +72,37 @@
 
 .sidebar-bottom {
   margin-top: auto;
-
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-@media (max-width: 1200px) {
-
-  .right-sidebar{
-    display:none;
-  }
-
-}
-
-@media (max-width: 992px){
-
-  .sidebar span{
-    display:none;
-  }
-
-  .sidebar{
-    width:80px;
-  }
-
-}
-
-@media (max-width:768px){
-
-  .sidebar{
-    position:fixed;
-    bottom:0;
-    left:0;
-    right:0;
-
-    width:100%;
-    height:70px;
-
-    display:flex;
-    flex-direction:row;
-
-    justify-content:space-around;
-
-    z-index:999;
-  }
-
-}
-
-body.dark .sidebar {
-  background: #000000;
-  border-right: 1px solid #262626;
-}
-
-body.dark .sidebar-nav a,
-body.dark .sidebar-bottom button {
-  color: #f5f5f5;
-}
-
-body.dark .sidebar-nav a:hover,
-body.dark .sidebar-nav a.active,
-body.dark .sidebar-bottom button:hover {
-  background: #1a1a1a;
-}
-
 body.dark .sidebar-logo img {
   filter: brightness(1.8);
+}
+
+@media (max-width: 1200px) {
+  .right-sidebar {
+    display: none;
+  }
+}
+
+@media (max-width: 992px) {
+  .sidebar {
+    width: 80px;
+  }
+
+  .sidebar span {
+    display: none;
+  }
+
+  .sidebar-logo img {
+    width: 42px;
+  }
+
+  .app-main {
+    margin-left: 80px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -165,6 +129,7 @@ body.dark .sidebar-logo img {
     width: 100%;
     flex-direction: row;
     justify-content: space-around;
+    margin-top: 0;
   }
 
   .sidebar-bottom {
