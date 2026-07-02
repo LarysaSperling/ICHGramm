@@ -114,8 +114,8 @@
 }
 
 .edit-profile-save {
-  width: 230px;
-  height: 36px;
+  width: 268px;
+  height: 32px;
   margin-top: 26px;
   border: none;
   border-radius: 8px;
@@ -131,8 +131,6 @@
   font-size: 13px;
   margin-top: 6px;
 }
-
-/* Dark theme */
 
 body.dark .edit-profile-page {
   background: #000000;

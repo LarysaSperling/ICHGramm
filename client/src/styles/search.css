@@ -1,0 +1,149 @@
+body.search-open .right-sidebar {
+  display: none;
+}
+.search-home-bg {
+  width: 90%;
+}
+.search-dark-layer {
+  position: fixed;
+  inset: 0;
+  left: 245px;
+  z-index: 850;
+  background: rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+.search-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  pointer-events: none;
+}
+
+.search-panel {
+  pointer-events: auto;
+  position: fixed;
+  left: 245px;
+  top: 0;
+
+  width: 360px;
+  height: 100vh;
+
+  background: var(--card-bg);
+  border-right: 1px solid var(--border-color);
+  box-shadow: 10px 0 24px rgba(0, 0, 0, 0.12);
+
+  padding: 28px 18px;
+}
+
+.search-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+}
+
+.search-header h1 {
+  font-size: 24px;
+  color: var(--text-color);
+}
+
+.search-header button {
+  border: none;
+  background: transparent;
+  color: var(--text-color);
+  cursor: pointer;
+}
+
+.search-box {
+  height: 42px;
+  background: var(--hover-bg);
+  border-radius: 8px;
+  padding: 0 12px;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  color: var(--muted-color);
+}
+
+.search-box input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text-color);
+  font-size: 14px;
+}
+
+.search-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 24px -18px;
+}
+
+.search-recent-title {
+  font-size: 16px;
+  margin-bottom: 18px;
+  color: var(--text-color);
+}
+
+.search-results {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.search-user-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  padding: 10px;
+  border-radius: 10px;
+
+  text-decoration: none;
+  color: var(--text-color);
+}
+
+.search-user-card:hover {
+  background: var(--hover-bg);
+}
+
+.search-user-card div {
+  display: flex;
+  flex-direction: column;
+}
+
+.search-user-card strong {
+  font-size: 14px;
+}
+
+.search-user-card span {
+  font-size: 13px;
+  color: var(--muted-color);
+}
+
+.search-message {
+  color: var(--muted-color);
+  font-size: 14px;
+}
+
+.search-error {
+  color: #ed4956;
+  font-size: 14px;
+}
+
+@media (max-width: 992px) {
+  .search-panel {
+    left: 80px;
+  }
+}
+
+@media (max-width: 768px) {
+  .search-panel {
+    left: 0;
+    width: 100%;
+    height: calc(100vh - 60px);
+  }
+}
