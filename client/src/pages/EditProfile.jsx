@@ -9,39 +9,47 @@ import "../styles/editProfile.css";
 const EditProfile = () => {
   const navigate = useNavigate();
 
-  const [form, setForm] = useState({
+  const [formData, setFormData] = useState({
     fullName: "",
+    website: "",
     bio: "",
   });
 
   const [avatar, setAvatar] = useState(null);
   const [preview, setPreview] = useState("");
-
-  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const loadProfile = async () => {
-      const { data } = await api.get("/users/profile");
+    const getProfile = async () => {
+      try {
+        const { data } = await api.get("/users/profile");
 
-      setForm({
-        fullName: data.fullName,
-        bio: data.bio,
-      });
+        setFormData({
+          fullName: data.fullName || "",
+          website: data.website || "",
+          bio: data.bio || "",
+        });
 
-      setPreview(data.avatar);
+        setPreview(data.avatar || "");
+      } catch (err) {
+        setError(err.response?.data?.message || "Failed to load profile");
+      }
     };
 
-    loadProfile();
+    getProfile();
   }, []);
 
   const handleChange = (event) => {
-    setForm({
-      ...form,
-      [event.target.name]: event.target.value,
-    });
+    const { name, value } = event.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
-  const handleAvatar = (event) => {
+  const handleAvatarChange = (event) => {
     const file = event.target.files[0];
 
     if (!file) return;
@@ -52,75 +60,103 @@ const EditProfile = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    setError("");
 
-    const formData = new FormData();
+    const dataToSend = new FormData();
 
-    formData.append("fullName", form.fullName);
-    formData.append("bio", form.bio);
+    dataToSend.append("fullName", formData.fullName.trim());
+    dataToSend.append("website", formData.website.trim());
+    dataToSend.append("bio", formData.bio.trim());
 
     if (avatar) {
-      formData.append("avatar", avatar);
+      dataToSend.append("avatar", avatar);
     }
 
     try {
-      setLoading(true);
+      setIsLoading(true);
 
-      await api.put("/users/profile", formData);
+      const { data } = await api.put("/users/profile", dataToSend);
 
-      navigate("/profile");
+      navigate(`/profile/${data._id}`);
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to update profile");
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   return (
     <section className="edit-profile-page">
-      <h1>Edit profile</h1>
+      <div className="edit-profile-container">
+        <h1>Edit profile</h1>
 
-      <form
-        className="edit-profile-form"
-        onSubmit={handleSubmit}
-      >
-        <div className="edit-avatar">
-          <Avatar
-            src={preview}
-            name={form.fullName}
-            size={70}
-          />
+        <form className="edit-profile-form" onSubmit={handleSubmit}>
+          <div className="edit-profile-avatar-box">
+            <Avatar src={preview} name={formData.fullName} size={56} />
 
-          <label>
-            Change photo
+            <div>
+              <strong>{formData.fullName || "User"}</strong>
+              <p>Update your profile photo</p>
+            </div>
 
+            <label className="edit-profile-photo-btn">
+              New photo
+              <input
+                type="file"
+                name="avatar"
+                accept="image/*"
+                onChange={handleAvatarChange}
+              />
+            </label>
+          </div>
+
+          <label className="edit-profile-field">
+            <span>Full name</span>
             <input
-              type="file"
-              accept="image/*"
-              onChange={handleAvatar}
+              type="text"
+              name="fullName"
+              value={formData.fullName}
+              onChange={handleChange}
+              placeholder="Full name"
+              autoComplete="name"
             />
           </label>
-        </div>
 
-        <input
-          type="text"
-          name="fullName"
-          value={form.fullName}
-          onChange={handleChange}
-          placeholder="Full name"
-        />
+          <label className="edit-profile-field">
+            <span>Website</span>
+            <input
+              type="url"
+              name="website"
+              value={formData.website}
+              onChange={handleChange}
+              placeholder="Website"
+              autoComplete="url"
+            />
+          </label>
 
-        <textarea
-          name="bio"
-          value={form.bio}
-          onChange={handleChange}
-          placeholder="Bio"
-        />
+          <label className="edit-profile-field">
+            <span>Bio</span>
+            <textarea
+              name="bio"
+              value={formData.bio}
+              onChange={handleChange}
+              placeholder="Tell something about yourself..."
+              maxLength={150}
+            />
+            <small>{formData.bio.length}/150</small>
+          </label>
 
-        <button
-          type="submit"
-          disabled={loading}
-        >
-          {loading ? "Saving..." : "Save"}
-        </button>
-      </form>
+          {error && <p className="edit-profile-error">{error}</p>}
+
+          <button
+            className="edit-profile-save"
+            type="submit"
+            disabled={isLoading}
+          >
+            {isLoading ? "Saving..." : "Save"}
+          </button>
+        </form>
+      </div>
     </section>
   );
 };
