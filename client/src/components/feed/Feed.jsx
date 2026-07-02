@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import api from "../../api/axios";
 import Loader from "../ui/Loader";
 import PostList from "../post/PostList";
-import Stories from "./Stories";
+import StoryList from "../story/StoryList";
 import "../../styles/feed.css";
 
 const Feed = () => {
@@ -32,7 +32,7 @@ const Feed = () => {
 
   return (
     <section className="feed">
-      <Stories />
+      <StoryList />
 
       {error && <p className="feed-error">{error}</p>}
 

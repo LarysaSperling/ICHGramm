@@ -6,11 +6,15 @@
 }
 
 .post-list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 28px;
 }
-
+@media (max-width: 900px) {
+  .post-list {
+    grid-template-columns: 1fr;
+  }
+}
 @media (max-width:768px){
 
 .feed{

@@ -1,3 +1,5 @@
+import "../../styles/home.css";
+
 const RightSidebar = () => {
   return (
     <aside className="right-sidebar">

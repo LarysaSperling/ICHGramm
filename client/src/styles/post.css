@@ -1,5 +1,5 @@
 .post-card {
-  width: 100%;
+  width: 404px;
   background: #fff;
   border: 1px solid #dbdbdb;
   border-radius: 4px;
@@ -49,9 +49,9 @@
 
 .post-image {
   width: 100%;
-  display: block;
+  height: 505px;
   object-fit: cover;
-  aspect-ratio:1;
+  display: block;
 }
 
 .post-actions {
