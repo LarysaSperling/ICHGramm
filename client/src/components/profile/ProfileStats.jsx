@@ -1,17 +1,20 @@
 const ProfileStats = ({ postsCount }) => {
   return (
     <div className="profile-stats">
-      <span>
-        <strong>{postsCount}</strong> posts
-      </span>
+      <button type="button">
+        <strong>{postsCount}</strong>
+        <span>posts</span>
+      </button>
 
-      <span>
-        <strong>0</strong> followers
-      </span>
+      <button type="button">
+        <strong>0</strong>
+        <span>followers</span>
+      </button>
 
-      <span>
-        <strong>0</strong> following
-      </span>
+      <button type="button">
+        <strong>0</strong>
+        <span>following</span>
+      </button>
     </div>
   );
 };
