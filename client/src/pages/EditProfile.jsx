@@ -6,6 +6,9 @@ import Avatar from "../components/ui/Avatar";
 
 import "../styles/editProfile.css";
 
+const MAX_AVATAR_SIZE = 2 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
 const EditProfile = () => {
   const navigate = useNavigate();
 
@@ -53,6 +56,18 @@ const EditProfile = () => {
     const file = event.target.files[0];
 
     if (!file) return;
+
+    setError("");
+
+    if (file.size > MAX_AVATAR_SIZE) {
+      setError("Avatar must not exceed 2 MB");
+      return;
+    }
+
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      setError("Only JPG, PNG and WEBP images are allowed");
+      return;
+    }
 
     setAvatar(file);
     setPreview(URL.createObjectURL(file));
@@ -104,7 +119,7 @@ const EditProfile = () => {
               <input
                 type="file"
                 name="avatar"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp"
                 onChange={handleAvatarChange}
               />
             </label>
