@@ -84,4 +84,27 @@ const getMyPosts = asyncHandler(async (req, res) => {
   res.json(posts);
 });
 
-export { getProfile, updateProfile, searchUsers, getMyPosts };
+const getUserById = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.params.id).select("-password").lean();
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  const posts = await Post.find({ author: req.params.id })
+    .sort({ createdAt: -1 })
+    .lean();
+
+  res.json({
+    user,
+    posts,
+  });
+});
+
+export {
+  getProfile,
+  updateProfile,
+  searchUsers,
+  getMyPosts,
+  getUserById,
+};
