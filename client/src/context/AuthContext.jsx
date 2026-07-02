@@ -3,22 +3,30 @@ import { createContext, useContext, useMemo, useState } from "react";
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    const savedUser = localStorage.getItem("user");
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
+
   const [isAuthLoading] = useState(false);
 
   const login = (data) => {
     localStorage.setItem("token", data.token);
 
-    setUser({
+    const userData = {
       _id: data._id,
       username: data.username,
       fullName: data.fullName,
       email: data.email,
-    });
+    };
+
+    localStorage.setItem("user", JSON.stringify(userData));
+    setUser(userData);
   };
 
   const logout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("user");
     setUser(null);
   };
 
@@ -28,7 +36,7 @@ export const AuthProvider = ({ children }) => {
       login,
       logout,
       isAuthLoading,
-      isAuthenticated: Boolean(user),
+      isAuthenticated: Boolean(localStorage.getItem("token") && user),
     }),
     [user, isAuthLoading]
   );
