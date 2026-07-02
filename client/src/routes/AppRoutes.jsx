@@ -13,6 +13,7 @@ import Notifications from "../pages/Notifications";
 import Profile from "../pages/Profile";
 import EditProfile from "../pages/EditProfile";
 import NotFound from "../pages/NotFound";
+import UserProfile from "../pages/UserProfile";
 
 const AppRoutes = () => {
   return (
@@ -36,6 +37,7 @@ const AppRoutes = () => {
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/profile/:id" element={<Profile />} />
         <Route path="/profile/edit" element={<EditProfile />} />
+        <Route path="/profile/:id" element={<UserProfile />} />
       </Route>
 
       <Route path="*" element={<NotFound />} />
