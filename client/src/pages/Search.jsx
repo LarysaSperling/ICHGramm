@@ -37,6 +37,7 @@ const Search = () => {
         setError("");
 
         const { data } = await api.get(`/users/search?q=${query.trim()}`);
+
         setUsers(data);
       } catch (err) {
         setUsers([]);
@@ -47,6 +48,7 @@ const Search = () => {
     };
 
     const timer = setTimeout(searchUsers, 400);
+
     return () => clearTimeout(timer);
   }, [query]);
 
@@ -63,7 +65,10 @@ const Search = () => {
           <div className="search-header">
             <h1>Search</h1>
 
-            <button type="button" onClick={() => navigate("/home")}>
+            <button
+              type="button"
+              onClick={() => navigate("/home")}
+            >
               <X size={22} />
             </button>
           </div>
@@ -84,20 +89,38 @@ const Search = () => {
 
           <div className="search-divider"></div>
 
-          {!query && <h2 className="search-recent-title">Recent</h2>}
-
-          {isLoading && <p className="search-message">Searching...</p>}
-          {error && <p className="search-error">{error}</p>}
-
-          {!isLoading && query && users.length === 0 && !error && (
-            <p className="search-message">No users found.</p>
+          {!query && (
+            <h2 className="search-recent-title">
+              Recent
+            </h2>
           )}
+
+          {isLoading && (
+            <p className="search-message">
+              Searching...
+            </p>
+          )}
+
+          {error && (
+            <p className="search-error">
+              {error}
+            </p>
+          )}
+
+          {!isLoading &&
+            query &&
+            users.length === 0 &&
+            !error && (
+              <p className="search-message">
+                No users found.
+              </p>
+            )}
 
           <div className="search-results">
             {users.map((user) => (
               <Link
                 key={user._id}
-                to={`/profile/${user._id}`}
+                to={`/users/${user._id}`}
                 className="search-user-card"
               >
                 <Avatar
@@ -106,7 +129,7 @@ const Search = () => {
                   size={44}
                 />
 
-                <div>
+                <div className="search-user-info">
                   <strong>{user.username}</strong>
                   <span>{user.fullName}</span>
                 </div>
