@@ -23,17 +23,29 @@ const Profile = () => {
         setProfile(profileResponse.data);
         setPosts(postsResponse.data);
       } catch (err) {
-        setError(
-          err.response?.data?.message || "Failed to load profile"
-        );
+        setError(err.response?.data?.message || "Failed to load profile");
       }
     };
 
     loadProfile();
   }, []);
 
+  const handleDeletePost = async (postId) => {
+    const isConfirmed = window.confirm("Delete this post?");
+
+    if (!isConfirmed) return;
+
+    try {
+      await api.delete(`/posts/${postId}`);
+
+      setPosts((prev) => prev.filter((post) => post._id !== postId));
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to delete post");
+    }
+  };
+
   if (error) {
-    return <p>{error}</p>;
+    return <p className="profile-error">{error}</p>;
   }
 
   if (!profile) {
@@ -42,10 +54,7 @@ const Profile = () => {
 
   return (
     <section className="profile-page">
-      <ProfileHeader
-        profile={profile}
-        postsCount={posts.length}
-      />
+      <ProfileHeader profile={profile} postsCount={posts.length} />
 
       <div className="profile-tabs">
         <button>POSTS</button>
@@ -53,7 +62,7 @@ const Profile = () => {
         <button>TAGGED</button>
       </div>
 
-      <ProfileGrid posts={posts} />
+      <ProfileGrid posts={posts} onDeletePost={handleDeletePost} />
     </section>
   );
 };

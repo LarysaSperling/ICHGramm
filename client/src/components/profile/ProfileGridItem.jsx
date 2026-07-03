@@ -1,8 +1,13 @@
-import { Heart, MessageCircle } from "lucide-react";
+import { Heart, MessageCircle, Trash2 } from "lucide-react";
 
-const ProfileGridItem = ({ post }) => {
+const ProfileGridItem = ({ post, onDeletePost }) => {
+  const handleDeleteClick = (event) => {
+    event.stopPropagation();
+    onDeletePost(post._id);
+  };
+
   return (
-    <button className="profile-grid-item" type="button">
+    <div className="profile-grid-item">
       <img src={post.image} alt={post.caption || "Post"} />
 
       <div className="profile-grid-overlay">
@@ -14,7 +19,15 @@ const ProfileGridItem = ({ post }) => {
           <MessageCircle size={20} /> 0
         </span>
       </div>
-    </button>
+
+      <button
+        className="profile-post-delete"
+        type="button"
+        onClick={handleDeleteClick}
+      >
+        <Trash2 size={18} />
+      </button>
+    </div>
   );
 };
 

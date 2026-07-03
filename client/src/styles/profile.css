@@ -309,6 +309,37 @@ body.dark .profile-empty-icon {
   border-color: #f5f5f5;
 }
 
+.profile-post-delete {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+
+  width: 34px;
+  height: 34px;
+
+  border: none;
+  border-radius: 50%;
+
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+  opacity: 0;
+  transition: 0.2s;
+}
+
+.profile-grid-item:hover .profile-post-delete {
+  opacity: 1;
+}
+
+.profile-post-delete:hover {
+  background: rgba(237, 73, 86, 0.9);
+}
+
 @media (max-width: 768px) {
   .profile-header {
     gap: 24px;
