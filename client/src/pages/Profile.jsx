@@ -44,6 +44,22 @@ const Profile = () => {
     }
   };
 
+  const handleUpdatePost = async (postId, newCaption) => {
+    try {
+      const { data } = await api.put(`/posts/${postId}`, {
+        caption: newCaption,
+      });
+
+      setPosts((prev) =>
+        prev.map((post) =>
+          post._id === postId ? { ...post, caption: data.caption } : post
+        )
+      );
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to update post");
+    }
+  };
+
   if (error) {
     return <p className="profile-error">{error}</p>;
   }
@@ -62,7 +78,11 @@ const Profile = () => {
         <button>TAGGED</button>
       </div>
 
-      <ProfileGrid posts={posts} onDeletePost={handleDeletePost} />
+      <ProfileGrid
+        posts={posts}
+        onDeletePost={handleDeletePost}
+        onUpdatePost={handleUpdatePost}
+      />
     </section>
   );
 };

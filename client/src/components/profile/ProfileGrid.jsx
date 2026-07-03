@@ -1,6 +1,6 @@
 import ProfileGridItem from "./ProfileGridItem";
 
-const ProfileGrid = ({ posts, onDeletePost }) => {
+const ProfileGrid = ({ posts, onDeletePost, onUpdatePost }) => {
   if (!posts.length) {
     return (
       <div className="profile-empty">
@@ -18,6 +18,7 @@ const ProfileGrid = ({ posts, onDeletePost }) => {
           key={post._id}
           post={post}
           onDeletePost={onDeletePost}
+          onUpdatePost={onUpdatePost}
         />
       ))}
     </div>
