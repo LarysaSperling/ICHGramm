@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 import api from "../api/axios";
 import Loader from "../components/ui/Loader";
@@ -10,6 +10,7 @@ import "../styles/profile.css";
 
 const UserProfile = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { user } = useAuth();
 
   const [profileUser, setProfileUser] = useState(null);
@@ -62,6 +63,12 @@ const UserProfile = () => {
     }
   };
 
+  const handleOpenMessages = () => {
+    if (!profileUser?._id) return;
+
+    navigate(`/messages?user=${profileUser._id}`);
+  };
+
   if (isLoading) {
     return <Loader />;
   }
@@ -88,12 +95,15 @@ const UserProfile = () => {
               className={isFollowing ? "following-btn" : "follow-btn"}
               onClick={handleFollow}
             >
-          {isFollowing ? "Following" : "Follow"}
-        </button>
+              {isFollowing ? "Following" : "Follow"}
+            </button>
 
-        <button className="message-btn">
-           Message
-        </button>
+            <button
+              className="message-btn"
+              onClick={handleOpenMessages}
+            >
+              Message
+            </button>
           </div>
 
           <div className="profile-stats">
