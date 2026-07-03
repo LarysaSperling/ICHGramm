@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import api from "../api/axios";
+import socket from "../socket";
 import Avatar from "../components/ui/Avatar";
 import Loader from "../components/ui/Loader";
 import { useAuth } from "../context/AuthContext";
@@ -18,12 +19,71 @@ const Messages = () => {
   const [isLoadingChats, setIsLoadingChats] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [error, setError] = useState("");
+  const [currentTime] = useState(() => new Date().getTime());
+
+  useEffect(() => {
+    if (!user?._id) return;
+
+    socket.connect();
+    socket.emit("joinUserRoom", user._id);
+
+    return () => {
+      socket.off("newMessage");
+      socket.disconnect();
+    };
+  }, [user]);
+
+  useEffect(() => {
+    const handleNewMessage = (newMessage) => {
+      const otherUser =
+        newMessage.sender._id === user?._id
+          ? newMessage.receiver
+          : newMessage.sender;
+
+      setMessages((prev) => {
+        const exists = prev.some((message) => message._id === newMessage._id);
+        return exists ? prev : [...prev, newMessage];
+      });
+
+      setChats((prev) => {
+        const chatExists = prev.some(
+          (chat) => chat.user._id === otherUser._id
+        );
+
+        if (!chatExists) {
+          return [
+            {
+              user: otherUser,
+              lastMessage: newMessage.text,
+              lastMessageDate: newMessage.createdAt,
+            },
+            ...prev,
+          ];
+        }
+
+        return prev.map((chat) =>
+          chat.user._id === otherUser._id
+            ? {
+                ...chat,
+                lastMessage: newMessage.text,
+                lastMessageDate: newMessage.createdAt,
+              }
+            : chat
+        );
+      });
+    };
+
+    socket.on("newMessage", handleNewMessage);
+
+    return () => {
+      socket.off("newMessage", handleNewMessage);
+    };
+  }, [user]);
 
   useEffect(() => {
     const getChats = async () => {
       try {
         setIsLoadingChats(true);
-
         const { data } = await api.get("/messages");
 
         setChats(data);
@@ -49,8 +109,10 @@ const Messages = () => {
         setIsLoadingMessages(true);
 
         const { data } = await api.get(`/messages/${activeChat.user._id}`);
-
         setMessages(data);
+
+        const chatRoom = [user._id, activeChat.user._id].sort().join("_");
+        socket.emit("joinChat", chatRoom);
       } catch (err) {
         setError(err.response?.data?.message || "Failed to load messages");
       } finally {
@@ -59,11 +121,7 @@ const Messages = () => {
     };
 
     getMessages();
-  }, [activeChat]);
-
-  const handleSelectChat = (chat) => {
-    setActiveChat(chat);
-  };
+  }, [activeChat, user]);
 
   const handleSendMessage = async (event) => {
     event.preventDefault();
@@ -76,19 +134,10 @@ const Messages = () => {
         text: messageText.trim(),
       });
 
-      setMessages((prev) => [...prev, data]);
-
-      setChats((prev) =>
-        prev.map((chat) =>
-          chat.user._id === activeChat.user._id
-            ? {
-                ...chat,
-                lastMessage: data.text,
-                lastMessageDate: data.createdAt,
-              }
-            : chat
-        )
-      );
+      setMessages((prev) => {
+        const exists = prev.some((message) => message._id === data._id);
+        return exists ? prev : [...prev, data];
+      });
 
       setMessageText("");
     } catch (err) {
@@ -96,23 +145,20 @@ const Messages = () => {
     }
   };
 
- const formatTime = (date) => {
-  if (!date) return "";
+  const formatTime = (date) => {
+    if (!date) return "";
 
-  const messageDate = new Date(date);
-  const now = new Date();
+    const diff = currentTime - new Date(date).getTime();
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
 
-  const diff = now.getTime() - messageDate.getTime();
-  const minutes = Math.floor(diff / 60000);
-  const hours = Math.floor(minutes / 60);
-  const days = Math.floor(hours / 24);
+    if (minutes < 1) return "now";
+    if (minutes < 60) return `${minutes}m`;
+    if (hours < 24) return `${hours}h`;
 
-  if (minutes < 1) return "now";
-  if (minutes < 60) return `${minutes}m`;
-  if (hours < 24) return `${hours}h`;
-
-  return `${days}d`;
-};
+    return `${days}d`;
+  };
 
   if (isLoadingChats) {
     return <Loader />;
@@ -121,9 +167,7 @@ const Messages = () => {
   return (
     <main className="messages-page">
       <section className="messages-list-panel">
-        <h2 className="messages-account">
-          {user?.username || "Messages"}
-        </h2>
+        <h2 className="messages-account">{user?.username || "Messages"}</h2>
 
         {error && <p className="messages-error">{error}</p>}
 
@@ -139,7 +183,7 @@ const Messages = () => {
               className={`messages-chat-item ${
                 activeChat?.user?._id === chat.user._id ? "active" : ""
               }`}
-              onClick={() => handleSelectChat(chat)}
+              onClick={() => setActiveChat(chat)}
             >
               <Avatar
                 src={chat.user.avatar}
