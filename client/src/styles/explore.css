@@ -26,3 +26,20 @@
   object-fit: cover;
   display: block;
 }
+
+@media (max-width: 900px) {
+  .explore-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .explore-page {
+    padding: 24px 12px 80px;
+  }
+
+  .explore-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
