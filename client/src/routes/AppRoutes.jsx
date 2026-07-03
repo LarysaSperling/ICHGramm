@@ -14,6 +14,7 @@ import Profile from "../pages/Profile";
 import EditProfile from "../pages/EditProfile";
 import UserProfile from "../pages/UserProfile";
 import NotFound from "../pages/NotFound";
+import Explore from "../pages/Explore";
 
 const AppRoutes = () => {
   return (
@@ -32,6 +33,7 @@ const AppRoutes = () => {
       >
         <Route path="/home" element={<Home />} />
         <Route path="/search" element={<Search />} />
+        <Route path="/explore" element={<Explore />} />
         <Route path="/create" element={<CreatePost />} />
         <Route path="/messages" element={<Messages />} />
         <Route path="/notifications" element={<Notifications />} />
