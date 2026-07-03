@@ -9,6 +9,7 @@ import {
   searchUsers,
   getMyPosts,
   getUserById,
+  toggleFollowUser,
 } from "../controllers/userController.js";
 
 import {
@@ -40,6 +41,7 @@ router.get(
 );
 
 router.get("/profile/posts", authMiddleware, getMyPosts);
+router.post("/:id/follow", authMiddleware, toggleFollowUser);
 
 router.get("/:id", authMiddleware, getUserById);
 

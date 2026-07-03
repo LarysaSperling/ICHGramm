@@ -101,10 +101,54 @@ const getUserById = asyncHandler(async (req, res) => {
   });
 });
 
+const toggleFollowUser = asyncHandler(async (req, res) => {
+  const targetUserId = req.params.id;
+  const currentUserId = req.user._id.toString();
+
+  if (targetUserId === currentUserId) {
+    throw new ApiError(400, "You cannot follow yourself");
+  }
+
+  const targetUser = await User.findById(targetUserId);
+  const currentUser = await User.findById(currentUserId);
+
+  if (!targetUser || !currentUser) {
+    throw new ApiError(404, "User not found");
+  }
+
+  const isFollowing = targetUser.followers.some(
+    (followerId) => followerId.toString() === currentUserId
+  );
+
+  if (isFollowing) {
+    targetUser.followers = targetUser.followers.filter(
+      (followerId) => followerId.toString() !== currentUserId
+    );
+
+    currentUser.following = currentUser.following.filter(
+      (followingId) => followingId.toString() !== targetUserId
+    );
+  } else {
+    targetUser.followers.push(currentUserId);
+    currentUser.following.push(targetUserId);
+  }
+
+  await targetUser.save();
+  await currentUser.save();
+
+  res.json({
+    message: isFollowing ? "Unfollowed successfully" : "Followed successfully",
+    isFollowing: !isFollowing,
+    followersCount: targetUser.followers.length,
+    followingCount: currentUser.following.length,
+  });
+});
+
 export {
   getProfile,
   updateProfile,
   searchUsers,
   getMyPosts,
   getUserById,
+  toggleFollowUser,
 };
