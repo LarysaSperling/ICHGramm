@@ -4,14 +4,13 @@ import {
   Heart,
   MessageCircle,
   MoreHorizontal,
-  Pencil,
   Send,
   Smile,
-  Trash2,
   X,
 } from "lucide-react";
 
 import Avatar from "../ui/Avatar";
+import PostActionMenu from "./PostActionMenu";
 import "../../styles/postPreviewModal.css";
 
 const PostPreviewModal = ({
@@ -25,11 +24,10 @@ const PostPreviewModal = ({
   const [localComments, setLocalComments] = useState([]);
   const [isLiked, setIsLiked] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   if (!isOpen || !post) return null;
 
-  const postComments = Array.isArray(post.comments) ? post.comments : [];
-  const comments = [...postComments, ...localComments];
   const username = post.author?.username || "user";
   const fullName = post.author?.fullName || username;
   const avatar = post.author?.avatar;
@@ -40,6 +38,9 @@ const PostPreviewModal = ({
         day: "numeric",
       })
     : "";
+
+  const postComments = Array.isArray(post.comments) ? post.comments : [];
+  const comments = [...postComments, ...localComments];
 
   const postLikes = Array.isArray(post.likes) ? post.likes.length : 0;
   const likesCount = isLiked ? postLikes + 1 : postLikes;
@@ -61,6 +62,16 @@ const PostPreviewModal = ({
 
     setLocalComments((prevComments) => [...prevComments, newComment]);
     setCommentText("");
+  };
+
+  const handleEdit = () => {
+    setIsMenuOpen(false);
+    onEditPost();
+  };
+
+  const handleDelete = () => {
+    setIsMenuOpen(false);
+    onDeletePost();
   };
 
   return (
@@ -88,7 +99,11 @@ const PostPreviewModal = ({
               </div>
             </div>
 
-            <button className="post-preview-menu" type="button">
+            <button
+              className="post-preview-menu"
+              type="button"
+              onClick={() => setIsMenuOpen(true)}
+            >
               <MoreHorizontal size={22} />
             </button>
           </header>
@@ -159,16 +174,15 @@ const PostPreviewModal = ({
                   type="button"
                   className={isLiked ? "active-like" : ""}
                   onClick={() => setIsLiked((prev) => !prev)}
-                  aria-label="Like post"
                 >
                   <Heart size={25} fill={isLiked ? "currentColor" : "none"} />
                 </button>
 
-                <button type="button" aria-label="Comment post">
+                <button type="button">
                   <MessageCircle size={25} />
                 </button>
 
-                <button type="button" aria-label="Send post">
+                <button type="button">
                   <Send size={25} />
                 </button>
               </div>
@@ -177,7 +191,6 @@ const PostPreviewModal = ({
                 type="button"
                 className={isSaved ? "active-save" : ""}
                 onClick={() => setIsSaved((prev) => !prev)}
-                aria-label="Save post"
               >
                 <Bookmark size={25} fill={isSaved ? "currentColor" : "none"} />
               </button>
@@ -206,21 +219,16 @@ const PostPreviewModal = ({
                 Post
               </button>
             </form>
-
-            <div className="post-preview-owner-actions">
-              <button type="button" onClick={onEditPost}>
-                <Pencil size={16} />
-                Edit
-              </button>
-
-              <button type="button" onClick={onDeletePost}>
-                <Trash2 size={16} />
-                Delete
-              </button>
-            </div>
           </footer>
         </aside>
       </div>
+
+      <PostActionMenu
+        isOpen={isMenuOpen}
+        onClose={() => setIsMenuOpen(false)}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+      />
     </div>
   );
 };
