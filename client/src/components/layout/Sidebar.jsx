@@ -20,7 +20,7 @@ import logo from "../../assets/logos/ichgram-logo.svg";
 import "../../styles/layout.css";
 
 const Sidebar = () => {
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
 
   return (
@@ -60,7 +60,7 @@ const Sidebar = () => {
     <span>Create</span>
   </NavLink>
 
-  <NavLink to={`/profile/${user?._id}`}>
+  <NavLink to="/profile">
     <CircleUserRound size={24} strokeWidth={2} />
     <span>Profile</span>
   </NavLink>
