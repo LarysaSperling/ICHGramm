@@ -76,11 +76,17 @@
   padding: 0 16px;
   font-weight: 600;
   font-size: 14px;
+  color: #262626;
 }
 
 .post-caption {
   padding: 8px 16px;
   font-size: 14px;
+  color: #262626;
+}
+
+.post-caption strong {
+  color: #262626;
 }
 
 .comment-form {
@@ -111,10 +117,12 @@
 .post-comment {
   font-size: 14px;
   margin-bottom: 4px;
+  color: #262626;
 }
 
 .post-comment strong {
   margin-right: 4px;
+  color: #262626;
 }
 
 .comment-form button:disabled {
