@@ -78,6 +78,7 @@ const searchUsers = asyncHandler(async (req, res) => {
 
 const getMyPosts = asyncHandler(async (req, res) => {
   const posts = await Post.find({ author: req.user._id })
+    .populate("author", "username fullName avatar")
     .sort({ createdAt: -1 })
     .lean();
 
@@ -92,6 +93,7 @@ const getUserById = asyncHandler(async (req, res) => {
   }
 
   const posts = await Post.find({ author: req.params.id })
+    .populate("author", "username fullName avatar")
     .sort({ createdAt: -1 })
     .lean();
 
