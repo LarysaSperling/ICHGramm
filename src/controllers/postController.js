@@ -107,10 +107,26 @@ const deletePost = asyncHandler(async (req, res) => {
   });
 });
 
+const getExplorePosts = asyncHandler(async (req, res) => {
+  const posts = await Post.aggregate([
+    {
+      $sample: { size: 60 },
+    },
+  ]);
+
+  const populatedPosts = await Post.populate(posts, {
+    path: "author",
+    select: "username fullName avatar",
+  });
+
+  res.json(populatedPosts);
+});
+
 export {
   createPost,
   getAllPosts,
   getPostById,
   updatePost,
   deletePost,
+  getExplorePosts,
 };

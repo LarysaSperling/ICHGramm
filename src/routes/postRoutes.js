@@ -9,6 +9,7 @@ import {
   getPostById,
   updatePost,
   deletePost,
+  getExplorePosts,
 } from "../controllers/postController.js";
 import {
   createPostValidator,
@@ -18,6 +19,8 @@ import {
 import validationMiddleware from "../middlewares/validationMiddleware.js";
 
 const router = express.Router();
+
+router.get("/explore", getExplorePosts);
 
 router.get("/", getAllPosts);
 router.get("/:id", getPostById);
