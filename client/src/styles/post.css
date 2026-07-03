@@ -18,6 +18,17 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.post-author-link {
+  color: inherit;
+  /* text-decoration: none; */
+}
+
+.post-author-link:hover {
+  text-decoration: underline;
 }
 
 .post-author img {

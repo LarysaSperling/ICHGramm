@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   Bookmark,
   Heart,
@@ -15,10 +16,11 @@ import "../../styles/post.css";
 const PostCard = ({ post }) => {
   const { _id, image, caption, author, createdAt } = post;
 
+  const authorLink = author?._id ? `/users/${author._id}` : "#";
+
   const [comments, setComments] = useState([]);
   const [commentText, setCommentText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   const [likesCount, setLikesCount] = useState(post.likesCount || 0);
   const [isLiked, setIsLiked] = useState(false);
 
@@ -62,7 +64,7 @@ const PostCard = ({ post }) => {
       setIsSubmitting(true);
 
       const { data } = await api.post(`/comments/${_id}`, {
-        text: commentText,
+        text: commentText.trim(),
       });
 
       setComments((prev) => [data, ...prev]);
@@ -77,10 +79,10 @@ const PostCard = ({ post }) => {
   return (
     <article className="post-card">
       <header className="post-header">
-        <div className="post-author">
+        <Link to={authorLink} className="post-author">
           <Avatar
             src={author?.avatar}
-            name={author?.username || author?.fullName}
+            name={author?.username || author?.fullName || "Unknown"}
             size={36}
           />
 
@@ -88,7 +90,7 @@ const PostCard = ({ post }) => {
             <strong>{author?.username || "unknown"}</strong>
             <span>{new Date(createdAt).toLocaleDateString()}</span>
           </div>
-        </div>
+        </Link>
 
         <button className="post-more" type="button">
           <MoreHorizontal size={22} />
@@ -124,7 +126,10 @@ const PostCard = ({ post }) => {
       <p className="post-likes">{likesCount} likes</p>
 
       <p className="post-caption">
-        <strong>{author?.username || "unknown"}</strong> {caption}
+        <Link to={authorLink} className="post-author-link">
+          <strong>{author?.username || "unknown"}</strong>
+        </Link>{" "}
+        {caption}
       </p>
 
       {comments.length > 0 && (
