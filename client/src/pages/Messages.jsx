@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 
 import api from "../api/axios";
 import socket from "../socket";
@@ -12,6 +12,7 @@ import "../styles/messages.css";
 const Messages = () => {
   const { user } = useAuth();
 
+  const [searchParams] = useSearchParams();
   const [chats, setChats] = useState([]);
   const [activeChat, setActiveChat] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -100,6 +101,37 @@ const Messages = () => {
 
     getChats();
   }, []);
+
+  useEffect(() => {
+  const openChatFromProfile = async () => {
+    const userId = searchParams.get("user");
+
+    if (!userId || !user?._id) return;
+
+    const existingChat = chats.find(
+      (chat) => chat.user._id === userId
+    );
+
+    if (existingChat) {
+      setActiveChat(existingChat);
+      return;
+    }
+
+    try {
+      const { data } = await api.get(`/users/${userId}`);
+
+      setActiveChat({
+        user: data.user,
+        lastMessage: "",
+        lastMessageDate: null,
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  openChatFromProfile();
+}, [searchParams, chats, user]);
 
   useEffect(() => {
     const getMessages = async () => {
