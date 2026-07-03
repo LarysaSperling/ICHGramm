@@ -61,7 +61,40 @@ const getMessagesWithUser = asyncHandler(async (req, res) => {
   res.json(messages);
 });
 
+const getChats = asyncHandler(async (req, res) => {
+  const messages = await Message.find({
+    $or: [
+      { sender: req.user._id },
+      { receiver: req.user._id },
+    ],
+  })
+    .populate("sender", "username fullName avatar")
+    .populate("receiver", "username fullName avatar")
+    .sort({ createdAt: -1 })
+    .lean();
+
+  const chatsMap = new Map();
+
+  messages.forEach((message) => {
+    const otherUser =
+      message.sender._id.toString() === req.user._id.toString()
+        ? message.receiver
+        : message.sender;
+
+    if (!chatsMap.has(otherUser._id.toString())) {
+      chatsMap.set(otherUser._id.toString(), {
+        user: otherUser,
+        lastMessage: message.text,
+        lastMessageDate: message.createdAt,
+      });
+    }
+  });
+
+  res.json([...chatsMap.values()]);
+});
+
 export {
   sendMessage,
   getMessagesWithUser,
+  getChats,
 };
