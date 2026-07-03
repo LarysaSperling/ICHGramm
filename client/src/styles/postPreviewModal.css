@@ -1,0 +1,596 @@
+/* Post Preview Modal */
+
+/* Modal overlay */
+
+.post-preview-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(0, 0, 0, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+/* Close button */
+
+.post-preview-close {
+  position: fixed;
+  top: 18px;
+  right: 24px;
+  z-index: 2002;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.post-preview-close:hover {
+  opacity: 0.75;
+}
+
+/* Main dialog */
+
+.post-preview-dialog {
+  width: min(1120px, 94vw);
+  height: min(722px, 90vh);
+  background: #ffffff;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 423px;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+/* Left image area */
+
+.post-preview-media {
+  min-width: 0;
+  min-height: 0;
+  background: #000000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.post-preview-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+/* Right panel */
+
+.post-preview-panel {
+  min-width: 0;
+  min-height: 0;
+  background: #ffffff;
+  border-left: 1px solid #dbdbdb;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+
+.post-preview-header {
+  min-height: 60px;
+  padding: 0 16px;
+  border-bottom: 1px solid #efefef;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.post-preview-author {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.post-preview-author-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.post-preview-author-text strong {
+  max-width: 260px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #262626;
+  line-height: 18px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.post-preview-author-text span {
+  max-width: 260px;
+  font-size: 12px;
+  font-weight: 400;
+  color: #737373;
+  line-height: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.post-preview-menu {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: #262626;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.post-preview-menu:hover {
+  color: #737373;
+}
+
+/* ==========================
+   Comments
+========================== */
+
+.post-preview-comments {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.post-preview-comments::-webkit-scrollbar {
+  width: 6px;
+}
+
+.post-preview-comments::-webkit-scrollbar-thumb {
+  background: #d5d5d5;
+  border-radius: 20px;
+}
+
+.post-preview-comments::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* One comment */
+
+.post-preview-comment {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.post-preview-comment-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.post-preview-comment-main p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+  color: #262626;
+  word-break: break-word;
+}
+
+.post-preview-comment-main strong {
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+/* Caption */
+
+.post-preview-caption {
+  padding-bottom: 6px;
+}
+
+/* Meta */
+
+.post-preview-comment-meta {
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.post-preview-comment-meta span {
+  font-size: 12px;
+  color: #8e8e8e;
+}
+
+.post-preview-comment-meta button {
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+
+  font-size: 12px;
+  font-weight: 600;
+  color: #8e8e8e;
+}
+
+.post-preview-comment-meta button:hover {
+  color: #262626;
+}
+
+/* Like comment */
+
+.post-preview-comment-like {
+  width: 26px;
+  height: 26px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+  background: transparent;
+
+  color: #8e8e8e;
+  cursor: pointer;
+}
+
+.post-preview-comment-like:hover {
+  color: #ed4956;
+}
+
+/* View all comments */
+
+.post-preview-view-comments {
+  align-self: flex-start;
+
+  padding: 0;
+
+  border: none;
+  background: transparent;
+
+  font-size: 14px;
+  color: #8e8e8e;
+
+  cursor: pointer;
+}
+
+.post-preview-view-comments:hover {
+  color: #262626;
+}
+
+/* Empty comments */
+
+.post-preview-empty-comments {
+  margin: auto 0;
+
+  text-align: center;
+
+  color: #8e8e8e;
+
+  font-size: 14px;
+  line-height: 22px;
+}
+
+/* ==========================
+   Footer
+========================== */
+
+.post-preview-footer {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid #efefef;
+  background: #ffffff;
+  flex-shrink: 0;
+}
+
+/* Top action row */
+
+.post-preview-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px 8px;
+}
+
+.post-preview-left-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.post-preview-left-actions button,
+.post-preview-actions > button {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #262626;
+  transition: color 0.2s ease;
+}
+
+.post-preview-left-actions button:hover,
+.post-preview-actions > button:hover {
+  color: #737373;
+}
+
+.active-like {
+  color: #ed4956 !important;
+}
+
+.active-save {
+  color: #262626;
+}
+
+/* Likes */
+
+.post-preview-likes {
+  margin: 0;
+  padding: 0 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #262626;
+}
+
+/* Date */
+
+.post-preview-date {
+  margin: 8px 0 0;
+  padding: 0 16px 12px;
+
+  font-size: 11px;
+  font-weight: 400;
+
+  color: #8e8e8e;
+
+  letter-spacing: 0.2px;
+  text-transform: uppercase;
+}
+
+/* ==========================
+   Add comment
+========================== */
+
+.post-preview-add-comment {
+  min-height: 56px;
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  padding: 0 16px;
+
+  border-top: 1px solid #efefef;
+}
+
+.post-preview-add-comment svg {
+  flex-shrink: 0;
+  color: #262626;
+}
+
+.post-preview-add-comment input {
+  flex: 1;
+
+  height: 40px;
+
+  border: none;
+  outline: none;
+
+  background: transparent;
+
+  color: #262626;
+  font-size: 14px;
+}
+
+.post-preview-add-comment input::placeholder {
+  color: #8e8e8e;
+}
+
+.post-preview-add-comment button {
+  border: none;
+  background: transparent;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  color: #0095f6;
+
+  cursor: pointer;
+
+  transition: opacity 0.2s ease;
+}
+
+.post-preview-add-comment button:hover {
+  opacity: 0.8;
+}
+
+.post-preview-add-comment button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+/* ==========================
+   Owner actions
+========================== */
+
+.post-preview-owner-actions {
+  display: flex;
+  gap: 10px;
+
+  padding: 12px 16px;
+
+  border-top: 1px solid #efefef;
+}
+
+.post-preview-owner-actions button {
+  flex: 1;
+
+  height: 38px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  border: none;
+  border-radius: 8px;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: 0.2s ease;
+}
+
+.post-preview-owner-actions button:first-child {
+  background: #efefef;
+  color: #262626;
+}
+
+.post-preview-owner-actions button:first-child:hover {
+  background: #e2e2e2;
+}
+
+.post-preview-owner-actions button:last-child {
+  background: #ed4956;
+  color: #ffffff;
+}
+
+.post-preview-owner-actions button:last-child:hover {
+  background: #d93b48;
+}
+
+/* ==========================
+   Dark mode
+========================== */
+
+body.dark .post-preview-dialog,
+body.dark .post-preview-panel,
+body.dark .post-preview-footer {
+  background: #000000;
+}
+
+body.dark .post-preview-panel {
+  border-left-color: #262626;
+}
+
+body.dark .post-preview-header,
+body.dark .post-preview-footer,
+body.dark .post-preview-add-comment,
+body.dark .post-preview-owner-actions {
+  border-color: #262626;
+}
+
+body.dark .post-preview-author-text strong,
+body.dark .post-preview-menu,
+body.dark .post-preview-comment-main p,
+body.dark .post-preview-comment-main strong,
+body.dark .post-preview-left-actions button,
+body.dark .post-preview-actions > button,
+body.dark .post-preview-likes,
+body.dark .post-preview-add-comment svg,
+body.dark .post-preview-add-comment input {
+  color: #f5f5f5;
+}
+
+body.dark .post-preview-author-text span,
+body.dark .post-preview-comment-meta span,
+body.dark .post-preview-comment-meta button,
+body.dark .post-preview-view-comments,
+body.dark .post-preview-empty-comments,
+body.dark .post-preview-date,
+body.dark .post-preview-comment-like {
+  color: #a8a8a8;
+}
+
+body.dark .post-preview-comment-meta button:hover,
+body.dark .post-preview-view-comments:hover {
+  color: #ffffff;
+}
+
+body.dark .post-preview-add-comment input::placeholder {
+  color: #737373;
+}
+
+body.dark .post-preview-owner-actions button:first-child {
+  background: #262626;
+  color: #f5f5f5;
+}
+
+body.dark .post-preview-owner-actions button:first-child:hover {
+  background: #333333;
+}
+
+/* ==========================
+   Responsive
+========================== */
+
+@media (max-width: 900px) {
+  .post-preview-modal {
+    padding: 12px;
+  }
+
+  .post-preview-dialog {
+    width: 96vw;
+    height: 92vh;
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(280px, 1fr) auto;
+  }
+
+  .post-preview-panel {
+    max-height: 430px;
+    border-left: none;
+    border-top: 1px solid #dbdbdb;
+  }
+
+  .post-preview-comments {
+    max-height: 180px;
+  }
+}
+
+@media (max-width: 520px) {
+  .post-preview-modal {
+    padding: 0;
+  }
+
+  .post-preview-close {
+    top: 10px;
+    right: 10px;
+  }
+
+  .post-preview-dialog {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+  }
+
+  .post-preview-header {
+    min-height: 54px;
+  }
+
+  .post-preview-author-text strong,
+  .post-preview-author-text span {
+    max-width: 190px;
+  }
+
+  .post-preview-owner-actions {
+    display: none;
+  }
+}

@@ -1,0 +1,228 @@
+import { useState } from "react";
+import {
+  Bookmark,
+  Heart,
+  MessageCircle,
+  MoreHorizontal,
+  Pencil,
+  Send,
+  Smile,
+  Trash2,
+  X,
+} from "lucide-react";
+
+import Avatar from "../ui/Avatar";
+import "../../styles/postPreviewModal.css";
+
+const PostPreviewModal = ({
+  post,
+  isOpen,
+  onClose,
+  onEditPost,
+  onDeletePost,
+}) => {
+  const [commentText, setCommentText] = useState("");
+  const [localComments, setLocalComments] = useState([]);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+
+  if (!isOpen || !post) return null;
+
+  const postComments = Array.isArray(post.comments) ? post.comments : [];
+  const comments = [...postComments, ...localComments];
+  const username = post.author?.username || "user";
+  const fullName = post.author?.fullName || username;
+  const avatar = post.author?.avatar;
+
+  const createdDate = post.createdAt
+    ? new Date(post.createdAt).toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+      })
+    : "";
+
+  const postLikes = Array.isArray(post.likes) ? post.likes.length : 0;
+  const likesCount = isLiked ? postLikes + 1 : postLikes;
+
+  const handleAddComment = (event) => {
+    event.preventDefault();
+
+    if (!commentText.trim()) return;
+
+    const newComment = {
+      _id: crypto.randomUUID(),
+      text: commentText.trim(),
+      author: {
+        username: "you",
+        avatar: null,
+      },
+      createdAt: new Date().toISOString(),
+    };
+
+    setLocalComments((prevComments) => [...prevComments, newComment]);
+    setCommentText("");
+  };
+
+  return (
+    <div className="post-preview-modal" onClick={onClose}>
+      <button className="post-preview-close" type="button" onClick={onClose}>
+        <X size={30} />
+      </button>
+
+      <div
+        className="post-preview-dialog"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="post-preview-media">
+          <img src={post.image} alt={post.caption || "Post"} />
+        </div>
+
+        <aside className="post-preview-panel">
+          <header className="post-preview-header">
+            <div className="post-preview-author">
+              <Avatar src={avatar} name={username} size={34} />
+
+              <div className="post-preview-author-text">
+                <strong>{username}</strong>
+                <span>{fullName}</span>
+              </div>
+            </div>
+
+            <button className="post-preview-menu" type="button">
+              <MoreHorizontal size={22} />
+            </button>
+          </header>
+
+          <section className="post-preview-comments">
+            {post.caption && (
+              <article className="post-preview-comment post-preview-caption">
+                <Avatar src={avatar} name={username} size={34} />
+
+                <div className="post-preview-comment-main">
+                  <p>
+                    <strong>{username}</strong> {post.caption}
+                  </p>
+
+                  <div className="post-preview-comment-meta">
+                    {createdDate && <span>{createdDate}</span>}
+                    <button type="button">Reply</button>
+                  </div>
+                </div>
+              </article>
+            )}
+
+            {comments.length > 2 && (
+              <button className="post-preview-view-comments" type="button">
+                View all {comments.length} comments
+              </button>
+            )}
+
+            {comments.length === 0 && (
+              <p className="post-preview-empty-comments">
+                No comments yet. Start the conversation.
+              </p>
+            )}
+
+            {comments.map((comment) => {
+              const commentUsername =
+                comment.author?.username || comment.username || "user";
+              const commentAvatar = comment.author?.avatar;
+              const commentTextValue = comment.text || comment.content || "";
+
+              return (
+                <article className="post-preview-comment" key={comment._id}>
+                  <Avatar src={commentAvatar} name={commentUsername} size={34} />
+
+                  <div className="post-preview-comment-main">
+                    <p>
+                      <strong>{commentUsername}</strong> {commentTextValue}
+                    </p>
+
+                    <div className="post-preview-comment-meta">
+                      <span>now</span>
+                      <button type="button">Reply</button>
+                    </div>
+                  </div>
+
+                  <button className="post-preview-comment-like" type="button">
+                    <Heart size={13} />
+                  </button>
+                </article>
+              );
+            })}
+          </section>
+
+          <footer className="post-preview-footer">
+            <div className="post-preview-actions">
+              <div className="post-preview-left-actions">
+                <button
+                  type="button"
+                  className={isLiked ? "active-like" : ""}
+                  onClick={() => setIsLiked((prev) => !prev)}
+                  aria-label="Like post"
+                >
+                  <Heart size={25} fill={isLiked ? "currentColor" : "none"} />
+                </button>
+
+                <button type="button" aria-label="Comment post">
+                  <MessageCircle size={25} />
+                </button>
+
+                <button type="button" aria-label="Send post">
+                  <Send size={25} />
+                </button>
+              </div>
+
+              <button
+                type="button"
+                className={isSaved ? "active-save" : ""}
+                onClick={() => setIsSaved((prev) => !prev)}
+                aria-label="Save post"
+              >
+                <Bookmark size={25} fill={isSaved ? "currentColor" : "none"} />
+              </button>
+            </div>
+
+            <p className="post-preview-likes">
+              {likesCount === 1 ? "1 like" : `${likesCount} likes`}
+            </p>
+
+            {createdDate && <p className="post-preview-date">{createdDate}</p>}
+
+            <form
+              className="post-preview-add-comment"
+              onSubmit={handleAddComment}
+            >
+              <Smile size={22} />
+
+              <input
+                type="text"
+                value={commentText}
+                onChange={(event) => setCommentText(event.target.value)}
+                placeholder="Add comment"
+              />
+
+              <button type="submit" disabled={!commentText.trim()}>
+                Post
+              </button>
+            </form>
+
+            <div className="post-preview-owner-actions">
+              <button type="button" onClick={onEditPost}>
+                <Pencil size={16} />
+                Edit
+              </button>
+
+              <button type="button" onClick={onDeletePost}>
+                <Trash2 size={16} />
+                Delete
+              </button>
+            </div>
+          </footer>
+        </aside>
+      </div>
+    </div>
+  );
+};
+
+export default PostPreviewModal;
