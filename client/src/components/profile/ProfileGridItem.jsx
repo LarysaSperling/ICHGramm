@@ -7,13 +7,15 @@ const ProfileGridItem = ({ post, onDeletePost, onUpdatePost }) => {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [localPost, setLocalPost] = useState(post);
 
+  if (!localPost) return null;
+
   const likesCount = Array.isArray(localPost.likes)
     ? localPost.likes.length
     : localPost.likes || 0;
 
-  const commentsCount = Array.isArray(localPost.comments)
-    ? localPost.comments.length
-    : 0;
+  const commentsCount =
+    localPost.commentsCount ??
+    (Array.isArray(localPost.comments) ? localPost.comments.length : 0);
 
   const handleDelete = () => {
     setIsPreviewOpen(false);

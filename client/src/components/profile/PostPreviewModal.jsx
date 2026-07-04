@@ -36,6 +36,7 @@ const PostPreviewModal = ({
 }) => {
   const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState([]);
+  const [showAllComments, setShowAllComments] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
@@ -48,6 +49,7 @@ const PostPreviewModal = ({
       try {
         const { data } = await api.get(`/comments/${post._id}`);
         setComments(Array.isArray(data) ? data : []);
+        setShowAllComments(false);
       } catch (error) {
         console.error("Fetch comments failed:", error);
       }
@@ -80,6 +82,8 @@ const PostPreviewModal = ({
 
   const likesCount = postLikes.length;
 
+  const visibleComments = showAllComments ? comments : comments.slice(0, 2);
+
   const handleToggleLike = async () => {
     if (isLiking) return;
 
@@ -98,26 +102,34 @@ const PostPreviewModal = ({
     }
   };
 
-  const handleAddComment = async (event) => {
-    event.preventDefault();
+ const handleAddComment = async (event) => {
+  event.preventDefault();
 
-    if (!commentText.trim() || isCommenting) return;
+  if (!commentText.trim() || isCommenting) return;
 
-    try {
-      setIsCommenting(true);
+  try {
+    setIsCommenting(true);
 
-      const { data } = await api.post(`/comments/${post._id}`, {
-        text: commentText.trim(),
+    const { data } = await api.post(`/comments/${post._id}`, {
+      text: commentText.trim(),
+    });
+
+    setComments((prevComments) => [data, ...prevComments]);
+    setCommentText("");
+    setShowAllComments(true);
+
+    if (onPostChange) {
+      onPostChange({
+        ...post,
+        commentsCount: comments.length + 1,
       });
-
-      setComments((prevComments) => [data, ...prevComments]);
-      setCommentText("");
-    } catch (error) {
-      console.error("Add comment failed:", error);
-    } finally {
-      setIsCommenting(false);
     }
-  };
+  } catch (error) {
+    console.error("Add comment failed:", error);
+  } finally {
+    setIsCommenting(false);
+  }
+};
 
   const handleEdit = () => {
     setIsMenuOpen(false);
@@ -183,8 +195,14 @@ const PostPreviewModal = ({
             )}
 
             {comments.length > 2 && (
-              <button className="post-preview-view-comments" type="button">
-                View all {comments.length} comments
+              <button
+                className="post-preview-view-comments"
+                type="button"
+                onClick={() => setShowAllComments((prev) => !prev)}
+              >
+                {showAllComments
+                  ? "Hide comments"
+                  : `View all ${comments.length} comments`}
               </button>
             )}
 
@@ -194,7 +212,7 @@ const PostPreviewModal = ({
               </p>
             )}
 
-            {comments.map((comment) => {
+            {visibleComments.map((comment) => {
               const commentUsername =
                 comment.user?.username || comment.author?.username || "user";
 
