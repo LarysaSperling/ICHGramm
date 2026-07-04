@@ -1,12 +1,18 @@
 import ProfileGridItem from "./ProfileGridItem";
 
-const ProfileGrid = ({ posts, onDeletePost, onUpdatePost }) => {
+const ProfileGrid = ({
+  posts = [],
+  emptyTitle = "Share Photos",
+  emptyText = "When you share photos, they will appear on your profile.",
+  onDeletePost,
+  onUpdatePost,
+}) => {
   if (!posts.length) {
     return (
       <div className="profile-empty">
         <div className="profile-empty-icon">📷</div>
-        <h3>Share Photos</h3>
-        <p>When you share photos, they will appear on your profile.</p>
+        <h3>{emptyTitle}</h3>
+        <p>{emptyText}</p>
       </div>
     );
   }
