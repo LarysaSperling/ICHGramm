@@ -21,18 +21,11 @@ const sendMessage = asyncHandler(async (req, res) => {
     },
   ]);
 
-  const chatRoom = [
-    req.user._id.toString(),
-    receiver.toString(),
-  ]
-    .sort()
-    .join("_");
+  const chatRoom = [req.user._id.toString(), receiver.toString()].sort().join("_");
 
   if (req.io) {
     req.io.to(chatRoom).emit("newMessage", populatedMessage);
-    req.io
-      .to(receiver.toString())
-      .emit("newMessageNotification", populatedMessage);
+    req.io.to(receiver.toString()).emit("newMessageNotification", populatedMessage);
   }
 
   res.status(201).json(populatedMessage);
@@ -61,12 +54,40 @@ const getMessagesWithUser = asyncHandler(async (req, res) => {
   res.json(messages);
 });
 
+const markMessagesAsSeen = asyncHandler(async (req, res) => {
+  const otherUserId = req.params.userId;
+
+  await Message.updateMany(
+    {
+      sender: otherUserId,
+      receiver: req.user._id,
+      isSeen: false,
+    },
+    {
+      isSeen: true,
+      seenAt: new Date(),
+    }
+  );
+
+  const chatRoom = [req.user._id.toString(), otherUserId.toString()]
+    .sort()
+    .join("_");
+
+  if (req.io) {
+    req.io.to(chatRoom).emit("messagesSeen", {
+      seenBy: req.user._id,
+      chatRoom,
+    });
+  }
+
+  res.json({
+    message: "Messages marked as seen",
+  });
+});
+
 const getChats = asyncHandler(async (req, res) => {
   const messages = await Message.find({
-    $or: [
-      { sender: req.user._id },
-      { receiver: req.user._id },
-    ],
+    $or: [{ sender: req.user._id }, { receiver: req.user._id }],
   })
     .populate("sender", "username fullName avatar")
     .populate("receiver", "username fullName avatar")
@@ -86,6 +107,8 @@ const getChats = asyncHandler(async (req, res) => {
         user: otherUser,
         lastMessage: message.text,
         lastMessageDate: message.createdAt,
+        lastMessageSeen: message.isSeen,
+        lastMessageSender: message.sender._id,
       });
     }
   });
@@ -96,5 +119,6 @@ const getChats = asyncHandler(async (req, res) => {
 export {
   sendMessage,
   getMessagesWithUser,
+  markMessagesAsSeen,
   getChats,
 };

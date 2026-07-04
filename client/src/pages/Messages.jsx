@@ -14,6 +14,7 @@ const Messages = () => {
   const [searchParams] = useSearchParams();
 
   const typingTimeoutRef = useRef(null);
+  const messagesEndRef = useRef(null);
 
   const [chats, setChats] = useState([]);
   const [activeChat, setActiveChat] = useState(null);
@@ -25,6 +26,11 @@ const Messages = () => {
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [error, setError] = useState("");
   const [currentTime] = useState(() => new Date().getTime());
+
+  const getChatRoom = () => {
+    if (!user?._id || !activeChat?.user?._id) return null;
+    return [user._id, activeChat.user._id].sort().join("_");
+  };
 
   useEffect(() => {
     if (!user?._id) return;
@@ -65,6 +71,8 @@ const Messages = () => {
               user: otherUser,
               lastMessage: newMessage.text,
               lastMessageDate: newMessage.createdAt,
+              lastMessageSeen: newMessage.isSeen,
+              lastMessageSender: newMessage.sender._id,
             },
             ...prev,
           ];
@@ -76,16 +84,49 @@ const Messages = () => {
                 ...chat,
                 lastMessage: newMessage.text,
                 lastMessageDate: newMessage.createdAt,
+                lastMessageSeen: newMessage.isSeen,
+                lastMessageSender: newMessage.sender._id,
               }
             : chat
         );
       });
     };
 
+    const handleMessagesSeen = ({ seenBy }) => {
+      setMessages((prev) =>
+        prev.map((message) => {
+          const senderId = message.sender?._id || message.sender;
+
+          if (senderId === user?._id) {
+            return {
+              ...message,
+              isSeen: true,
+              seenAt: new Date().toISOString(),
+            };
+          }
+
+          return message;
+        })
+      );
+
+      setChats((prev) =>
+        prev.map((chat) =>
+          chat.user._id === seenBy
+            ? {
+                ...chat,
+                lastMessageSeen: true,
+              }
+            : chat
+        )
+      );
+    };
+
     socket.on("newMessage", handleNewMessage);
+    socket.on("messagesSeen", handleMessagesSeen);
 
     return () => {
       socket.off("newMessage", handleNewMessage);
+      socket.off("messagesSeen", handleMessagesSeen);
     };
   }, [user]);
 
@@ -170,6 +211,8 @@ const Messages = () => {
 
         const chatRoom = [user._id, activeChat.user._id].sort().join("_");
         socket.emit("joinChat", chatRoom);
+
+        await api.put(`/messages/${activeChat.user._id}/seen`);
       } catch (err) {
         setError(err.response?.data?.message || "Failed to load messages");
       } finally {
@@ -180,11 +223,9 @@ const Messages = () => {
     getMessages();
   }, [activeChat, user]);
 
-  const getChatRoom = () => {
-    if (!user?._id || !activeChat?.user?._id) return null;
-
-    return [user._id, activeChat.user._id].sort().join("_");
-  };
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, typingUser]);
 
   const handleMessageChange = (event) => {
     const value = event.target.value;
@@ -254,9 +295,20 @@ const Messages = () => {
     return `${days}d`;
   };
 
+  const getLastOwnMessageId = () => {
+    const ownMessages = messages.filter((message) => {
+      const senderId = message.sender?._id || message.sender;
+      return senderId === user?._id;
+    });
+
+    return ownMessages.at(-1)?._id;
+  };
+
   if (isLoadingChats) {
     return <Loader />;
   }
+
+  const lastOwnMessageId = getLastOwnMessageId();
 
   return (
     <main className="messages-page">
@@ -380,27 +432,43 @@ const Messages = () => {
 
                   <div className="messages-bubbles">
                     {messages.map((message) => {
-                      const isOwnMessage =
-                        message.sender?._id === user?._id ||
-                        message.sender === user?._id;
+                      const senderId = message.sender?._id || message.sender;
+                      const isOwnMessage = senderId === user?._id;
+                      const isLastOwnMessage = message._id === lastOwnMessageId;
 
                       return (
                         <div
                           key={message._id}
-                          className={`message-bubble ${
-                            isOwnMessage ? "sent" : "received"
+                          className={`message-row ${
+                            isOwnMessage ? "own" : "other"
                           }`}
                         >
-                          {message.text}
+                          <div
+                            className={`message-bubble ${
+                              isOwnMessage ? "sent" : "received"
+                            }`}
+                          >
+                            {message.text}
+                          </div>
+
+                          {isOwnMessage && isLastOwnMessage && (
+                            <span className="message-status">
+                              {message.isSeen ? "Seen" : "Sent"}
+                            </span>
+                          )}
                         </div>
                       );
                     })}
 
                     {typingUser?._id === activeChat.user._id && (
-                      <div className="message-bubble received typing-bubble">
-                        typing...
+                      <div className="message-row other">
+                        <div className="message-bubble received typing-bubble">
+                          typing...
+                        </div>
                       </div>
                     )}
+
+                    <div ref={messagesEndRef} />
                   </div>
                 </>
               )}

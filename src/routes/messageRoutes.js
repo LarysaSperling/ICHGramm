@@ -5,6 +5,7 @@ import authMiddleware from "../middlewares/authMiddleware.js";
 import {
   sendMessage,
   getMessagesWithUser,
+  markMessagesAsSeen,
   getChats,
 } from "../controllers/messageController.js";
 
@@ -22,6 +23,12 @@ router.post(
 );
 
 router.get("/", authMiddleware, getChats);
+
+router.put(
+  "/:userId/seen",
+  authMiddleware,
+  markMessagesAsSeen
+);
 
 router.get(
   "/:userId",
