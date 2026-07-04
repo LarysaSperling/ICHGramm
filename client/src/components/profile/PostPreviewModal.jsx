@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Bookmark,
   Heart,
@@ -35,10 +35,26 @@ const PostPreviewModal = ({
   onPostChange,
 }) => {
   const [commentText, setCommentText] = useState("");
-  const [localComments, setLocalComments] = useState([]);
+  const [comments, setComments] = useState([]);
   const [isSaved, setIsSaved] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
+  const [isCommenting, setIsCommenting] = useState(false);
+
+  useEffect(() => {
+    const fetchComments = async () => {
+      if (!isOpen || !post?._id) return;
+
+      try {
+        const { data } = await api.get(`/comments/${post._id}`);
+        setComments(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error("Fetch comments failed:", error);
+      }
+    };
+
+    fetchComments();
+  }, [isOpen, post?._id]);
 
   if (!isOpen || !post) return null;
 
@@ -64,9 +80,6 @@ const PostPreviewModal = ({
 
   const likesCount = postLikes.length;
 
-  const postComments = Array.isArray(post.comments) ? post.comments : [];
-  const comments = [...postComments, ...localComments];
-
   const handleToggleLike = async () => {
     if (isLiking) return;
 
@@ -85,23 +98,25 @@ const PostPreviewModal = ({
     }
   };
 
-  const handleAddComment = (event) => {
+  const handleAddComment = async (event) => {
     event.preventDefault();
 
-    if (!commentText.trim()) return;
+    if (!commentText.trim() || isCommenting) return;
 
-    const newComment = {
-      _id: crypto.randomUUID(),
-      text: commentText.trim(),
-      author: {
-        username: "you",
-        avatar: null,
-      },
-      createdAt: new Date().toISOString(),
-    };
+    try {
+      setIsCommenting(true);
 
-    setLocalComments((prevComments) => [...prevComments, newComment]);
-    setCommentText("");
+      const { data } = await api.post(`/comments/${post._id}`, {
+        text: commentText.trim(),
+      });
+
+      setComments((prevComments) => [data, ...prevComments]);
+      setCommentText("");
+    } catch (error) {
+      console.error("Add comment failed:", error);
+    } finally {
+      setIsCommenting(false);
+    }
   };
 
   const handleEdit = () => {
@@ -181,9 +196,9 @@ const PostPreviewModal = ({
 
             {comments.map((comment) => {
               const commentUsername =
-                comment.author?.username || comment.username || "user";
-              const commentAvatar = comment.author?.avatar;
-              const commentTextValue = comment.text || comment.content || "";
+                comment.user?.username || comment.author?.username || "user";
+
+              const commentAvatar = comment.user?.avatar || comment.author?.avatar;
 
               return (
                 <article className="post-preview-comment" key={comment._id}>
@@ -191,7 +206,7 @@ const PostPreviewModal = ({
 
                   <div className="post-preview-comment-main">
                     <p>
-                      <strong>{commentUsername}</strong> {commentTextValue}
+                      <strong>{commentUsername}</strong> {comment.text}
                     </p>
 
                     <div className="post-preview-comment-meta">
@@ -259,7 +274,10 @@ const PostPreviewModal = ({
                 placeholder="Add comment"
               />
 
-              <button type="submit" disabled={!commentText.trim()}>
+              <button
+                type="submit"
+                disabled={!commentText.trim() || isCommenting}
+              >
                 Post
               </button>
             </form>
