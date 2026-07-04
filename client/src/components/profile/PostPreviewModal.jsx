@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Bookmark,
   Heart,
@@ -26,6 +26,45 @@ const getCurrentUserId = () => {
   }
 };
 
+const formatTimeAgo = (dateValue) => {
+  if (!dateValue) return "just now";
+
+  const date = new Date(dateValue);
+  const now = new Date();
+
+  const seconds = Math.floor((now - date) / 1000);
+
+  if (seconds < 60) return "just now";
+
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) {
+    return minutes === 1 ? "1 minute ago" : `${minutes} minutes ago`;
+  }
+
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) {
+    return hours === 1 ? "1 hour ago" : `${hours} hours ago`;
+  }
+
+  const days = Math.floor(hours / 24);
+  if (days < 7) {
+    return days === 1 ? "1 day ago" : `${days} days ago`;
+  }
+
+  const weeks = Math.floor(days / 7);
+  if (weeks < 4) {
+    return weeks === 1 ? "1 week ago" : `${weeks} weeks ago`;
+  }
+
+  const months = Math.floor(days / 30);
+  if (months < 12) {
+    return months === 1 ? "1 month ago" : `${months} months ago`;
+  }
+
+  const years = Math.floor(days / 365);
+  return years === 1 ? "1 year ago" : `${years} years ago`;
+};
+
 const PostPreviewModal = ({
   post,
   isOpen,
@@ -34,6 +73,8 @@ const PostPreviewModal = ({
   onDeletePost,
   onPostChange,
 }) => {
+  const commentInputRef = useRef(null);
+
   const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState([]);
   const [showAllComments, setShowAllComments] = useState(false);
@@ -48,8 +89,10 @@ const PostPreviewModal = ({
 
       try {
         const { data } = await api.get(`/comments/${post._id}`);
+
         setComments(Array.isArray(data) ? data : []);
         setShowAllComments(false);
+        setCommentText("");
       } catch (error) {
         console.error("Fetch comments failed:", error);
       }
@@ -81,7 +124,6 @@ const PostPreviewModal = ({
   });
 
   const likesCount = postLikes.length;
-
   const visibleComments = showAllComments ? comments : comments.slice(0, 2);
 
   const handleToggleLike = async () => {
@@ -102,34 +144,38 @@ const PostPreviewModal = ({
     }
   };
 
- const handleAddComment = async (event) => {
-  event.preventDefault();
+  const handleAddComment = async (event) => {
+    event.preventDefault();
 
-  if (!commentText.trim() || isCommenting) return;
+    if (!commentText.trim() || isCommenting) return;
 
-  try {
-    setIsCommenting(true);
+    try {
+      setIsCommenting(true);
 
-    const { data } = await api.post(`/comments/${post._id}`, {
-      text: commentText.trim(),
-    });
-
-    setComments((prevComments) => [data, ...prevComments]);
-    setCommentText("");
-    setShowAllComments(true);
-
-    if (onPostChange) {
-      onPostChange({
-        ...post,
-        commentsCount: comments.length + 1,
+      const { data } = await api.post(`/comments/${post._id}`, {
+        text: commentText.trim(),
       });
+
+      setComments((prevComments) => [data, ...prevComments]);
+      setCommentText("");
+      setShowAllComments(true);
+
+      if (onPostChange) {
+        onPostChange({
+          ...post,
+          commentsCount: comments.length + 1,
+        });
+      }
+    } catch (error) {
+      console.error("Add comment failed:", error);
+    } finally {
+      setIsCommenting(false);
     }
-  } catch (error) {
-    console.error("Add comment failed:", error);
-  } finally {
-    setIsCommenting(false);
-  }
-};
+  };
+
+  const handleCommentIconClick = () => {
+    commentInputRef.current?.focus();
+  };
 
   const handleEdit = () => {
     setIsMenuOpen(false);
@@ -140,8 +186,7 @@ const PostPreviewModal = ({
     setIsMenuOpen(false);
     onDeletePost();
   };
-
-  return (
+    return (
     <div className="post-preview-modal" onClick={onClose}>
       <button className="post-preview-close" type="button" onClick={onClose}>
         <X size={30} />
@@ -188,6 +233,7 @@ const PostPreviewModal = ({
 
                   <div className="post-preview-comment-meta">
                     {createdDate && <span>{createdDate}</span>}
+
                     <button type="button">Reply</button>
                   </div>
                 </div>
@@ -214,13 +260,24 @@ const PostPreviewModal = ({
 
             {visibleComments.map((comment) => {
               const commentUsername =
-                comment.user?.username || comment.author?.username || "user";
+                comment.user?.username ||
+                comment.author?.username ||
+                "user";
 
-              const commentAvatar = comment.user?.avatar || comment.author?.avatar;
+              const commentAvatar =
+                comment.user?.avatar ||
+                comment.author?.avatar;
 
               return (
-                <article className="post-preview-comment" key={comment._id}>
-                  <Avatar src={commentAvatar} name={commentUsername} size={34} />
+                <article
+                  className="post-preview-comment"
+                  key={comment._id}
+                >
+                  <Avatar
+                    src={commentAvatar}
+                    name={commentUsername}
+                    size={34}
+                  />
 
                   <div className="post-preview-comment-main">
                     <p>
@@ -228,12 +285,19 @@ const PostPreviewModal = ({
                     </p>
 
                     <div className="post-preview-comment-meta">
-                      <span>now</span>
-                      <button type="button">Reply</button>
+                      <span>{formatTimeAgo(comment.createdAt)}</span>
+
+                      <button type="button">
+                        Reply
+                      </button>
                     </div>
                   </div>
 
-                  <button className="post-preview-comment-like" type="button">
+                  <button
+                    className="post-preview-comment-like"
+                    type="button"
+                    aria-label="Like comment"
+                  >
                     <Heart size={13} />
                   </button>
                 </article>
@@ -251,14 +315,24 @@ const PostPreviewModal = ({
                   disabled={isLiking}
                   aria-label="Like post"
                 >
-                  <Heart size={25} fill={isLiked ? "currentColor" : "none"} />
+                  <Heart
+                    size={25}
+                    fill={isLiked ? "currentColor" : "none"}
+                  />
                 </button>
 
-                <button type="button" aria-label="Comment post">
+                <button
+                  type="button"
+                  aria-label="Comment"
+                  onClick={handleCommentIconClick}
+                >
                   <MessageCircle size={25} />
                 </button>
 
-                <button type="button" aria-label="Send post">
+                <button
+                  type="button"
+                  aria-label="Send post"
+                >
                   <Send size={25} />
                 </button>
               </div>
@@ -269,15 +343,24 @@ const PostPreviewModal = ({
                 onClick={() => setIsSaved((prev) => !prev)}
                 aria-label="Save post"
               >
-                <Bookmark size={25} fill={isSaved ? "currentColor" : "none"} />
+                <Bookmark
+                  size={25}
+                  fill={isSaved ? "currentColor" : "none"}
+                />
               </button>
             </div>
 
             <p className="post-preview-likes">
-              {likesCount === 1 ? "1 like" : `${likesCount} likes`}
+              {likesCount === 1
+                ? "1 like"
+                : `${likesCount} likes`}
             </p>
 
-            {createdDate && <p className="post-preview-date">{createdDate}</p>}
+            {createdDate && (
+              <p className="post-preview-date">
+                {createdDate}
+              </p>
+            )}
 
             <form
               className="post-preview-add-comment"
@@ -286,15 +369,20 @@ const PostPreviewModal = ({
               <Smile size={22} />
 
               <input
+                ref={commentInputRef}
                 type="text"
                 value={commentText}
-                onChange={(event) => setCommentText(event.target.value)}
-                placeholder="Add comment"
+                onChange={(event) =>
+                  setCommentText(event.target.value)
+                }
+                placeholder="Add a comment..."
               />
 
               <button
                 type="submit"
-                disabled={!commentText.trim() || isCommenting}
+                disabled={
+                  !commentText.trim() || isCommenting
+                }
               >
                 Post
               </button>
