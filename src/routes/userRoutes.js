@@ -10,39 +10,24 @@ import {
   getMyPosts,
   getUserById,
   toggleFollowUser,
+  toggleSavedPost,
+  getSavedPosts,
 } from "../controllers/userController.js";
-
-import {
-  updateProfileValidator,
-  searchUsersValidator,
-} from "../validators/userValidator.js";
-
-import validationMiddleware from "../middlewares/validationMiddleware.js";
 
 const router = express.Router();
 
 router.get("/profile", authMiddleware, getProfile);
-
-router.put(
-  "/profile",
-  authMiddleware,
-  upload.single("avatar"),
-  updateProfileValidator,
-  validationMiddleware,
-  updateProfile
-);
-
-router.get(
-  "/search",
-  authMiddleware,
-  searchUsersValidator,
-  validationMiddleware,
-  searchUsers
-);
+router.put("/profile", authMiddleware, upload.single("avatar"), updateProfile);
 
 router.get("/profile/posts", authMiddleware, getMyPosts);
-router.post("/:id/follow", authMiddleware, toggleFollowUser);
+router.get("/me/posts", authMiddleware, getMyPosts);
 
+router.get("/search", authMiddleware, searchUsers);
+
+router.get("/saved", authMiddleware, getSavedPosts);
+router.post("/saved/:postId", authMiddleware, toggleSavedPost);
+
+router.post("/:id/follow", authMiddleware, toggleFollowUser);
 router.get("/:id", authMiddleware, getUserById);
 
 export default router;

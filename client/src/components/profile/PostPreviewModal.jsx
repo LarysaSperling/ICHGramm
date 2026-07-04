@@ -79,6 +79,7 @@ const PostPreviewModal = ({
   const [comments, setComments] = useState([]);
   const [showAllComments, setShowAllComments] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
   const [isCommenting, setIsCommenting] = useState(false);
@@ -100,6 +101,26 @@ const PostPreviewModal = ({
 
     fetchComments();
   }, [isOpen, post?._id]);
+
+  useEffect(() => {
+  const fetchSavedPosts = async () => {
+    if (!isOpen || !post?._id) return;
+
+    try {
+      const { data } = await api.get("/users/saved");
+
+      const saved = Array.isArray(data)
+        ? data.some((savedPost) => savedPost._id === post._id)
+        : false;
+
+      setIsSaved(saved);
+    } catch (error) {
+      console.error("Fetch saved posts failed:", error);
+    }
+  };
+
+  fetchSavedPosts();
+}, [isOpen, post?._id]);
 
   if (!isOpen || !post) return null;
 
@@ -143,6 +164,22 @@ const PostPreviewModal = ({
       setIsLiking(false);
     }
   };
+
+  const handleToggleSave = async () => {
+  if (isSaving) return;
+
+  try {
+    setIsSaving(true);
+
+    const { data } = await api.post(`/users/saved/${post._id}`);
+
+    setIsSaved(data.saved);
+  } catch (error) {
+    console.error("Save post failed:", error);
+  } finally {
+    setIsSaving(false);
+  }
+};
 
   const handleAddComment = async (event) => {
     event.preventDefault();
@@ -338,15 +375,13 @@ const PostPreviewModal = ({
               </div>
 
               <button
-                type="button"
-                className={isSaved ? "active-save" : ""}
-                onClick={() => setIsSaved((prev) => !prev)}
-                aria-label="Save post"
-              >
-                <Bookmark
-                  size={25}
-                  fill={isSaved ? "currentColor" : "none"}
-                />
+          type="button"
+             className={isSaved ? "active-save" : ""}
+             onClick={handleToggleSave}
+             disabled={isSaving}
+             aria-label="Save post"
+             >
+          <Bookmark size={25} fill={isSaved ? "currentColor" : "none"} />
               </button>
             </div>
 
@@ -369,13 +404,14 @@ const PostPreviewModal = ({
               <Smile size={22} />
 
               <input
-                ref={commentInputRef}
+                id="post-comment"
+                name="comment"
                 type="text"
+                ref={commentInputRef}
                 value={commentText}
-                onChange={(event) =>
-                  setCommentText(event.target.value)
-                }
+                onChange={(event) => setCommentText(event.target.value)}
                 placeholder="Add a comment..."
+                autoComplete="off"
               />
 
               <button

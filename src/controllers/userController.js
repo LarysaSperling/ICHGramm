@@ -146,6 +146,56 @@ const toggleFollowUser = asyncHandler(async (req, res) => {
   });
 });
 
+const toggleSavedPost = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id);
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  const post = await Post.findById(req.params.postId);
+
+  if (!post) {
+    throw new ApiError(404, "Post not found");
+  }
+
+  const alreadySaved = user.savedPosts.some(
+    (savedPostId) => savedPostId.toString() === post._id.toString()
+  );
+
+  if (alreadySaved) {
+    user.savedPosts = user.savedPosts.filter(
+      (savedPostId) => savedPostId.toString() !== post._id.toString()
+    );
+  } else {
+    user.savedPosts.push(post._id);
+  }
+
+  await user.save();
+
+  res.json({
+    saved: !alreadySaved,
+    savedPosts: user.savedPosts,
+  });
+});
+const getSavedPosts = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id)
+    .populate({
+      path: "savedPosts",
+      populate: {
+        path: "author",
+        select: "username fullName avatar",
+      },
+    })
+    .lean();
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  res.json(user.savedPosts);
+});
+
 export {
   getProfile,
   updateProfile,
@@ -153,4 +203,6 @@ export {
   getMyPosts,
   getUserById,
   toggleFollowUser,
+  toggleSavedPost,
+  getSavedPosts,
 };
