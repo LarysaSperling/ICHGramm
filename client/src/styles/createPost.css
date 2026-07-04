@@ -82,6 +82,7 @@
   height: 100%;
   object-fit: cover;
   cursor: crosshair;
+  -webkit-user-select: none;
   user-select: none;
 }
 

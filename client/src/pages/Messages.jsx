@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import api from "../api/axios";
@@ -11,12 +11,16 @@ import "../styles/messages.css";
 
 const Messages = () => {
   const { user } = useAuth();
-
   const [searchParams] = useSearchParams();
+
+  const typingTimeoutRef = useRef(null);
+
   const [chats, setChats] = useState([]);
   const [activeChat, setActiveChat] = useState(null);
   const [messages, setMessages] = useState([]);
   const [messageText, setMessageText] = useState("");
+  const [onlineUsers, setOnlineUsers] = useState([]);
+  const [typingUser, setTypingUser] = useState(null);
   const [isLoadingChats, setIsLoadingChats] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [error, setError] = useState("");
@@ -28,8 +32,14 @@ const Messages = () => {
     socket.connect();
     socket.emit("joinUserRoom", user._id);
 
+    const handleOnlineUsers = (users) => {
+      setOnlineUsers(users);
+    };
+
+    socket.on("onlineUsers", handleOnlineUsers);
+
     return () => {
-      socket.off("newMessage");
+      socket.off("onlineUsers", handleOnlineUsers);
       socket.disconnect();
     };
   }, [user]);
@@ -47,9 +57,7 @@ const Messages = () => {
       });
 
       setChats((prev) => {
-        const chatExists = prev.some(
-          (chat) => chat.user._id === otherUser._id
-        );
+        const chatExists = prev.some((chat) => chat.user._id === otherUser._id);
 
         if (!chatExists) {
           return [
@@ -82,11 +90,29 @@ const Messages = () => {
   }, [user]);
 
   useEffect(() => {
+    const handleTyping = (typingUserData) => {
+      setTypingUser(typingUserData);
+    };
+
+    const handleStopTyping = () => {
+      setTypingUser(null);
+    };
+
+    socket.on("typing", handleTyping);
+    socket.on("stopTyping", handleStopTyping);
+
+    return () => {
+      socket.off("typing", handleTyping);
+      socket.off("stopTyping", handleStopTyping);
+    };
+  }, []);
+
+  useEffect(() => {
     const getChats = async () => {
       try {
         setIsLoadingChats(true);
-        const { data } = await api.get("/messages");
 
+        const { data } = await api.get("/messages");
         setChats(data);
 
         if (data.length > 0) {
@@ -103,42 +129,41 @@ const Messages = () => {
   }, []);
 
   useEffect(() => {
-  const openChatFromProfile = async () => {
-    const userId = searchParams.get("user");
+    const openChatFromProfile = async () => {
+      const userId = searchParams.get("user");
 
-    if (!userId || !user?._id) return;
+      if (!userId || !user?._id) return;
 
-    const existingChat = chats.find(
-      (chat) => chat.user._id === userId
-    );
+      const existingChat = chats.find((chat) => chat.user._id === userId);
 
-    if (existingChat) {
-      setActiveChat(existingChat);
-      return;
-    }
+      if (existingChat) {
+        setActiveChat(existingChat);
+        return;
+      }
 
-    try {
-      const { data } = await api.get(`/users/${userId}`);
+      try {
+        const { data } = await api.get(`/users/${userId}`);
 
-      setActiveChat({
-        user: data.user,
-        lastMessage: "",
-        lastMessageDate: null,
-      });
-    } catch (err) {
-      console.error(err);
-    }
-  };
+        setActiveChat({
+          user: data.user,
+          lastMessage: "",
+          lastMessageDate: null,
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    };
 
-  openChatFromProfile();
-}, [searchParams, chats, user]);
+    openChatFromProfile();
+  }, [searchParams, chats, user]);
 
   useEffect(() => {
     const getMessages = async () => {
-      if (!activeChat?.user?._id) return;
+      if (!activeChat?.user?._id || !user?._id) return;
 
       try {
         setIsLoadingMessages(true);
+        setTypingUser(null);
 
         const { data } = await api.get(`/messages/${activeChat.user._id}`);
         setMessages(data);
@@ -155,12 +180,49 @@ const Messages = () => {
     getMessages();
   }, [activeChat, user]);
 
+  const getChatRoom = () => {
+    if (!user?._id || !activeChat?.user?._id) return null;
+
+    return [user._id, activeChat.user._id].sort().join("_");
+  };
+
+  const handleMessageChange = (event) => {
+    const value = event.target.value;
+    setMessageText(value);
+
+    const chatRoom = getChatRoom();
+
+    if (!chatRoom || !user?._id) return;
+
+    socket.emit("typing", {
+      chatRoom,
+      user: {
+        _id: user._id,
+        username: user.username,
+      },
+    });
+
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    typingTimeoutRef.current = setTimeout(() => {
+      socket.emit("stopTyping", chatRoom);
+    }, 1200);
+  };
+
   const handleSendMessage = async (event) => {
     event.preventDefault();
 
     if (!messageText.trim() || !activeChat?.user?._id) return;
 
     try {
+      const chatRoom = getChatRoom();
+
+      if (chatRoom) {
+        socket.emit("stopTyping", chatRoom);
+      }
+
       const { data } = await api.post("/messages", {
         receiver: activeChat.user._id,
         text: messageText.trim(),
@@ -208,29 +270,43 @@ const Messages = () => {
         )}
 
         <div className="messages-chat-list">
-          {chats.map((chat) => (
-            <button
-              key={chat.user._id}
-              type="button"
-              className={`messages-chat-item ${
-                activeChat?.user?._id === chat.user._id ? "active" : ""
-              }`}
-              onClick={() => setActiveChat(chat)}
-            >
-              <Avatar
-                src={chat.user.avatar}
-                name={chat.user.username || chat.user.fullName}
-                size={52}
-              />
+          {chats.map((chat) => {
+            const isOnline = onlineUsers.includes(chat.user._id);
 
-              <div className="messages-chat-info">
-                <strong>{chat.user.username}</strong>
-                <span>
-                  {chat.lastMessage} · {formatTime(chat.lastMessageDate)}
-                </span>
-              </div>
-            </button>
-          ))}
+            return (
+              <button
+                key={chat.user._id}
+                type="button"
+                className={`messages-chat-item ${
+                  activeChat?.user?._id === chat.user._id ? "active" : ""
+                }`}
+                onClick={() => setActiveChat(chat)}
+              >
+                <div className="messages-avatar-wrap">
+                  <Avatar
+                    src={chat.user.avatar}
+                    name={chat.user.username || chat.user.fullName}
+                    size={52}
+                  />
+
+                  {isOnline && <span className="messages-online-dot" />}
+                </div>
+
+                <div className="messages-chat-info">
+                  <strong>{chat.user.username}</strong>
+                  <span>
+                    {typingUser?._id === chat.user._id
+                      ? "typing..."
+                      : `${chat.lastMessage || "No messages yet"} ${
+                          chat.lastMessageDate
+                            ? `· ${formatTime(chat.lastMessageDate)}`
+                            : ""
+                        }`}
+                  </span>
+                </div>
+              </button>
+            );
+          })}
         </div>
       </section>
 
@@ -243,22 +319,43 @@ const Messages = () => {
         ) : (
           <>
             <header className="messages-conversation-header">
-              <Avatar
-                src={activeChat.user.avatar}
-                name={activeChat.user.username || activeChat.user.fullName}
-                size={40}
-              />
+              <div className="messages-avatar-wrap">
+                <Avatar
+                  src={activeChat.user.avatar}
+                  name={activeChat.user.username || activeChat.user.fullName}
+                  size={40}
+                />
 
-              <strong>{activeChat.user.username}</strong>
+                {onlineUsers.includes(activeChat.user._id) && (
+                  <span className="messages-online-dot small" />
+                )}
+              </div>
+
+              <div className="messages-header-info">
+                <strong>{activeChat.user.username}</strong>
+                <span>
+                  {typingUser?._id === activeChat.user._id
+                    ? "typing..."
+                    : onlineUsers.includes(activeChat.user._id)
+                    ? "Active now"
+                    : "Offline"}
+                </span>
+              </div>
             </header>
 
             <div className="messages-conversation-body">
               <div className="messages-profile-preview">
-                <Avatar
-                  src={activeChat.user.avatar}
-                  name={activeChat.user.username || activeChat.user.fullName}
-                  size={96}
-                />
+                <div className="messages-avatar-wrap">
+                  <Avatar
+                    src={activeChat.user.avatar}
+                    name={activeChat.user.username || activeChat.user.fullName}
+                    size={96}
+                  />
+
+                  {onlineUsers.includes(activeChat.user._id) && (
+                    <span className="messages-online-dot large" />
+                  )}
+                </div>
 
                 <h3>{activeChat.user.username}</h3>
                 <p>{activeChat.user.fullName} · ICHgram</p>
@@ -298,6 +395,12 @@ const Messages = () => {
                         </div>
                       );
                     })}
+
+                    {typingUser?._id === activeChat.user._id && (
+                      <div className="message-bubble received typing-bubble">
+                        typing...
+                      </div>
+                    )}
                   </div>
                 </>
               )}
@@ -305,11 +408,12 @@ const Messages = () => {
 
             <form className="messages-form" onSubmit={handleSendMessage}>
               <input
-                type="text"
+                id="message-text"
                 name="message"
+                type="text"
                 placeholder="Write message"
                 value={messageText}
-                onChange={(event) => setMessageText(event.target.value)}
+                onChange={handleMessageChange}
                 autoComplete="off"
               />
 
