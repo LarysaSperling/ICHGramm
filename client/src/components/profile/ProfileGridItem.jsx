@@ -1,56 +1,47 @@
 import { useState } from "react";
-import {
-  Heart,
-  MessageCircle,
-  Pencil,
-  Trash2,
-} from "lucide-react";
+import { Heart, MessageCircle, Pencil, Trash2 } from "lucide-react";
 
 import PostPreviewModal from "./PostPreviewModal";
 
-const ProfileGridItem = ({
-  post,
-  onDeletePost,
-  onUpdatePost,
-}) => {
+const ProfileGridItem = ({ post, onDeletePost, onUpdatePost }) => {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [localPost, setLocalPost] = useState(post);
 
-  const likesCount = Array.isArray(post.likes)
-    ? post.likes.length
-    : post.likes || 0;
+  const likesCount = Array.isArray(localPost.likes)
+    ? localPost.likes.length
+    : localPost.likes || 0;
 
-  const commentsCount = Array.isArray(post.comments)
-    ? post.comments.length
+  const commentsCount = Array.isArray(localPost.comments)
+    ? localPost.comments.length
     : 0;
 
   const handleDelete = () => {
     setIsPreviewOpen(false);
-    onDeletePost(post._id);
+    onDeletePost(localPost._id);
   };
 
   const handleEdit = async () => {
-    const newCaption = window.prompt(
-      "Edit caption",
-      post.caption || ""
-    );
+    const newCaption = window.prompt("Edit caption", localPost.caption || "");
 
     if (newCaption === null) return;
-
     if (!newCaption.trim()) return;
 
-    await onUpdatePost(post._id, newCaption.trim());
+    const updatedPost = await onUpdatePost(localPost._id, newCaption.trim());
+
+    if (updatedPost) {
+      setLocalPost(updatedPost);
+    } else {
+      setLocalPost((prevPost) => ({
+        ...prevPost,
+        caption: newCaption.trim(),
+      }));
+    }
   };
 
   return (
     <>
-      <div
-        className="profile-grid-item"
-        onClick={() => setIsPreviewOpen(true)}
-      >
-        <img
-          src={post.image}
-          alt={post.caption || "Post"}
-        />
+      <div className="profile-grid-item" onClick={() => setIsPreviewOpen(true)}>
+        <img src={localPost.image} alt={localPost.caption || "Post"} />
 
         <div className="profile-grid-overlay">
           <span>
@@ -88,11 +79,12 @@ const ProfileGridItem = ({
       </div>
 
       <PostPreviewModal
-        post={post}
+        post={localPost}
         isOpen={isPreviewOpen}
         onClose={() => setIsPreviewOpen(false)}
         onEditPost={handleEdit}
         onDeletePost={handleDelete}
+        onPostChange={setLocalPost}
       />
     </>
   );

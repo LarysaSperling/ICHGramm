@@ -17,17 +17,20 @@ const postSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+
+    likes: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
   },
   {
     timestamps: true,
   }
 );
+
 postSchema.index({ createdAt: -1 });
-
-postSchema.index({
-  author: 1,
-  createdAt: -1,
-});
-
+postSchema.index({ author: 1, createdAt: -1 });
 
 export default mongoose.model("Post", postSchema);

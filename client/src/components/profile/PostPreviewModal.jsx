@@ -9,9 +9,22 @@ import {
   X,
 } from "lucide-react";
 
+import api from "../../api/axios";
 import Avatar from "../ui/Avatar";
 import PostActionMenu from "./PostActionMenu";
 import "../../styles/postPreviewModal.css";
+
+const getCurrentUserId = () => {
+  const token = localStorage.getItem("token");
+  if (!token) return null;
+
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload.id || payload._id || payload.userId || null;
+  } catch {
+    return null;
+  }
+};
 
 const PostPreviewModal = ({
   post,
@@ -19,14 +32,17 @@ const PostPreviewModal = ({
   onClose,
   onEditPost,
   onDeletePost,
+  onPostChange,
 }) => {
   const [commentText, setCommentText] = useState("");
   const [localComments, setLocalComments] = useState([]);
-  const [isLiked, setIsLiked] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isLiking, setIsLiking] = useState(false);
 
   if (!isOpen || !post) return null;
+
+  const currentUserId = getCurrentUserId();
 
   const username = post.author?.username || "user";
   const fullName = post.author?.fullName || username;
@@ -39,11 +55,35 @@ const PostPreviewModal = ({
       })
     : "";
 
+  const postLikes = Array.isArray(post.likes) ? post.likes : [];
+
+  const isLiked = postLikes.some((like) => {
+    const likeId = typeof like === "string" ? like : like?._id;
+    return likeId === currentUserId;
+  });
+
+  const likesCount = postLikes.length;
+
   const postComments = Array.isArray(post.comments) ? post.comments : [];
   const comments = [...postComments, ...localComments];
 
-  const postLikes = Array.isArray(post.likes) ? post.likes.length : 0;
-  const likesCount = isLiked ? postLikes + 1 : postLikes;
+  const handleToggleLike = async () => {
+    if (isLiking) return;
+
+    try {
+      setIsLiking(true);
+
+      const { data } = await api.post(`/posts/${post._id}/like`);
+
+      if (data.post && onPostChange) {
+        onPostChange(data.post);
+      }
+    } catch (error) {
+      console.error("Like post failed:", error);
+    } finally {
+      setIsLiking(false);
+    }
+  };
 
   const handleAddComment = (event) => {
     event.preventDefault();
@@ -103,6 +143,7 @@ const PostPreviewModal = ({
               className="post-preview-menu"
               type="button"
               onClick={() => setIsMenuOpen(true)}
+              aria-label="Open post menu"
             >
               <MoreHorizontal size={22} />
             </button>
@@ -173,16 +214,18 @@ const PostPreviewModal = ({
                 <button
                   type="button"
                   className={isLiked ? "active-like" : ""}
-                  onClick={() => setIsLiked((prev) => !prev)}
+                  onClick={handleToggleLike}
+                  disabled={isLiking}
+                  aria-label="Like post"
                 >
                   <Heart size={25} fill={isLiked ? "currentColor" : "none"} />
                 </button>
 
-                <button type="button">
+                <button type="button" aria-label="Comment post">
                   <MessageCircle size={25} />
                 </button>
 
-                <button type="button">
+                <button type="button" aria-label="Send post">
                   <Send size={25} />
                 </button>
               </div>
@@ -191,6 +234,7 @@ const PostPreviewModal = ({
                 type="button"
                 className={isSaved ? "active-save" : ""}
                 onClick={() => setIsSaved((prev) => !prev)}
+                aria-label="Save post"
               >
                 <Bookmark size={25} fill={isSaved ? "currentColor" : "none"} />
               </button>

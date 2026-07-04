@@ -122,6 +122,40 @@ const getExplorePosts = asyncHandler(async (req, res) => {
   res.json(populatedPosts);
 });
 
+const toggleLikePost = asyncHandler(async (req, res) => {
+  const post = await Post.findById(req.params.id);
+
+  if (!post) {
+    throw new ApiError(404, "Post not found");
+  }
+
+  const userId = req.user._id.toString();
+
+  const alreadyLiked = post.likes.some(
+    (like) => like.toString() === userId
+  );
+
+  if (alreadyLiked) {
+    post.likes = post.likes.filter(
+      (like) => like.toString() !== userId
+    );
+  } else {
+    post.likes.push(req.user._id);
+  }
+
+  await post.save();
+
+  const updatedPost = await Post.findById(post._id)
+    .populate("author", "username fullName avatar")
+    .lean();
+
+  res.json({
+    post: updatedPost,
+    liked: !alreadyLiked,
+    likesCount: updatedPost.likes.length,
+  });
+});
+
 export {
   createPost,
   getAllPosts,
@@ -129,4 +163,5 @@ export {
   updatePost,
   deletePost,
   getExplorePosts,
+  toggleLikePost,
 };

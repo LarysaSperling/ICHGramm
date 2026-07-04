@@ -10,6 +10,7 @@ import {
   updatePost,
   deletePost,
   getExplorePosts,
+  toggleLikePost,
 } from "../controllers/postController.js";
 import {
   createPostValidator,
@@ -24,6 +25,7 @@ router.get("/explore", getExplorePosts);
 
 router.get("/", getAllPosts);
 router.get("/:id", getPostById);
+router.post("/:id/like", authMiddleware, toggleLikePost);
 
 router.post(
   "/",
