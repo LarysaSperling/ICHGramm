@@ -13,16 +13,42 @@ import Avatar from "../ui/Avatar";
 
 import "../../styles/post.css";
 
-const PostCard = ({ post }) => {
-  const { _id, image, caption, author, createdAt } = post;
+const getCurrentUserId = () => {
+  const token = localStorage.getItem("token");
+  if (!token) return null;
 
-  const authorLink = author?._id ? `/users/${author._id}` : "#";
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload.id || payload._id || payload.userId || null;
+  } catch {
+    return null;
+  }
+};
 
+const PostCard = ({ post, savedPostIds = [], onPostChange }) => {
+  const [localPost, setUpdatedPost] = useState(post);
   const [comments, setComments] = useState([]);
   const [commentText, setCommentText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [likesCount, setLikesCount] = useState(post.likesCount || 0);
-  const [isLiked, setIsLiked] = useState(false);
+  const [isLiking, setIsLiking] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const currentUserId = getCurrentUserId();
+
+  const { _id, image, caption, author, createdAt } = localPost;
+
+  const authorLink = author?._id ? `/users/${author._id}` : "#";
+
+  const postLikes = Array.isArray(localPost.likes) ? localPost.likes : [];
+
+  const isLiked = postLikes.some((like) => {
+    const likeId = typeof like === "string" ? like : like?._id;
+    return likeId === currentUserId;
+  });
+
+  const likesCount = postLikes.length;
+
+  const isSaved = savedPostIds.includes(_id);
 
   useEffect(() => {
     const getComments = async () => {
@@ -38,20 +64,44 @@ const PostCard = ({ post }) => {
   }, [_id]);
 
   const handleToggleLike = async () => {
+    if (isLiking) return;
+
     try {
-      const { data } = await api.post(`/likes/${_id}`);
+      setIsLiking(true);
 
-      if (data.message === "Post liked") {
-        setIsLiked(true);
-        setLikesCount((prev) => prev + 1);
-      }
+      const { data } = await api.post(`/posts/${_id}/like`);
 
-      if (data.message === "Like removed") {
-        setIsLiked(false);
-        setLikesCount((prev) => Math.max(prev - 1, 0));
+      if (data.post) {
+        setUpdatedPost(data.post);
+
+        if (onPostChange) {
+          onPostChange(data.post);
+        }
       }
     } catch (err) {
       console.error(err.response?.data?.message || "Failed to like post");
+    } finally {
+      setIsLiking(false);
+    }
+  };
+
+  const handleToggleSave = async () => {
+    if (isSaving) return;
+
+    try {
+      setIsSaving(true);
+
+      const { data } = await api.post(`/users/saved/${_id}`);
+
+      if (onPostChange) {
+        onPostChange(localPost, {
+          saved: data.saved,
+        });
+      }
+    } catch (err) {
+      console.error(err.response?.data?.message || "Failed to save post");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -69,6 +119,13 @@ const PostCard = ({ post }) => {
 
       setComments((prev) => [data, ...prev]);
       setCommentText("");
+
+      if (onPostChange) {
+        onPostChange({
+          ...localPost,
+          commentsCount: comments.length + 1,
+        });
+      }
     } catch (err) {
       console.error(err.response?.data?.message || "Failed to add comment");
     } finally {
@@ -101,7 +158,7 @@ const PostCard = ({ post }) => {
 
       <div className="post-actions">
         <div>
-          <button type="button" onClick={handleToggleLike}>
+          <button type="button" onClick={handleToggleLike} disabled={isLiking}>
             <Heart
               size={24}
               fill={isLiked ? "red" : "none"}
@@ -118,12 +175,17 @@ const PostCard = ({ post }) => {
           </button>
         </div>
 
-        <button type="button">
-          <Bookmark size={24} />
+        <button type="button" onClick={handleToggleSave} disabled={isSaving}>
+          <Bookmark
+            size={24}
+            fill={isSaved ? "currentColor" : "none"}
+          />
         </button>
       </div>
 
-      <p className="post-likes">{likesCount} likes</p>
+      <p className="post-likes">
+        {likesCount === 1 ? "1 like" : `${likesCount} likes`}
+      </p>
 
       <p className="post-caption">
         <Link to={authorLink} className="post-author-link">

@@ -33,24 +33,6 @@ const Messages = () => {
   };
 
   useEffect(() => {
-    if (!user?._id) return;
-
-    socket.connect();
-    socket.emit("joinUserRoom", user._id);
-
-    const handleOnlineUsers = (users) => {
-      setOnlineUsers(users);
-    };
-
-    socket.on("onlineUsers", handleOnlineUsers);
-
-    return () => {
-      socket.off("onlineUsers", handleOnlineUsers);
-      socket.disconnect();
-    };
-  }, [user]);
-
-  useEffect(() => {
     const handleNewMessage = (newMessage) => {
       const otherUser =
         newMessage.sender._id === user?._id
@@ -147,6 +129,18 @@ const Messages = () => {
       socket.off("stopTyping", handleStopTyping);
     };
   }, []);
+
+  useEffect(() => {
+  const handleOnlineUsers = (users) => {
+    setOnlineUsers(users);
+  };
+
+  socket.on("onlineUsers", handleOnlineUsers);
+
+  return () => {
+    socket.off("onlineUsers", handleOnlineUsers);
+  };
+}, []);
 
   useEffect(() => {
     const getChats = async () => {

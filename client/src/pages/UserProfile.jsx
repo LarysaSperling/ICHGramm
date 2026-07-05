@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
 import api from "../api/axios";
 import Loader from "../components/ui/Loader";
@@ -20,7 +20,15 @@ const UserProfile = () => {
   const [isFollowing, setIsFollowing] = useState(false);
 
   useEffect(() => {
+    if (user?._id && id === user._id) {
+      navigate("/profile", { replace: true });
+    }
+  }, [id, user, navigate]);
+
+  useEffect(() => {
     const getUserProfile = async () => {
+      if (!id || id === user?._id) return;
+
       try {
         setIsLoading(true);
 
@@ -45,6 +53,8 @@ const UserProfile = () => {
   }, [id, user]);
 
   const handleFollow = async () => {
+    if (!profileUser?._id || profileUser._id === user?._id) return;
+
     try {
       const { data } = await api.post(`/users/${id}/follow`);
 
@@ -64,7 +74,7 @@ const UserProfile = () => {
   };
 
   const handleOpenMessages = () => {
-    if (!profileUser?._id) return;
+    if (!profileUser?._id || profileUser._id === user?._id) return;
 
     navigate(`/messages?user=${profileUser._id}`);
   };
@@ -76,6 +86,8 @@ const UserProfile = () => {
   if (error) {
     return <p className="profile-error">{error}</p>;
   }
+
+  const isOwnProfile = profileUser?._id === user?._id;
 
   return (
     <main className="profile-page">
@@ -91,19 +103,29 @@ const UserProfile = () => {
           <div className="profile-top">
             <h2>{profileUser?.username}</h2>
 
-            <button
-              className={isFollowing ? "following-btn" : "follow-btn"}
-              onClick={handleFollow}
-            >
-              {isFollowing ? "Following" : "Follow"}
-            </button>
+            {isOwnProfile ? (
+              <Link to="/profile/edit" className="profile-edit-btn">
+                Edit profile
+              </Link>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className={isFollowing ? "following-btn" : "follow-btn"}
+                  onClick={handleFollow}
+                >
+                  {isFollowing ? "Following" : "Follow"}
+                </button>
 
-            <button
-              className="message-btn"
-              onClick={handleOpenMessages}
-            >
-              Message
-            </button>
+                <button
+                  type="button"
+                  className="message-btn"
+                  onClick={handleOpenMessages}
+                >
+                  Message
+                </button>
+              </>
+            )}
           </div>
 
           <div className="profile-stats">
