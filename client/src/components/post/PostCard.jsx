@@ -6,12 +6,15 @@ import {
   MessageCircle,
   MoreHorizontal,
   Send,
+  Smile,
 } from "lucide-react";
 
 import api from "../../api/axios";
 import Avatar from "../ui/Avatar";
 
 import "../../styles/post.css";
+
+const EMOJIS = ["😀", "😍", "😂", "❤️", "🔥", "👏", "🥰", "😎", "🌸", "✨"];
 
 const getCurrentUserId = () => {
   const token = localStorage.getItem("token");
@@ -32,6 +35,8 @@ const PostCard = ({ post, savedPostIds = [], onPostChange }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [showAllComments, setShowAllComments] = useState(false);
+  const [isEmojiOpen, setIsEmojiOpen] = useState(false);
 
   const currentUserId = getCurrentUserId();
 
@@ -47,8 +52,9 @@ const PostCard = ({ post, savedPostIds = [], onPostChange }) => {
   });
 
   const likesCount = postLikes.length;
-
   const isSaved = savedPostIds.includes(_id);
+
+  const visibleComments = showAllComments ? comments : comments.slice(0, 3);
 
   useEffect(() => {
     const getComments = async () => {
@@ -103,6 +109,11 @@ const PostCard = ({ post, savedPostIds = [], onPostChange }) => {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleEmojiClick = (emoji) => {
+    setCommentText((prev) => `${prev}${emoji}`);
+    setIsEmojiOpen(false);
   };
 
   const handleAddComment = async (event) => {
@@ -182,10 +193,7 @@ const PostCard = ({ post, savedPostIds = [], onPostChange }) => {
         </div>
 
         <button type="button" onClick={handleToggleSave} disabled={isSaving}>
-          <Bookmark
-            size={24}
-            fill={isSaved ? "currentColor" : "none"}
-          />
+          <Bookmark size={24} fill={isSaved ? "currentColor" : "none"} />
         </button>
       </div>
 
@@ -200,9 +208,19 @@ const PostCard = ({ post, savedPostIds = [], onPostChange }) => {
         {caption}
       </p>
 
+      {comments.length > 3 && !showAllComments && (
+        <button
+          type="button"
+          className="post-view-comments"
+          onClick={() => setShowAllComments(true)}
+        >
+          View all {comments.length} comments
+        </button>
+      )}
+
       {comments.length > 0 && (
         <div className="post-comments">
-          {comments.slice(0, 3).map((comment) => (
+          {visibleComments.map((comment) => (
             <p key={comment._id} className="post-comment">
               <strong>{comment.user?.username || "unknown"}</strong>{" "}
               {comment.text}
@@ -211,7 +229,41 @@ const PostCard = ({ post, savedPostIds = [], onPostChange }) => {
         </div>
       )}
 
+      {showAllComments && comments.length > 3 && (
+        <button
+          type="button"
+          className="post-view-comments"
+          onClick={() => setShowAllComments(false)}
+        >
+          Show less
+        </button>
+      )}
+
       <form className="comment-form" onSubmit={handleAddComment}>
+        <div className="comment-emoji-wrapper">
+          <button
+            type="button"
+            className="comment-emoji-button"
+            onClick={() => setIsEmojiOpen((prev) => !prev)}
+          >
+            <Smile size={20} />
+          </button>
+
+          {isEmojiOpen && (
+            <div className="comment-emoji-picker">
+              {EMOJIS.map((emoji) => (
+                <button
+                  key={emoji}
+                  type="button"
+                  onClick={() => handleEmojiClick(emoji)}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
         <input
           id={`comment-${_id}`}
           name="comment"
@@ -220,6 +272,7 @@ const PostCard = ({ post, savedPostIds = [], onPostChange }) => {
           value={commentText}
           onChange={(event) => setCommentText(event.target.value)}
           autoComplete="off"
+          maxLength={300}
         />
 
         <button type="submit" disabled={isSubmitting || !commentText.trim()}>
