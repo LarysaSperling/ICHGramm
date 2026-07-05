@@ -1,4 +1,5 @@
 import Post from "../models/Post.js";
+import Notification from "../models/Notification.js";
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
 
@@ -112,6 +113,7 @@ const deletePost = asyncHandler(async (req, res) => {
     throw new ApiError(403, "Not authorized");
   }
 
+  await Notification.deleteMany({ post: post._id });
   await post.deleteOne();
 
   res.json({
@@ -143,14 +145,10 @@ const toggleLikePost = asyncHandler(async (req, res) => {
 
   const userId = req.user._id.toString();
 
-  const alreadyLiked = post.likes.some(
-    (like) => like.toString() === userId
-  );
+  const alreadyLiked = post.likes.some((like) => like.toString() === userId);
 
   if (alreadyLiked) {
-    post.likes = post.likes.filter(
-      (like) => like.toString() !== userId
-    );
+    post.likes = post.likes.filter((like) => like.toString() !== userId);
   } else {
     post.likes.push(req.user._id);
   }

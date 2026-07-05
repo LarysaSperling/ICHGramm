@@ -3,7 +3,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import api from "../../api/axios";
 import Loader from "../ui/Loader";
 import PostList from "../post/PostList";
-import PostForm from "../post/PostForm";
 import StoryList from "../story/StoryList";
 
 import "../../styles/feed.css";
@@ -106,10 +105,6 @@ const Feed = () => {
     };
   }, [hasMore, isLoading, isLoadingMore, loadPosts, page]);
 
-  const handlePostCreated = (newPost) => {
-    setPosts((prev) => [newPost, ...prev]);
-  };
-
   const handlePostChange = (updatedPost, options = {}) => {
     if (updatedPost?._id) {
       setPosts((prev) =>
@@ -135,8 +130,6 @@ const Feed = () => {
   return (
     <section className="feed">
       <StoryList />
-
-      <PostForm onPostCreated={handlePostCreated} />
 
       {error && <p className="feed-error">{error}</p>}
 

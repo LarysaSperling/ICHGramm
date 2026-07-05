@@ -12,7 +12,15 @@ const getNotifications = asyncHandler(async (req, res) => {
     .sort({ createdAt: -1 })
     .lean();
 
-  res.json(notifications);
+  const filteredNotifications = notifications.filter((notification) => {
+    if (notification.type === "follow") {
+      return true;
+    }
+
+    return notification.post !== null;
+  });
+
+  res.json(filteredNotifications);
 });
 
 const markAsRead = asyncHandler(async (req, res) => {
@@ -33,7 +41,4 @@ const markAsRead = asyncHandler(async (req, res) => {
   res.json(notification);
 });
 
-export {
-  getNotifications,
-  markAsRead,
-};
+export { getNotifications, markAsRead };
