@@ -16,30 +16,33 @@ const Feed = () => {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState("");
 
+  const loadSavedPosts = async () => {
+    const savedResponse = await api.get("/users/saved");
+
+    const savedIds = Array.isArray(savedResponse.data)
+      ? savedResponse.data.map((post) => post._id)
+      : [];
+
+    setSavedPostIds(savedIds);
+  };
+
   const loadPosts = async (pageNumber) => {
     try {
+      setError("");
+
       if (pageNumber === 1) {
         setIsLoading(true);
       } else {
         setIsLoadingMore(true);
       }
 
-      const [postsResponse, savedResponse] = await Promise.all([
-        api.get(`/posts?page=${pageNumber}&limit=5`),
-        api.get("/users/saved"),
-      ]);
-
+      const postsResponse = await api.get(`/posts?page=${pageNumber}&limit=5`);
       const nextPosts = postsResponse.data.posts || [];
 
       setPosts((prev) =>
         pageNumber === 1 ? nextPosts : [...prev, ...nextPosts]
       );
 
-      const savedIds = Array.isArray(savedResponse.data)
-        ? savedResponse.data.map((post) => post._id)
-        : [];
-
-      setSavedPostIds(savedIds);
       setHasMore(Boolean(postsResponse.data.hasMore));
       setPage(pageNumber);
     } catch (err) {
@@ -51,7 +54,18 @@ const Feed = () => {
   };
 
   useEffect(() => {
-    loadPosts(1);
+    const loadFeed = async () => {
+      try {
+        setIsLoading(true);
+        await Promise.all([loadPosts(1), loadSavedPosts()]);
+      } catch (err) {
+        setError(err.response?.data?.message || "Failed to load feed");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadFeed();
   }, []);
 
   const handlePostChange = (updatedPost, options = {}) => {
