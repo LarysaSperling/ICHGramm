@@ -17,6 +17,8 @@ const ALLOWED_FILE_TYPES = [
   "image/webp",
 ];
 
+const EMOJIS = ["😀", "😍", "😂", "❤️", "🔥", "👏", "🥰", "😎", "🌸", "✨"];
+
 const CreatePost = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -27,11 +29,10 @@ const CreatePost = () => {
   const [position, setPosition] = useState({ x: 50, y: 50 });
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isEmojiOpen, setIsEmojiOpen] = useState(false);
 
   const validateFile = (file) => {
-    if (!file) {
-      return "Image is required";
-    }
+    if (!file) return "Image is required";
 
     if (!ALLOWED_FILE_TYPES.includes(file.type)) {
       return "Only JPG, JPEG, PNG and WEBP images are allowed";
@@ -46,7 +47,6 @@ const CreatePost = () => {
 
   const handleImageChange = (event) => {
     const file = event.target.files[0];
-
     const validationError = validateFile(file);
 
     if (validationError) {
@@ -72,6 +72,11 @@ const CreatePost = () => {
       x: Math.max(0, Math.min(100, x)),
       y: Math.max(0, Math.min(100, y)),
     });
+  };
+
+  const handleEmojiClick = (emoji) => {
+    setCaption((prev) => `${prev}${emoji}`);
+    setIsEmojiOpen(false);
   };
 
   const handleSubmit = async (event) => {
@@ -112,7 +117,7 @@ const CreatePost = () => {
   };
 
   return (
-    <div className="create-post-overlay">
+    <div className="create-post-overlay" onClick={() => navigate(-1)}>
       <button
         className="create-post-close"
         type="button"
@@ -121,7 +126,11 @@ const CreatePost = () => {
         <X size={28} />
       </button>
 
-      <form className="create-post-modal" onSubmit={handleSubmit}>
+      <form
+        className="create-post-modal"
+        onSubmit={handleSubmit}
+        onClick={(event) => event.stopPropagation()}
+      >
         <header className="create-post-header">
           <h2>Create new post</h2>
 
@@ -188,7 +197,28 @@ const CreatePost = () => {
             />
 
             <div className="create-caption-footer">
-              <Smile size={20} />
+              <button
+                type="button"
+                className="emoji-button"
+                onClick={() => setIsEmojiOpen((prev) => !prev)}
+              >
+                <Smile size={20} />
+              </button>
+
+              {isEmojiOpen && (
+                <div className="emoji-picker">
+                  {EMOJIS.map((emoji) => (
+                    <button
+                      key={emoji}
+                      type="button"
+                      onClick={() => handleEmojiClick(emoji)}
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              )}
+
               <span className="caption-counter">{caption.length}/2 200</span>
             </div>
 

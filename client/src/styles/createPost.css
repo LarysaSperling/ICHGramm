@@ -164,6 +164,7 @@
   font-family: inherit;
 }
 .create-caption-footer {
+  position: relative;
   height: 44px;
   border-bottom: 1px solid #efefef;
   border-top: none;
@@ -191,6 +192,36 @@
   color: #ed4956;
   font-size: 13px;
   padding: 0 16px 12px;
+}
+
+.emoji-button {
+  border: none;
+  background: transparent;
+  color: #8e8e8e;
+  cursor: pointer;
+  padding: 0;
+}
+
+.emoji-picker {
+  position: absolute;
+  bottom: 54px;
+  left: 16px;
+  z-index: 20;
+  background: #ffffff;
+  border: 1px solid #dbdbdb;
+  border-radius: 12px;
+  padding: 8px;
+  display: grid;
+  grid-template-columns: repeat(5, 32px);
+  gap: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.emoji-picker button {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 20px;
 }
 
 @media (max-width: 768px) {
