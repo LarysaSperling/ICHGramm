@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import api from "../../api/axios";
 import Loader from "../ui/Loader";
@@ -7,6 +7,8 @@ import PostForm from "../post/PostForm";
 import StoryList from "../story/StoryList";
 
 import "../../styles/feed.css";
+
+const POSTS_LIMIT = 5;
 
 const Feed = () => {
   const [posts, setPosts] = useState([]);
@@ -17,7 +19,10 @@ const Feed = () => {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState("");
 
-  const loadSavedPosts = async () => {
+  const observerRef = useRef(null);
+  const loadMoreRef = useRef(null);
+
+  const loadSavedPosts = useCallback(async () => {
     const savedResponse = await api.get("/users/saved");
 
     const savedIds = Array.isArray(savedResponse.data)
@@ -25,9 +30,9 @@ const Feed = () => {
       : [];
 
     setSavedPostIds(savedIds);
-  };
+  }, []);
 
-  const loadPosts = async (pageNumber) => {
+  const loadPosts = useCallback(async (pageNumber) => {
     try {
       setError("");
 
@@ -37,7 +42,10 @@ const Feed = () => {
         setIsLoadingMore(true);
       }
 
-      const postsResponse = await api.get(`/posts?page=${pageNumber}&limit=5`);
+      const postsResponse = await api.get(
+        `/posts?page=${pageNumber}&limit=${POSTS_LIMIT}`
+      );
+
       const nextPosts = postsResponse.data.posts || [];
 
       setPosts((prev) =>
@@ -52,7 +60,7 @@ const Feed = () => {
       setIsLoading(false);
       setIsLoadingMore(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     const loadFeed = async () => {
@@ -67,7 +75,36 @@ const Feed = () => {
     };
 
     loadFeed();
-  }, []);
+  }, [loadPosts, loadSavedPosts]);
+
+  useEffect(() => {
+    if (!loadMoreRef.current || !hasMore || isLoading || isLoadingMore) {
+      return;
+    }
+
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        const firstEntry = entries[0];
+
+        if (firstEntry.isIntersecting && hasMore && !isLoadingMore) {
+          loadPosts(page + 1);
+        }
+      },
+      {
+        root: null,
+        rootMargin: "200px",
+        threshold: 0,
+      }
+    );
+
+    observerRef.current.observe(loadMoreRef.current);
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, [hasMore, isLoading, isLoadingMore, loadPosts, page]);
 
   const handlePostCreated = (newPost) => {
     setPosts((prev) => [newPost, ...prev]);
@@ -110,14 +147,8 @@ const Feed = () => {
       />
 
       {hasMore && (
-        <div className="feed-load-more">
-          <button
-            type="button"
-            onClick={() => loadPosts(page + 1)}
-            disabled={isLoadingMore}
-          >
-            {isLoadingMore ? "Loading..." : "Load more"}
-          </button>
+        <div ref={loadMoreRef} className="feed-infinite-loader">
+          {isLoadingMore && <Loader />}
         </div>
       )}
 
