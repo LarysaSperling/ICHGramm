@@ -43,7 +43,12 @@ const ProfileGridItem = ({ post, onDeletePost, onUpdatePost }) => {
   return (
     <>
       <div className="profile-grid-item" onClick={() => setIsPreviewOpen(true)}>
-        <img src={localPost.image} alt={localPost.caption || "Post"} />
+        <img
+          src={localPost.image}
+          alt={localPost.caption || "Post"}
+          loading="lazy"
+          decoding="async"
+        />
 
         <div className="profile-grid-overlay">
           <span>

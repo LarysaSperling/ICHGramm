@@ -35,7 +35,12 @@ useEffect(() => {
       <div className="explore-grid">
         {posts.map((post) => (
           <button key={post._id} className="explore-item" type="button">
-            <img src={post.image} alt={post.caption || "Post"} />
+            <img
+              src={post.image}
+              alt={post.caption || "Post"}
+              loading="lazy"
+              decoding="async"
+            />
           </button>
         ))}
       </div>

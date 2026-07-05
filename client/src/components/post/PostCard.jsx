@@ -154,7 +154,13 @@ const PostCard = ({ post, savedPostIds = [], onPostChange }) => {
         </button>
       </header>
 
-      <img className="post-image" src={image} alt={caption || "Post"} />
+      <img
+        className="post-image"
+        src={image}
+        alt={caption || "Post"}
+        loading="lazy"
+        decoding="async"
+      />
 
       <div className="post-actions">
         <div>
