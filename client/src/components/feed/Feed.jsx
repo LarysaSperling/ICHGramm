@@ -10,32 +10,48 @@ import "../../styles/feed.css";
 const Feed = () => {
   const [posts, setPosts] = useState([]);
   const [savedPostIds, setSavedPostIds] = useState([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    const getFeedData = async () => {
-      try {
-        const [postsResponse, savedResponse] = await Promise.all([
-          api.get("/posts"),
-          api.get("/users/saved"),
-        ]);
-
-        setPosts(postsResponse.data.posts || []);
-
-        const ids = Array.isArray(savedResponse.data)
-          ? savedResponse.data.map((post) => post._id)
-          : [];
-
-        setSavedPostIds(ids);
-      } catch (err) {
-        setError(err.response?.data?.message || "Failed to load posts");
-      } finally {
-        setIsLoading(false);
+  const loadPosts = async (pageNumber) => {
+    try {
+      if (pageNumber === 1) {
+        setIsLoading(true);
+      } else {
+        setIsLoadingMore(true);
       }
-    };
 
-    getFeedData();
+      const [postsResponse, savedResponse] = await Promise.all([
+        api.get(`/posts?page=${pageNumber}&limit=5`),
+        api.get("/users/saved"),
+      ]);
+
+      const nextPosts = postsResponse.data.posts || [];
+
+      setPosts((prev) =>
+        pageNumber === 1 ? nextPosts : [...prev, ...nextPosts]
+      );
+
+      const savedIds = Array.isArray(savedResponse.data)
+        ? savedResponse.data.map((post) => post._id)
+        : [];
+
+      setSavedPostIds(savedIds);
+      setHasMore(Boolean(postsResponse.data.hasMore));
+      setPage(pageNumber);
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to load posts");
+    } finally {
+      setIsLoading(false);
+      setIsLoadingMore(false);
+    }
+  };
+
+  useEffect(() => {
+    loadPosts(1);
   }, []);
 
   const handlePostChange = (updatedPost, options = {}) => {
@@ -71,6 +87,22 @@ const Feed = () => {
         savedPostIds={savedPostIds}
         onPostChange={handlePostChange}
       />
+
+      {hasMore && (
+        <div className="feed-load-more">
+          <button
+            type="button"
+            onClick={() => loadPosts(page + 1)}
+            disabled={isLoadingMore}
+          >
+            {isLoadingMore ? "Loading..." : "Load more"}
+          </button>
+        </div>
+      )}
+
+      {!hasMore && posts.length > 0 && (
+        <p className="feed-end">No more posts</p>
+      )}
     </section>
   );
 };
