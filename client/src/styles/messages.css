@@ -190,11 +190,19 @@
 }
 
 .message-status {
-  margin-top: 4px;
-  padding: 0 6px;
+  margin-top: 6px;
   font-size: 11px;
-  color: #8e8e8e;
+  font-weight: 500;
   user-select: none;
+  transition: color 0.25s ease;
+}
+
+.message-status.sent {
+  color: #8e8e8e;
+}
+
+.message-status.seen {
+  color: #0095f6;
 }
 
 .typing-bubble {
@@ -406,8 +414,12 @@ body.dark .messages-online-dot {
   border-color: #000;
 }
 
-body.dark .message-status {
-  color: #a8a8a8;
+body.dark .message-status.sent {
+  color: #9a9a9a;
+}
+
+body.dark .message-status.seen {
+  color: #4dabff;
 }
 
 body.dark .messages-online-dot {

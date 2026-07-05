@@ -450,10 +450,13 @@ const Messages = () => {
                           >
                             {message.text}
                           </div>
-
                           {isOwnMessage && isLastOwnMessage && (
-                            <span className="message-status">
-                              {message.isSeen ? "Seen" : "Sent"}
+                            <span
+                              className={`message-status ${
+                                message.isSeen ? "seen" : "sent"
+                              }`}
+                            >
+                              {message.isSeen ? "✓✓ Seen" : "✓ Sent"}
                             </span>
                           )}
                         </div>
