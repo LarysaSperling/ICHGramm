@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Bookmark, Heart, MessageCircle, Send, Smile, X } from "lucide-react";
 import { Link } from "react-router-dom";
+import EmojiPicker from "emoji-picker-react";
 
 import api from "../../api/axios";
 import Avatar from "../ui/Avatar";
@@ -30,7 +31,9 @@ const PostModal = ({ post, onClose, onPostChange }) => {
   const [isSaved, setIsSaved] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
+  const [isEmojiOpen, setIsEmojiOpen] = useState(false);
 
+  const emojiRef = useRef(null);
   const currentUserId = getCurrentUserId();
 
   const { _id, image, caption, author, createdAt } = localPost;
@@ -47,6 +50,20 @@ const PostModal = ({ post, onClose, onPostChange }) => {
   });
 
   const likesCount = likes.length;
+
+  useEffect(() => {
+    const handleClickOutsideEmoji = (event) => {
+      if (emojiRef.current && !emojiRef.current.contains(event.target)) {
+        setIsEmojiOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutsideEmoji);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutsideEmoji);
+    };
+  }, []);
 
   useEffect(() => {
     const loadModalData = async () => {
@@ -80,6 +97,11 @@ const PostModal = ({ post, onClose, onPostChange }) => {
 
     loadModalData();
   }, [_id, authorId]);
+
+  const handleEmojiClick = (emojiData) => {
+    setCommentText((prev) => `${prev}${emojiData.emoji}`);
+    setIsEmojiOpen(false);
+  };
 
   const handleToggleLike = async () => {
     if (isLiking) return;
@@ -146,6 +168,7 @@ const PostModal = ({ post, onClose, onPostChange }) => {
 
       setComments((prev) => [data, ...prev]);
       setCommentText("");
+      setIsEmojiOpen(false);
     } catch (err) {
       console.error(err.response?.data?.message || "Failed to add comment");
     } finally {
@@ -233,7 +256,11 @@ const PostModal = ({ post, onClose, onPostChange }) => {
 
           <div className="post-modal-actions">
             <div>
-              <button type="button" onClick={handleToggleLike} disabled={isLiking}>
+              <button
+                type="button"
+                onClick={handleToggleLike}
+                disabled={isLiking}
+              >
                 <Heart
                   size={24}
                   fill={isLiked ? "red" : "none"}
@@ -256,12 +283,35 @@ const PostModal = ({ post, onClose, onPostChange }) => {
           </div>
 
           <div className="post-modal-meta">
-            <strong>{likesCount === 1 ? "1 like" : `${likesCount} likes`}</strong>
+            <strong>
+              {likesCount === 1 ? "1 like" : `${likesCount} likes`}
+            </strong>
             <span>{timeAgo(createdAt)}</span>
           </div>
 
           <form className="post-modal-form" onSubmit={handleAddComment}>
-            <Smile size={20} />
+            <div className="post-modal-emoji" ref={emojiRef}>
+              <button
+                type="button"
+                className="post-modal-emoji-button"
+                onClick={() => setIsEmojiOpen((prev) => !prev)}
+              >
+                <Smile size={20} />
+              </button>
+
+              {isEmojiOpen && (
+                <div className="post-modal-emoji-picker">
+                  <EmojiPicker
+                    onEmojiClick={handleEmojiClick}
+                    width={300}
+                    height={360}
+                    previewConfig={{ showPreview: false }}
+                    searchDisabled={false}
+                    skinTonesDisabled
+                  />
+                </div>
+              )}
+            </div>
 
             <input
               type="text"

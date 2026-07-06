@@ -181,6 +181,39 @@
   cursor: not-allowed;
 }
 
+.post-modal-emoji {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.post-modal-emoji-button {
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+.post-modal-emoji-picker {
+  position: absolute;
+  left: 0;
+  bottom: 36px;
+  z-index: 20;
+}
+
+body.dark .post-modal-emoji-picker .EmojiPickerReact {
+  --epr-bg-color: #161616;
+  --epr-category-label-bg-color: #161616;
+  --epr-text-color: #f5f5f5;
+  --epr-hover-bg-color: #262626;
+  --epr-highlight-color: #0095f6;
+  --epr-search-input-bg-color: #000;
+  --epr-border-color: #262626;
+}
+
 body.dark .post-modal,
 body.dark .post-modal-content {
   background: #000;
