@@ -4,6 +4,7 @@ import { Outlet } from "react-router-dom";
 
 import Sidebar from "./Sidebar";
 import RightSidebar from "./RightSidebar";
+import Footer from "./Footer";
 
 import "../../styles/layout.css";
 
@@ -34,8 +35,12 @@ const AppLayout = () => {
       />
 
       <main className="app-main">
-        <Outlet />
-      </main>
+  <div className="page-content">
+    <Outlet />
+  </div>
+
+  <Footer />
+</main>
 
       <RightSidebar />
     </div>

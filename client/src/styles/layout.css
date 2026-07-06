@@ -11,6 +11,11 @@
   margin-right: 280px;
   padding: 32px 24px;
   background: var(--bg-color);
+  display: flex;
+  flex-direction: column;
+}
+.page-content {
+  flex: 1;
 }
 
 .sidebar {
@@ -162,6 +167,7 @@ body.dark .sidebar-logo img {
     padding: 28px 18px;
     transform: translateX(-100%);
     transition: transform 0.25s ease;
+    height: 100dvh;
   }
 
   .sidebar.open {

@@ -5,6 +5,7 @@ import Loader from "../ui/Loader";
 import PostList from "../post/PostList";
 import StoryList from "../story/StoryList";
 
+import seenUpdatesIcon from "../../assets/icons/seen-updates.svg";
 import "../../styles/feed.css";
 
 const POSTS_LIMIT = 5;
@@ -146,7 +147,16 @@ const Feed = () => {
       )}
 
       {!hasMore && posts.length > 0 && (
-        <p className="feed-end">No more posts</p>
+        <div className="feed-end">
+          <img
+            className="feed-end-icon-image"
+            src={seenUpdatesIcon}
+            alt="Seen all updates"
+          />
+
+          <h3>You have seen all the updates</h3>
+          <p>You have viewed all new publications</p>
+        </div>
       )}
     </section>
   );
