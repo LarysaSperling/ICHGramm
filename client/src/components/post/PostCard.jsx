@@ -1,11 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import EmojiPicker from "emoji-picker-react";
 import {
   Bookmark,
   Heart,
   MessageCircle,
   MoreHorizontal,
   Send,
+  Smile,
 } from "lucide-react";
 
 import api from "../../api/axios";
@@ -69,7 +71,9 @@ const PostCard = ({ post, savedPostIds = [], onPostChange, onOpenPost }) => {
   const [isFollowLoading, setIsFollowLoading] = useState(false);
   const [showAllComments, setShowAllComments] = useState(false);
   const [showFullCaption, setShowFullCaption] = useState(false);
+  const [isEmojiOpen, setIsEmojiOpen] = useState(false);
 
+  const emojiRef = useRef(null);
   const currentUserId = getCurrentUserId();
 
   const { _id, image, caption, author, createdAt } = localPost;
@@ -96,6 +100,20 @@ const PostCard = ({ post, savedPostIds = [], onPostChange, onOpenPost }) => {
     showFullCaption || !isLongCaption
       ? safeCaption
       : `${safeCaption.slice(0, CAPTION_LIMIT)}...`;
+
+  useEffect(() => {
+    const handleClickOutsideEmoji = (event) => {
+      if (emojiRef.current && !emojiRef.current.contains(event.target)) {
+        setIsEmojiOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutsideEmoji);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutsideEmoji);
+    };
+  }, []);
 
   useEffect(() => {
     const getComments = async () => {
@@ -129,6 +147,11 @@ const PostCard = ({ post, savedPostIds = [], onPostChange, onOpenPost }) => {
 
     getProfile();
   }, [authorId, isOwnPost]);
+
+  const handleEmojiClick = (emojiData) => {
+    setCommentText((prev) => `${prev}${emojiData.emoji}`);
+    setIsEmojiOpen(false);
+  };
 
   const handleToggleFollow = async () => {
     if (!authorId || isOwnPost || isFollowLoading) return;
@@ -202,6 +225,7 @@ const PostCard = ({ post, savedPostIds = [], onPostChange, onOpenPost }) => {
 
       setComments((prev) => [data, ...prev]);
       setCommentText("");
+      setIsEmojiOpen(false);
 
       if (onPostChange) {
         onPostChange({
@@ -325,6 +349,30 @@ const PostCard = ({ post, savedPostIds = [], onPostChange, onOpenPost }) => {
       )}
 
       <form className="comment-form" onSubmit={handleAddComment}>
+        <div className="post-card-emoji" ref={emojiRef}>
+          <button
+            type="button"
+            className="post-card-emoji-button"
+            onClick={() => setIsEmojiOpen((prev) => !prev)}
+          >
+            <Smile size={20} />
+          </button>
+
+          {isEmojiOpen && (
+            <div className="post-card-emoji-picker">
+              <EmojiPicker
+                onEmojiClick={handleEmojiClick}
+                width={300}
+                height={360}
+                emojiStyle="native"
+                previewConfig={{ showPreview: false }}
+                searchDisabled={false}
+                skinTonesDisabled
+              />
+            </div>
+          )}
+        </div>
+
         <input
           id={`comment-${_id}`}
           name="comment"

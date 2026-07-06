@@ -305,6 +305,7 @@ const PostModal = ({ post, onClose, onPostChange }) => {
                     onEmojiClick={handleEmojiClick}
                     width={300}
                     height={360}
+                    emojiStyle="native"
                     previewConfig={{ showPreview: false }}
                     searchDisabled={false}
                     skinTonesDisabled
