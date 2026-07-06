@@ -171,6 +171,7 @@ const Feed = () => {
         <PostModal
           post={selectedPost}
           onClose={() => setSelectedPost(null)}
+          onPostChange={handlePostChange}
         />
       )}
     </section>
