@@ -16,7 +16,7 @@ const Explore = () => {
     const getPosts = async () => {
       try {
         const { data } = await api.get("/posts/explore");
-        setPosts(data);
+        setPosts(Array.isArray(data) ? data : []);
       } catch (err) {
         setError(err.response?.data?.message || "Failed to load posts");
       } finally {
@@ -26,6 +26,20 @@ const Explore = () => {
 
     getPosts();
   }, []);
+
+  const handlePostChange = (updatedPost) => {
+    if (!updatedPost?._id) return;
+
+    setPosts((prev) =>
+      prev.map((post) =>
+        post._id === updatedPost._id ? { ...post, ...updatedPost } : post
+      )
+    );
+
+    setSelectedPost((prev) =>
+      prev?._id === updatedPost._id ? { ...prev, ...updatedPost } : prev
+    );
+  };
 
   if (isLoading) return <Loader />;
 
@@ -55,6 +69,7 @@ const Explore = () => {
         <PostModal
           post={selectedPost}
           onClose={() => setSelectedPost(null)}
+          onPostChange={handlePostChange}
         />
       )}
     </main>
