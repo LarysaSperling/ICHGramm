@@ -6,9 +6,9 @@
 
 .app-main {
   min-height: 100vh;
-  width: calc(100% - 245px - 280px);
+  width: calc(100% - 245px);
   margin-left: 245px;
-  margin-right: 280px;
+  margin-right: 0;
   padding: 32px 24px;
   background: var(--bg-color);
   display: flex;
@@ -16,6 +16,7 @@
 }
 .page-content {
   flex: 1;
+  width: 100%;
 }
 
 .sidebar {

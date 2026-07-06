@@ -5,6 +5,7 @@ import api from "../api/axios";
 import Loader from "../components/ui/Loader";
 import PostList from "../components/post/PostList";
 import { useAuth } from "../context/AuthContext";
+import PostModal from "../components/post/PostModal";
 
 import "../styles/profile.css";
 
@@ -18,6 +19,8 @@ const UserProfile = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [isFollowing, setIsFollowing] = useState(false);
+  const [selectedPost, setSelectedPost] = useState(null);
+  const [savedPostIds, setSavedPostIds] = useState([]);
 
   useEffect(() => {
     if (user?._id && id === user._id) {
@@ -33,6 +36,19 @@ const UserProfile = () => {
         setIsLoading(true);
 
         const { data } = await api.get(`/users/${id}`);
+        const [userResponse, savedResponse] = await Promise.all([
+          api.get(`/users/${id}`),
+          api.get("/users/saved"),
+        ]);
+
+       setProfileUser(userResponse.data.user);
+       setPosts(userResponse.data.posts || []);
+
+       setSavedPostIds(
+         Array.isArray(savedResponse.data)
+           ? savedResponse.data.map((post) => post._id)
+           : []
+      );
 
         setProfileUser(data.user);
         setPosts(data.posts || []);
@@ -152,7 +168,18 @@ const UserProfile = () => {
         </div>
       </section>
 
-      <PostList posts={posts} />
+      <PostList
+  posts={posts}
+  savedPostIds={savedPostIds}
+  onOpenPost={setSelectedPost}
+/>
+
+{selectedPost && (
+  <PostModal
+    post={selectedPost}
+    onClose={() => setSelectedPost(null)}
+  />
+)}
     </main>
   );
 };
