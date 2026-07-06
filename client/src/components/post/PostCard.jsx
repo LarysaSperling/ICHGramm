@@ -14,6 +14,9 @@ import timeAgo from "../../utils/timeAgo";
 
 import "../../styles/post.css";
 
+const CAPTION_LIMIT = 20;
+const COMMENT_LIMIT = 35;
+
 const getCurrentUserId = () => {
   const token = localStorage.getItem("token");
   if (!token) return null;
@@ -26,6 +29,35 @@ const getCurrentUserId = () => {
   }
 };
 
+const PostComment = ({ comment }) => {
+  const [showFullText, setShowFullText] = useState(false);
+
+  const commentText = comment.text || "";
+  const isLongComment = commentText.length > COMMENT_LIMIT;
+
+  const displayedComment =
+    showFullText || !isLongComment
+      ? commentText
+      : `${commentText.slice(0, COMMENT_LIMIT)}...`;
+
+  return (
+    <p className="post-comment">
+      <strong>{comment.user?.username || "unknown"}</strong>{" "}
+      <span>{displayedComment}</span>
+
+      {isLongComment && !showFullText && (
+        <button
+          type="button"
+          className="post-comment-more"
+          onClick={() => setShowFullText(true)}
+        >
+          more
+        </button>
+      )}
+    </p>
+  );
+};
+
 const PostCard = ({ post, savedPostIds = [], onPostChange }) => {
   const [localPost, setUpdatedPost] = useState(post);
   const [comments, setComments] = useState([]);
@@ -36,6 +68,7 @@ const PostCard = ({ post, savedPostIds = [], onPostChange }) => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
   const [showAllComments, setShowAllComments] = useState(false);
+  const [showFullCaption, setShowFullCaption] = useState(false);
 
   const currentUserId = getCurrentUserId();
 
@@ -54,8 +87,15 @@ const PostCard = ({ post, savedPostIds = [], onPostChange }) => {
 
   const likesCount = postLikes.length;
   const isSaved = savedPostIds.includes(_id);
-
   const visibleComments = showAllComments ? comments : comments.slice(0, 2);
+
+  const safeCaption = caption || "";
+  const isLongCaption = safeCaption.length > CAPTION_LIMIT;
+
+  const displayedCaption =
+    showFullCaption || !isLongCaption
+      ? safeCaption
+      : `${safeCaption.slice(0, CAPTION_LIMIT)}...`;
 
   useEffect(() => {
     const getComments = async () => {
@@ -213,7 +253,7 @@ const PostCard = ({ post, savedPostIds = [], onPostChange }) => {
       <img
         className="post-image"
         src={image}
-        alt={caption || "Post"}
+        alt={safeCaption || "Post"}
         loading="lazy"
         decoding="async"
       />
@@ -250,16 +290,23 @@ const PostCard = ({ post, savedPostIds = [], onPostChange }) => {
         <Link to={authorLink} className="post-author-link">
           <strong>{author?.username || "unknown"}</strong>
         </Link>{" "}
-        {caption}
+        <span className="post-caption-text">{displayedCaption}</span>
+
+        {isLongCaption && !showFullCaption && (
+          <button
+            type="button"
+            className="post-caption-more"
+            onClick={() => setShowFullCaption(true)}
+          >
+            more
+          </button>
+        )}
       </p>
 
       {comments.length > 0 && (
         <div className="post-comments">
           {visibleComments.map((comment) => (
-            <p key={comment._id} className="post-comment">
-              <strong>{comment.user?.username || "unknown"}</strong>{" "}
-              {comment.text}
-            </p>
+            <PostComment key={comment._id} comment={comment} />
           ))}
         </div>
       )}

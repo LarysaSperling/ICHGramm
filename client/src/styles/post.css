@@ -16,12 +16,20 @@
   align-items: center;
 }
 
+.post-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
 .post-author {
   display: flex;
   align-items: center;
   gap: 12px;
   text-decoration: none;
   color: inherit;
+  min-width: 0;
 }
 
 .post-author-link {
@@ -45,6 +53,16 @@
   flex-direction: row;
   align-items: center;
   gap: 4px;
+  min-width: 0;
+}
+
+.post-author strong {
+  font-size: 14px;
+}
+
+.post-author span {
+  font-size: 12px;
+  color: #8e8e8e;
 }
 
 .post-author span::before {
@@ -53,13 +71,24 @@
   color: #8e8e8e;
 }
 
-.post-author strong {
-  font-size: 14px;
+.post-follow {
+  border: none;
+  background: transparent;
+  color: #0095f6;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
 }
 
-.post-author span {
+.post-follow.following {
   color: #8e8e8e;
-  font-size: 12px;
+}
+
+.post-follow:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .post-more {
@@ -67,6 +96,7 @@
   background: transparent;
   cursor: pointer;
   color: inherit;
+  flex-shrink: 0;
 }
 
 .post-image {
@@ -99,8 +129,8 @@
 .post-likes {
   margin: 0;
   padding: 0 16px;
-  font-weight: 600;
   font-size: 14px;
+  font-weight: 600;
   color: #262626;
 }
 
@@ -110,10 +140,27 @@
   font-size: 14px;
   line-height: 1.4;
   color: #262626;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .post-caption strong {
-  color: #262626;
+  color: inherit;
+}
+
+.post-caption-text {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.post-caption-more {
+  border: none;
+  background: transparent;
+  color: #8e8e8e;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0;
+  margin-left: 4px;
 }
 
 .post-comments {
@@ -128,11 +175,12 @@
   font-size: 14px;
   line-height: 1.4;
   color: #262626;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .post-comment strong {
   margin-right: 4px;
-  color: #262626;
 }
 
 .post-view-comments {
@@ -147,12 +195,12 @@
 }
 
 .comment-form {
-  border-top: 1px solid #efefef;
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 10px 16px;
   margin-top: 4px;
+  border-top: 1px solid #efefef;
 }
 
 .comment-form input {
@@ -181,34 +229,80 @@
   opacity: 0.4;
   cursor: not-allowed;
 }
-.post-header-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
+
+.post-caption,
+.post-caption-text,
+.post-comment,
+.post-comment span {
+  max-width: 100%;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
-.post-follow {
+.post-comment {
+  display: block;
+}
+
+.post-comment strong {
+  display: inline;
+}
+.post-caption {
+  display: block;
+  max-width: 100%;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.post-caption-text {
+  display: inline;
+  max-width: 100%;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.post-comment {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  max-width: 100%;
+  min-width: 0;
+  white-space: normal;
+}
+
+.post-comment strong {
+  flex-shrink: 0;
+}
+
+.post-comment span {
+  flex: 1;
+  min-width: 0;
+  max-width: 100%;
+  display: block;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.post-comment-more {
   border: none;
   background: transparent;
-  color: #0095f6;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  padding: 0;
-}
-
-.post-follow.following {
   color: #8e8e8e;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0;
+  margin-left: 4px;
+  flex-shrink: 0;
 }
 
-.post-follow:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+body.dark .post-comment-more {
+  color: #a8a8a8;
 }
 
 body.dark .post-card {
-  background: #000000;
+  background: #000;
   border-color: #262626;
   color: #f5f5f5;
 }
@@ -222,12 +316,13 @@ body.dark .comment-form input {
   color: #f5f5f5;
 }
 
-body.dark .comment-form {
-  border-top-color: #262626;
+body.dark .post-author span,
+body.dark .post-caption-more,
+body.dark .post-view-comments,
+body.dark .comment-form input::placeholder {
+  color: #a8a8a8;
 }
 
-body.dark .post-author span,
-body.dark .comment-form input::placeholder,
-body.dark .post-view-comments {
-  color: #a8a8a8;
+body.dark .comment-form {
+  border-top-color: #262626;
 }
