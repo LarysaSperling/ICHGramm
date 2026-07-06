@@ -42,7 +42,15 @@
 
 .post-author div {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+}
+
+.post-author span::before {
+  content: "•";
+  margin-right: 4px;
+  color: #8e8e8e;
 }
 
 .post-author strong {

@@ -10,6 +10,7 @@ import {
 
 import api from "../../api/axios";
 import Avatar from "../ui/Avatar";
+import timeAgo from "../../utils/timeAgo";
 
 import "../../styles/post.css";
 
@@ -147,7 +148,7 @@ const PostCard = ({ post, savedPostIds = [], onPostChange }) => {
 
           <div>
             <strong>{author?.username || "unknown"}</strong>
-            <span>{new Date(createdAt).toLocaleDateString()}</span>
+            <span>{timeAgo(createdAt)}</span>
           </div>
         </Link>
 
