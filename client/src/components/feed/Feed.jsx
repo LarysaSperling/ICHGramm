@@ -4,8 +4,10 @@ import api from "../../api/axios";
 import Loader from "../ui/Loader";
 import PostList from "../post/PostList";
 import StoryList from "../story/StoryList";
+import PostModal from "../post/PostModal";
 
 import seenUpdatesIcon from "../../assets/icons/seen-updates.svg";
+
 import "../../styles/feed.css";
 
 const POSTS_LIMIT = 5;
@@ -18,6 +20,7 @@ const Feed = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState("");
+  const [selectedPost, setSelectedPost] = useState(null);
 
   const observerRef = useRef(null);
   const loadMoreRef = useRef(null);
@@ -113,6 +116,10 @@ const Feed = () => {
           post._id === updatedPost._id ? { ...post, ...updatedPost } : post
         )
       );
+
+      setSelectedPost((prev) =>
+        prev?._id === updatedPost._id ? { ...prev, ...updatedPost } : prev
+      );
     }
 
     if (options.saved !== undefined && updatedPost?._id) {
@@ -138,6 +145,7 @@ const Feed = () => {
         posts={posts}
         savedPostIds={savedPostIds}
         onPostChange={handlePostChange}
+        onOpenPost={setSelectedPost}
       />
 
       {hasMore && (
@@ -157,6 +165,13 @@ const Feed = () => {
           <h3>You have seen all the updates</h3>
           <p>You have viewed all new publications</p>
         </div>
+      )}
+
+      {selectedPost && (
+        <PostModal
+          post={selectedPost}
+          onClose={() => setSelectedPost(null)}
+        />
       )}
     </section>
   );

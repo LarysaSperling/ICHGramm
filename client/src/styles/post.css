@@ -2,8 +2,9 @@
   width: 100%;
   max-width: 404px;
   background: #ffffff;
-  border: 1px solid #dbdbdb;
-  border-radius: 4px;
+  border: none;
+  border-bottom: 1px solid #dbdbdb;
+  border-radius: 0;
   overflow: hidden;
   color: #262626;
 }
@@ -104,6 +105,7 @@
   aspect-ratio: 1 / 1.25;
   object-fit: cover;
   display: block;
+  cursor: pointer;
 }
 
 .post-actions {
@@ -189,7 +191,7 @@
   color: #8e8e8e;
   font-size: 14px;
   cursor: pointer;
-  padding: 4px 16px 8px;
+  padding: 4px 16px 16px;
   margin: 0;
   text-align: left;
 }
@@ -303,7 +305,7 @@ body.dark .post-comment-more {
 
 body.dark .post-card {
   background: #000;
-  border-color: #262626;
+  border-bottom-color: #262626;
   color: #f5f5f5;
 }
 

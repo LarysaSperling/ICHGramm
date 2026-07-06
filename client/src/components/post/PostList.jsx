@@ -1,10 +1,6 @@
 import PostCard from "./PostCard";
 
-const PostList = ({
-  posts = [],
-  savedPostIds = [],
-  onPostChange,
-}) => {
+const PostList = ({ posts = [], savedPostIds = [], onPostChange, onOpenPost }) => {
   if (!posts.length) {
     return <p>No posts yet.</p>;
   }
@@ -17,6 +13,7 @@ const PostList = ({
           post={post}
           savedPostIds={savedPostIds}
           onPostChange={onPostChange}
+          onOpenPost={onOpenPost}
         />
       ))}
     </div>

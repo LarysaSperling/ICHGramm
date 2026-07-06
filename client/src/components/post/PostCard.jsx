@@ -58,7 +58,7 @@ const PostComment = ({ comment }) => {
   );
 };
 
-const PostCard = ({ post, savedPostIds = [], onPostChange }) => {
+const PostCard = ({ post, savedPostIds = [], onPostChange, onOpenPost }) => {
   const [localPost, setUpdatedPost] = useState(post);
   const [comments, setComments] = useState([]);
   const [commentText, setCommentText] = useState("");
@@ -256,6 +256,7 @@ const PostCard = ({ post, savedPostIds = [], onPostChange }) => {
         alt={safeCaption || "Post"}
         loading="lazy"
         decoding="async"
+        onClick={() => onOpenPost?.(localPost)}
       />
 
       <div className="post-actions">
