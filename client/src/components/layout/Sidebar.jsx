@@ -20,45 +20,48 @@ import logo from "../../assets/logos/ichgram-logo.svg";
 
 import "../../styles/layout.css";
 
-const Sidebar = () => {
+const Sidebar = ({ isOpen, onClose }) => {
   const { logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
 
-  const {
-    unreadMessages,
-    messageToast,
-    clearUnreadMessages,
-  } = useMessages();
+  const { unreadMessages, messageToast, clearUnreadMessages } = useMessages();
+
+  const handleNavigate = () => {
+    if (onClose) onClose();
+  };
 
   return (
-    <aside className="sidebar">
-      <Link to="/home" className="sidebar-logo">
+    <aside className={`sidebar ${isOpen ? "open" : ""}`}>
+      <Link to="/home" className="sidebar-logo" onClick={handleNavigate}>
         <img src={logo} alt="ICHGramm" />
       </Link>
 
       <nav className="sidebar-nav">
-        <NavLink to="/home">
-          <House size={24} strokeWidth={2} />
+        <NavLink to="/home" onClick={handleNavigate}>
+          <House size={24} />
           <span>Home</span>
         </NavLink>
 
-        <NavLink to="/search">
-          <Search size={24} strokeWidth={2} />
+        <NavLink to="/search" onClick={handleNavigate}>
+          <Search size={24} />
           <span>Search</span>
         </NavLink>
 
-        <NavLink to="/explore">
-          <Compass size={24} strokeWidth={2} />
+        <NavLink to="/explore" onClick={handleNavigate}>
+          <Compass size={24} />
           <span>Explore</span>
         </NavLink>
 
         <NavLink
           to="/messages"
           className="sidebar-link-with-badge"
-          onClick={clearUnreadMessages}
+          onClick={() => {
+            clearUnreadMessages();
+            handleNavigate();
+          }}
         >
           <div className="sidebar-icon-wrap">
-            <MessageCircle size={24} strokeWidth={2} />
+            <MessageCircle size={24} />
 
             {unreadMessages > 0 && (
               <span className="sidebar-badge">
@@ -70,18 +73,18 @@ const Sidebar = () => {
           <span>Messages</span>
         </NavLink>
 
-        <NavLink to="/notifications">
-          <Heart size={24} strokeWidth={2} />
+        <NavLink to="/notifications" onClick={handleNavigate}>
+          <Heart size={24} />
           <span>Notifications</span>
         </NavLink>
 
-        <NavLink to="/create">
-          <SquarePlus size={24} strokeWidth={2} />
+        <NavLink to="/create" onClick={handleNavigate}>
+          <SquarePlus size={24} />
           <span>Create</span>
         </NavLink>
 
-        <NavLink to="/profile">
-          <CircleUserRound size={24} strokeWidth={2} />
+        <NavLink to="/profile" onClick={handleNavigate}>
+          <CircleUserRound size={24} />
           <span>Profile</span>
         </NavLink>
       </nav>
@@ -111,7 +114,10 @@ const Sidebar = () => {
         <Link
           to="/messages"
           className="message-toast"
-          onClick={clearUnreadMessages}
+          onClick={() => {
+            clearUnreadMessages();
+            handleNavigate();
+          }}
         >
           <strong>{messageToast.sender}</strong>
           <span>{messageToast.text}</span>

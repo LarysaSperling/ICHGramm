@@ -6,15 +6,12 @@ import {
   MessageCircle,
   MoreHorizontal,
   Send,
-  Smile,
 } from "lucide-react";
 
 import api from "../../api/axios";
 import Avatar from "../ui/Avatar";
 
 import "../../styles/post.css";
-
-const EMOJIS = ["😀", "😍", "😂", "❤️", "🔥", "👏", "🥰", "😎", "🌸", "✨"];
 
 const getCurrentUserId = () => {
   const token = localStorage.getItem("token");
@@ -36,7 +33,6 @@ const PostCard = ({ post, savedPostIds = [], onPostChange }) => {
   const [isLiking, setIsLiking] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showAllComments, setShowAllComments] = useState(false);
-  const [isEmojiOpen, setIsEmojiOpen] = useState(false);
 
   const currentUserId = getCurrentUserId();
 
@@ -54,13 +50,13 @@ const PostCard = ({ post, savedPostIds = [], onPostChange }) => {
   const likesCount = postLikes.length;
   const isSaved = savedPostIds.includes(_id);
 
-  const visibleComments = showAllComments ? comments : comments.slice(0, 3);
+  const visibleComments = showAllComments ? comments : comments.slice(0, 2);
 
   useEffect(() => {
     const getComments = async () => {
       try {
         const { data } = await api.get(`/comments/${_id}`);
-        setComments(data);
+        setComments(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error(err.response?.data?.message || "Failed to load comments");
       }
@@ -109,11 +105,6 @@ const PostCard = ({ post, savedPostIds = [], onPostChange }) => {
     } finally {
       setIsSaving(false);
     }
-  };
-
-  const handleEmojiClick = (emoji) => {
-    setCommentText((prev) => `${prev}${emoji}`);
-    setIsEmojiOpen(false);
   };
 
   const handleAddComment = async (event) => {
@@ -208,16 +199,6 @@ const PostCard = ({ post, savedPostIds = [], onPostChange }) => {
         {caption}
       </p>
 
-      {comments.length > 3 && !showAllComments && (
-        <button
-          type="button"
-          className="post-view-comments"
-          onClick={() => setShowAllComments(true)}
-        >
-          View all {comments.length} comments
-        </button>
-      )}
-
       {comments.length > 0 && (
         <div className="post-comments">
           {visibleComments.map((comment) => (
@@ -229,41 +210,19 @@ const PostCard = ({ post, savedPostIds = [], onPostChange }) => {
         </div>
       )}
 
-      {showAllComments && comments.length > 3 && (
+      {comments.length > 2 && (
         <button
           type="button"
           className="post-view-comments"
-          onClick={() => setShowAllComments(false)}
+          onClick={() => setShowAllComments((prev) => !prev)}
         >
-          Show less
+          {showAllComments
+            ? "Show less"
+            : `View all comments (${comments.length})`}
         </button>
       )}
 
       <form className="comment-form" onSubmit={handleAddComment}>
-        <div className="comment-emoji-wrapper">
-          <button
-            type="button"
-            className="comment-emoji-button"
-            onClick={() => setIsEmojiOpen((prev) => !prev)}
-          >
-            <Smile size={20} />
-          </button>
-
-          {isEmojiOpen && (
-            <div className="comment-emoji-picker">
-              {EMOJIS.map((emoji) => (
-                <button
-                  key={emoji}
-                  type="button"
-                  onClick={() => handleEmojiClick(emoji)}
-                >
-                  {emoji}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
         <input
           id={`comment-${_id}`}
           name="comment"

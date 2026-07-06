@@ -1,9 +1,11 @@
 .post-card {
-  width: 404px;
-  background: #fff;
+  width: 100%;
+  max-width: 404px;
+  background: #ffffff;
   border: 1px solid #dbdbdb;
   border-radius: 4px;
   overflow: hidden;
+  color: #262626;
 }
 
 .post-header {
@@ -24,6 +26,7 @@
 
 .post-author-link {
   color: inherit;
+  text-decoration: none;
 }
 
 .post-author-link:hover {
@@ -55,11 +58,12 @@
   border: none;
   background: transparent;
   cursor: pointer;
+  color: inherit;
 }
 
 .post-image {
   width: 100%;
-  height: 505px;
+  aspect-ratio: 1 / 1.25;
   object-fit: cover;
   display: block;
 }
@@ -68,7 +72,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 16px;
+  padding: 10px 16px 6px;
 }
 
 .post-actions div {
@@ -80,9 +84,12 @@
   border: none;
   background: transparent;
   cursor: pointer;
+  color: inherit;
+  padding: 0;
 }
 
 .post-likes {
+  margin: 0;
   padding: 0 16px;
   font-weight: 600;
   font-size: 14px;
@@ -90,8 +97,10 @@
 }
 
 .post-caption {
-  padding: 8px 16px;
+  margin: 0;
+  padding: 6px 16px 2px;
   font-size: 14px;
+  line-height: 1.4;
   color: #262626;
 }
 
@@ -99,34 +108,17 @@
   color: #262626;
 }
 
-.comment-form {
-  display: flex;
-  border-top: 1px solid #efefef;
-  padding: 10px 16px;
-}
-
-.comment-form input {
-  flex: 1;
-  border: none;
-  outline: none;
-  font-size: 14px;
-}
-
-.comment-form button {
-  border: none;
-  background: transparent;
-  color: #0095f6;
-  font-weight: 600;
-  cursor: pointer;
-}
-
 .post-comments {
-  padding: 0 16px 8px;
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .post-comment {
+  margin: 0;
   font-size: 14px;
-  margin-bottom: 4px;
+  line-height: 1.4;
   color: #262626;
 }
 
@@ -135,55 +127,74 @@
   color: #262626;
 }
 
-.comment-form button:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
 .post-view-comments {
   border: none;
   background: transparent;
   color: #8e8e8e;
   font-size: 14px;
   cursor: pointer;
-  padding: 0;
-  margin: 4px 0;
+  padding: 4px 16px 8px;
+  margin: 0;
   text-align: left;
 }
 
-.comment-emoji-wrapper {
-  position: relative;
+.comment-form {
+  border-top: 1px solid #efefef;
   display: flex;
   align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  margin-top: 4px;
 }
 
-.comment-emoji-button {
+.comment-form input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #262626;
+  font-size: 14px;
+}
+
+.comment-form input::placeholder {
+  color: #8e8e8e;
+}
+
+.comment-form button {
   border: none;
   background: transparent;
-  color: #8e8e8e;
+  color: #0095f6;
+  font-weight: 600;
   cursor: pointer;
   padding: 0;
-  display: flex;
-  align-items: center;
 }
 
-.comment-emoji-picker {
-  position: absolute;
-  bottom: 32px;
-  left: 0;
-  z-index: 30;
-  background: #ffffff;
-  border: 1px solid #dbdbdb;
-  border-radius: 12px;
-  padding: 8px;
-  display: grid;
-  grid-template-columns: repeat(5, 32px);
-  gap: 6px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+.comment-form button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
-.comment-emoji-picker button {
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  font-size: 20px;
+body.dark .post-card {
+  background: #000000;
+  border-color: #262626;
+  color: #f5f5f5;
+}
+
+body.dark .post-likes,
+body.dark .post-caption,
+body.dark .post-caption strong,
+body.dark .post-comment,
+body.dark .post-comment strong,
+body.dark .comment-form input {
+  color: #f5f5f5;
+}
+
+body.dark .comment-form {
+  border-top-color: #262626;
+}
+
+body.dark .post-author span,
+body.dark .comment-form input::placeholder,
+body.dark .post-view-comments {
+  color: #a8a8a8;
 }

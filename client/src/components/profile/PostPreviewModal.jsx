@@ -14,6 +14,8 @@ import Avatar from "../ui/Avatar";
 import PostActionMenu from "./PostActionMenu";
 import "../../styles/postPreviewModal.css";
 
+const EMOJIS = ["😀", "😍", "😂", "❤️", "🔥", "👏", "🥰", "😎", "🌸", "✨"];
+
 const getCurrentUserId = () => {
   const token = localStorage.getItem("token");
   if (!token) return null;
@@ -83,6 +85,7 @@ const PostPreviewModal = ({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
   const [isCommenting, setIsCommenting] = useState(false);
+  const [isEmojiOpen, setIsEmojiOpen] = useState(false);
 
   useEffect(() => {
     const fetchComments = async () => {
@@ -181,6 +184,11 @@ const PostPreviewModal = ({
   }
 };
 
+const handleEmojiClick = (emoji) => {
+  setCommentText((prev) => `${prev}${emoji}`);
+  setIsEmojiOpen(false);
+};
+
   const handleAddComment = async (event) => {
     event.preventDefault();
 
@@ -195,7 +203,6 @@ const PostPreviewModal = ({
 
       setComments((prevComments) => [data, ...prevComments]);
       setCommentText("");
-      setShowAllComments(true);
 
       if (onPostChange) {
         onPostChange({
@@ -401,7 +408,29 @@ const PostPreviewModal = ({
               className="post-preview-add-comment"
               onSubmit={handleAddComment}
             >
-              <Smile size={22} />
+              <div className="post-preview-emoji">
+                <button
+                  type="button"
+                  className="post-preview-emoji-button"
+                  onClick={() => setIsEmojiOpen((prev) => !prev)}
+                >
+                  <Smile size={22} />
+               </button>
+
+               {isEmojiOpen && (
+                 <div className="post-preview-emoji-picker">
+                   {EMOJIS.map((emoji) => (
+                     <button
+                       key={emoji}
+                       type="button"
+                       onClick={() => handleEmojiClick(emoji)}
+                     >
+                      {emoji}
+                     </button>
+                   ))}
+                 </div>
+               )}
+            </div>
 
               <input
                 id="post-comment"

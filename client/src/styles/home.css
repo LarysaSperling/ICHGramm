@@ -1,66 +1,99 @@
 .home-page {
-  display: flex;
-  justify-content: flex-start;
+  width: 100%;
   min-height: 100vh;
-  background: #fff;
-  padding-top: 20px;
+  background: var(--bg-color);
 }
 
 .feed {
-  width: 860px;
-  margin-left: 0;
+  width: 100%;
+  max-width: 832px;
+  margin: 0 auto;
+}
+
+.stories {
+  width: 220px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 28px;
 }
 
 .post-list {
   display: grid;
   grid-template-columns: repeat(2, 404px);
-  gap: 32px 28px;
+  justify-content: center;
+  gap: 24px;
 }
 
-.stories {
-  width: 220px;
-  flex-shrink: 0;
-  background: #fff;
-  border: 1px solid #dbdbdb;
-  border-radius: 8px;
-  padding: 20px;
+.feed-infinite-loader {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: center;
+  padding: 24px 0;
+  min-height: 80px;
 }
 
-.right-sidebar {
-  width: 260px;
-  background: #fff;
-  border: 1px solid #dbdbdb;
-  border-radius: 8px;
-  padding: 20px;
+.feed-end,
+.feed-error {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: var(--text-color);
 }
 
-@media (max-width: 1300px) {
-  .home-page {
-    grid-template-columns: 1fr;
-  }
+.feed-end {
+  margin: 40px 0 80px;
+}
 
-  .stories,
-  .right-sidebar {
-    display: none;
-  }
-
+@media (max-width: 1200px) {
   .feed {
-    width: 860px;
-    margin: 0 auto;
+    max-width: 404px;
   }
 
-  .post-list {
-    grid-template-columns: repeat(2, 404px);
-    justify-content: center;
-  }
-}
-
-@media (max-width: 950px) {
-  .feed {
+  .stories {
     width: 404px;
   }
 
   .post-list {
+    display: grid;
     grid-template-columns: 404px;
+    justify-content: center;
+    gap: 32px;
+  }
+}
+
+@media (max-width: 768px) {
+  .feed {
+    max-width: 100%;
+  }
+
+  .stories {
+    width: 100%;
+  }
+
+  .post-list {
+    grid-template-columns: minmax(280px, 404px);
+    justify-content: center;
+    gap: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .feed {
+    max-width: 100%;
+  }
+
+  .stories {
+    width: 100%;
+    padding: 16px;
+  }
+
+  .post-list {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .feed-end {
+    margin: 32px 0 72px;
   }
 }

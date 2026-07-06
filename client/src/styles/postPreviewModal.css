@@ -1,7 +1,3 @@
-/* Post Preview Modal */
-
-/* Modal overlay */
-
 .post-preview-modal {
   position: fixed;
   inset: 0;
@@ -12,8 +8,6 @@
   justify-content: center;
   padding: 24px;
 }
-
-/* Close button */
 
 .post-preview-close {
   position: fixed;
@@ -35,8 +29,6 @@
   opacity: 0.75;
 }
 
-/* Main dialog */
-
 .post-preview-dialog {
   width: min(1120px, 94vw);
   height: min(722px, 90vh);
@@ -47,8 +39,6 @@
   overflow: hidden;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
 }
-
-/* Left image area */
 
 .post-preview-media {
   min-width: 0;
@@ -66,8 +56,6 @@
   display: block;
 }
 
-/* Right panel */
-
 .post-preview-panel {
   min-width: 0;
   min-height: 0;
@@ -76,8 +64,6 @@
   display: flex;
   flex-direction: column;
 }
-
-/* Header */
 
 .post-preview-header {
   min-height: 60px;
@@ -140,10 +126,6 @@
   color: #737373;
 }
 
-/* ==========================
-   Comments
-========================== */
-
 .post-preview-comments {
   flex: 1;
   overflow-y: auto;
@@ -166,8 +148,6 @@
 .post-preview-comments::-webkit-scrollbar-track {
   background: transparent;
 }
-
-/* One comment */
 
 .post-preview-comment {
   display: flex;
@@ -193,13 +173,9 @@
   margin-right: 4px;
 }
 
-/* Caption */
-
 .post-preview-caption {
   padding-bottom: 6px;
 }
-
-/* Meta */
 
 .post-preview-comment-meta {
   margin-top: 6px;
@@ -228,8 +204,6 @@
   color: #262626;
 }
 
-/* Like comment */
-
 .post-preview-comment-like {
   width: 26px;
   height: 26px;
@@ -251,8 +225,6 @@
   color: #ed4956;
 }
 
-/* View all comments */
-
 .post-preview-view-comments {
   align-self: flex-start;
 
@@ -271,8 +243,6 @@
   color: #262626;
 }
 
-/* Empty comments */
-
 .post-preview-empty-comments {
   margin: auto 0;
 
@@ -284,10 +254,6 @@
   line-height: 22px;
 }
 
-/* ==========================
-   Footer
-========================== */
-
 .post-preview-footer {
   display: flex;
   flex-direction: column;
@@ -295,8 +261,6 @@
   background: #ffffff;
   flex-shrink: 0;
 }
-
-/* Top action row */
 
 .post-preview-actions {
   display: flex;
@@ -338,8 +302,6 @@
   color: #262626;
 }
 
-/* Likes */
-
 .post-preview-likes {
   margin: 0;
   padding: 0 16px;
@@ -347,8 +309,6 @@
   font-weight: 600;
   color: #262626;
 }
-
-/* Date */
 
 .post-preview-date {
   margin: 8px 0 0;
@@ -362,10 +322,6 @@
   letter-spacing: 0.2px;
   text-transform: uppercase;
 }
-
-/* ==========================
-   Add comment
-========================== */
 
 .post-preview-add-comment {
   min-height: 56px;
@@ -425,10 +381,6 @@
   cursor: default;
 }
 
-/* ==========================
-   Owner actions
-========================== */
-
 .post-preview-owner-actions {
   display: flex;
   gap: 10px;
@@ -476,10 +428,6 @@
 .post-preview-owner-actions button:last-child:hover {
   background: #d93b48;
 }
-
-/* ==========================
-   Dark mode
-========================== */
 
 body.dark .post-preview-dialog,
 body.dark .post-preview-panel,
@@ -538,9 +486,41 @@ body.dark .post-preview-owner-actions button:first-child:hover {
   background: #333333;
 }
 
-/* ==========================
-   Responsive
-========================== */
+.post-preview-emoji {
+  position: relative;
+}
+
+.post-preview-emoji-button {
+  border: none;
+  background: transparent;
+  color: #8e8e8e;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+.post-preview-emoji-picker {
+  position: absolute;
+  bottom: 36px;
+  left: 0;
+  z-index: 100;
+  background: #ffffff;
+  border: 1px solid #dbdbdb;
+  border-radius: 12px;
+  padding: 8px;
+  display: grid;
+  grid-template-columns: repeat(5, 32px);
+  gap: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.post-preview-emoji-picker button {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 20px;
+}
 
 @media (max-width: 900px) {
   .post-preview-modal {
