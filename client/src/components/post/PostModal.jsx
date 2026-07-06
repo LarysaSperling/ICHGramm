@@ -34,6 +34,7 @@ const PostModal = ({ post, onClose, onPostChange }) => {
   const [isEmojiOpen, setIsEmojiOpen] = useState(false);
 
   const emojiRef = useRef(null);
+  const inputRef = useRef(null);
   const currentUserId = getCurrentUserId();
 
   const { _id, image, caption, author, createdAt } = localPost;
@@ -98,10 +99,14 @@ const PostModal = ({ post, onClose, onPostChange }) => {
     loadModalData();
   }, [_id, authorId]);
 
-  const handleEmojiClick = (emojiData) => {
-    setCommentText((prev) => `${prev}${emojiData.emoji}`);
-    setIsEmojiOpen(false);
-  };
+ const handleEmojiClick = (emojiData) => {
+  setCommentText((prev) => `${prev}${emojiData.emoji}`);
+  setIsEmojiOpen(false);
+
+  setTimeout(() => {
+    inputRef.current?.focus();
+  }, 0);
+};
 
   const handleToggleLike = async () => {
     if (isLiking) return;
@@ -315,6 +320,7 @@ const PostModal = ({ post, onClose, onPostChange }) => {
             </div>
 
             <input
+              ref={inputRef}
               type="text"
               name="modal-comment"
               placeholder="Add a comment..."
@@ -325,7 +331,7 @@ const PostModal = ({ post, onClose, onPostChange }) => {
             />
 
             <button type="submit" disabled={isSubmitting || !commentText.trim()}>
-              Post
+              Send
             </button>
           </form>
         </aside>

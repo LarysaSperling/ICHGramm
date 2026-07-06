@@ -74,6 +74,7 @@ const PostCard = ({ post, savedPostIds = [], onPostChange, onOpenPost }) => {
   const [isEmojiOpen, setIsEmojiOpen] = useState(false);
 
   const emojiRef = useRef(null);
+  const inputRef = useRef(null);
   const currentUserId = getCurrentUserId();
 
   const { _id, image, caption, author, createdAt } = localPost;
@@ -149,9 +150,13 @@ const PostCard = ({ post, savedPostIds = [], onPostChange, onOpenPost }) => {
   }, [authorId, isOwnPost]);
 
   const handleEmojiClick = (emojiData) => {
-    setCommentText((prev) => `${prev}${emojiData.emoji}`);
-    setIsEmojiOpen(false);
-  };
+  setCommentText((prev) => `${prev}${emojiData.emoji}`);
+  setIsEmojiOpen(false);
+
+  setTimeout(() => {
+    inputRef.current?.focus();
+  }, 0);
+};
 
   const handleToggleFollow = async () => {
     if (!authorId || isOwnPost || isFollowLoading) return;
@@ -374,6 +379,7 @@ const PostCard = ({ post, savedPostIds = [], onPostChange, onOpenPost }) => {
         </div>
 
         <input
+          ref={inputRef}
           id={`comment-${_id}`}
           name="comment"
           type="text"
@@ -385,7 +391,7 @@ const PostCard = ({ post, savedPostIds = [], onPostChange, onOpenPost }) => {
         />
 
         <button type="submit" disabled={isSubmitting || !commentText.trim()}>
-          Post
+          Send
         </button>
       </form>
     </article>
