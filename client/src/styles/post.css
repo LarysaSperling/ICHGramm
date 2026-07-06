@@ -181,6 +181,31 @@
   opacity: 0.4;
   cursor: not-allowed;
 }
+.post-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.post-follow {
+  border: none;
+  background: transparent;
+  color: #0095f6;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+}
+
+.post-follow.following {
+  color: #8e8e8e;
+}
+
+.post-follow:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
 body.dark .post-card {
   background: #000000;

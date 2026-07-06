@@ -4,7 +4,7 @@ import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
 
 const getProfile = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user._id).select("-password").lean();
+ const user = await User.findById(req.user._id).select("-password").lean();
 
   if (!user) {
     throw new ApiError(404, "User not found");

@@ -33,13 +33,17 @@ const PostCard = ({ post, savedPostIds = [], onPostChange }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [isFollowLoading, setIsFollowLoading] = useState(false);
   const [showAllComments, setShowAllComments] = useState(false);
 
   const currentUserId = getCurrentUserId();
 
   const { _id, image, caption, author, createdAt } = localPost;
 
-  const authorLink = author?._id ? `/users/${author._id}` : "#";
+  const authorId = author?._id;
+  const authorLink = authorId ? `/users/${authorId}` : "#";
+  const isOwnPost = authorId === currentUserId;
 
   const postLikes = Array.isArray(localPost.likes) ? localPost.likes : [];
 
@@ -65,6 +69,42 @@ const PostCard = ({ post, savedPostIds = [], onPostChange }) => {
 
     getComments();
   }, [_id]);
+
+  useEffect(() => {
+    const getProfile = async () => {
+      if (!authorId || isOwnPost) return;
+
+      try {
+        const { data } = await api.get("/users/profile");
+
+        const followingIds = Array.isArray(data.following)
+          ? data.following.map((id) => id.toString())
+          : [];
+
+        setIsFollowing(followingIds.includes(authorId));
+      } catch (err) {
+        console.error(err.response?.data?.message || "Failed to load profile");
+      }
+    };
+
+    getProfile();
+  }, [authorId, isOwnPost]);
+
+  const handleToggleFollow = async () => {
+    if (!authorId || isOwnPost || isFollowLoading) return;
+
+    try {
+      setIsFollowLoading(true);
+
+      const { data } = await api.post(`/users/${authorId}/follow`);
+
+      setIsFollowing(Boolean(data.isFollowing));
+    } catch (err) {
+      console.error(err.response?.data?.message || "Failed to follow user");
+    } finally {
+      setIsFollowLoading(false);
+    }
+  };
 
   const handleToggleLike = async () => {
     if (isLiking) return;
@@ -139,18 +179,31 @@ const PostCard = ({ post, savedPostIds = [], onPostChange }) => {
   return (
     <article className="post-card">
       <header className="post-header">
-        <Link to={authorLink} className="post-author">
-          <Avatar
-            src={author?.avatar}
-            name={author?.username || author?.fullName || "Unknown"}
-            size={36}
-          />
+        <div className="post-header-left">
+          <Link to={authorLink} className="post-author">
+            <Avatar
+              src={author?.avatar}
+              name={author?.username || author?.fullName || "Unknown"}
+              size={36}
+            />
 
-          <div>
-            <strong>{author?.username || "unknown"}</strong>
-            <span>{timeAgo(createdAt)}</span>
-          </div>
-        </Link>
+            <div>
+              <strong>{author?.username || "unknown"}</strong>
+              <span>{timeAgo(createdAt)}</span>
+            </div>
+          </Link>
+
+          {!isOwnPost && (
+            <button
+              type="button"
+              className={isFollowing ? "post-follow following" : "post-follow"}
+              onClick={handleToggleFollow}
+              disabled={isFollowLoading}
+            >
+              {isFollowing ? "Following" : "Follow"}
+            </button>
+          )}
+        </div>
 
         <button className="post-more" type="button">
           <MoreHorizontal size={22} />
