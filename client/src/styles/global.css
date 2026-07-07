@@ -17,6 +17,7 @@ body {
   --muted-color: #737373;
   --border-color: #dbdbdb;
   --hover-bg: #f2f2f2;
+  --footer-height: 80px;
 }
 
 body.dark {

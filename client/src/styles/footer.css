@@ -1,5 +1,14 @@
 .footer {
-  margin: 60px 0 30px;
+  position: fixed;
+  left: 245px;
+  right: 0;
+  bottom: 0;
+  height: var(--footer-height);
+  z-index: 2000;
+  background: var(--bg-color);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   text-align: center;
 }
 

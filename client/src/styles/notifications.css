@@ -9,9 +9,9 @@
 .notifications-dark-layer {
   position: fixed;
   top: 0;
-  left: 244px;
+  left: 245px;
   right: 0;
-  bottom: 0;
+  bottom: var(--footer-height);
   background: rgba(0, 0, 0, 0.58);
   z-index: 20;
 }
@@ -19,14 +19,13 @@
 .notifications-overlay {
   position: fixed;
   top: 0;
-  left: 244px;
+  left: 245px;
   width: 397px;
-  height: 100vh;
+  height: calc(100dvh - var(--footer-height));
   background: #fff;
   z-index: 30;
   border-right: 1px solid #dbdbdb;
   box-shadow: 4px 0 18px rgba(0, 0, 0, 0.12);
-
   border-top-right-radius: 18px;
   border-bottom-right-radius: 18px;
   overflow: hidden;
@@ -176,6 +175,17 @@ body.dark .notification-content {
 
 body.dark .notifications-header button {
   color: #f5f5f5;
+}
+
+@media (max-width: 992px) {
+  .notifications-overlay {
+    left: 80px;
+    width: 397px;
+  }
+
+  .notifications-dark-layer {
+    left: 80px;
+  }
 }
 
 @media (max-width: 768px) {
