@@ -82,18 +82,6 @@
   gap: 8px;
 }
 
-.right-sidebar {
-  width: 280px;
-  height: 100dvh;
-  position: fixed;
-  right: 0;
-  top: 0;
-  padding: 32px 24px;
-  border-left: 1px solid var(--border-color);
-  background: var(--card-bg);
-  color: var(--text-color);
-}
-
 .mobile-menu-button {
   display: none;
   position: fixed;
@@ -123,10 +111,6 @@ body.dark .sidebar-logo img {
   .app-main {
     width: calc(100% - 245px);
     margin-right: 0;
-  }
-
-  .right-sidebar {
-    display: none;
   }
 }
 

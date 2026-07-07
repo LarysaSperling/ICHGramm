@@ -522,6 +522,38 @@ body.dark .post-preview-owner-actions button:first-child:hover {
   font-size: 20px;
 }
 
+.post-preview-emoji {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.post-preview-emoji-button {
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+.post-preview-emoji-picker {
+  position: absolute;
+  left: 0;
+  bottom: 36px;
+  z-index: 50;
+}
+
+body.dark .post-preview-emoji-picker .EmojiPickerReact {
+  --epr-bg-color: #161616;
+  --epr-category-label-bg-color: #161616;
+  --epr-text-color: #f5f5f5;
+  --epr-hover-bg-color: #262626;
+  --epr-highlight-color: #0095f6;
+  --epr-search-input-bg-color: #000;
+  --epr-border-color: #262626;
+}
 @media (max-width: 900px) {
   .post-preview-modal {
     padding: 12px;

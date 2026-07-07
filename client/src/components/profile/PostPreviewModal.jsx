@@ -8,13 +8,14 @@ import {
   Smile,
   X,
 } from "lucide-react";
+import EmojiPicker from "emoji-picker-react";
 
 import api from "../../api/axios";
 import Avatar from "../ui/Avatar";
 import PostActionMenu from "./PostActionMenu";
-import "../../styles/postPreviewModal.css";
+import timeAgo from "../../utils/timeAgo";
 
-const EMOJIS = ["😀", "😍", "😂", "❤️", "🔥", "👏", "🥰", "😎", "🌸", "✨"];
+import "../../styles/postPreviewModal.css";
 
 const getCurrentUserId = () => {
   const token = localStorage.getItem("token");
@@ -28,45 +29,6 @@ const getCurrentUserId = () => {
   }
 };
 
-const formatTimeAgo = (dateValue) => {
-  if (!dateValue) return "just now";
-
-  const date = new Date(dateValue);
-  const now = new Date();
-
-  const seconds = Math.floor((now - date) / 1000);
-
-  if (seconds < 60) return "just now";
-
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) {
-    return minutes === 1 ? "1 minute ago" : `${minutes} minutes ago`;
-  }
-
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) {
-    return hours === 1 ? "1 hour ago" : `${hours} hours ago`;
-  }
-
-  const days = Math.floor(hours / 24);
-  if (days < 7) {
-    return days === 1 ? "1 day ago" : `${days} days ago`;
-  }
-
-  const weeks = Math.floor(days / 7);
-  if (weeks < 4) {
-    return weeks === 1 ? "1 week ago" : `${weeks} weeks ago`;
-  }
-
-  const months = Math.floor(days / 30);
-  if (months < 12) {
-    return months === 1 ? "1 month ago" : `${months} months ago`;
-  }
-
-  const years = Math.floor(days / 365);
-  return years === 1 ? "1 year ago" : `${years} years ago`;
-};
-
 const PostPreviewModal = ({
   post,
   isOpen,
@@ -76,6 +38,7 @@ const PostPreviewModal = ({
   onPostChange,
 }) => {
   const commentInputRef = useRef(null);
+  const emojiRef = useRef(null);
 
   const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState([]);
@@ -86,6 +49,22 @@ const PostPreviewModal = ({
   const [isLiking, setIsLiking] = useState(false);
   const [isCommenting, setIsCommenting] = useState(false);
   const [isEmojiOpen, setIsEmojiOpen] = useState(false);
+
+  const currentUserId = getCurrentUserId();
+
+  useEffect(() => {
+    const handleClickOutsideEmoji = (event) => {
+      if (emojiRef.current && !emojiRef.current.contains(event.target)) {
+        setIsEmojiOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutsideEmoji);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutsideEmoji);
+    };
+  }, []);
 
   useEffect(() => {
     const fetchComments = async () => {
@@ -106,39 +85,30 @@ const PostPreviewModal = ({
   }, [isOpen, post?._id]);
 
   useEffect(() => {
-  const fetchSavedPosts = async () => {
-    if (!isOpen || !post?._id) return;
+    const fetchSavedPosts = async () => {
+      if (!isOpen || !post?._id) return;
 
-    try {
-      const { data } = await api.get("/users/saved");
+      try {
+        const { data } = await api.get("/users/saved");
 
-      const saved = Array.isArray(data)
-        ? data.some((savedPost) => savedPost._id === post._id)
-        : false;
+        const saved = Array.isArray(data)
+          ? data.some((savedPost) => savedPost._id === post._id)
+          : false;
 
-      setIsSaved(saved);
-    } catch (error) {
-      console.error("Fetch saved posts failed:", error);
-    }
-  };
+        setIsSaved(saved);
+      } catch (error) {
+        console.error("Fetch saved posts failed:", error);
+      }
+    };
 
-  fetchSavedPosts();
-}, [isOpen, post?._id]);
+    fetchSavedPosts();
+  }, [isOpen, post?._id]);
 
   if (!isOpen || !post) return null;
-
-  const currentUserId = getCurrentUserId();
 
   const username = post.author?.username || "user";
   const fullName = post.author?.fullName || username;
   const avatar = post.author?.avatar;
-
-  const createdDate = post.createdAt
-    ? new Date(post.createdAt).toLocaleDateString("en-US", {
-        month: "long",
-        day: "numeric",
-      })
-    : "";
 
   const postLikes = Array.isArray(post.likes) ? post.likes : [];
 
@@ -169,25 +139,29 @@ const PostPreviewModal = ({
   };
 
   const handleToggleSave = async () => {
-  if (isSaving) return;
+    if (isSaving) return;
 
-  try {
-    setIsSaving(true);
+    try {
+      setIsSaving(true);
 
-    const { data } = await api.post(`/users/saved/${post._id}`);
+      const { data } = await api.post(`/users/saved/${post._id}`);
 
-    setIsSaved(data.saved);
-  } catch (error) {
-    console.error("Save post failed:", error);
-  } finally {
-    setIsSaving(false);
-  }
-};
+      setIsSaved(Boolean(data.saved));
+    } catch (error) {
+      console.error("Save post failed:", error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
-const handleEmojiClick = (emoji) => {
-  setCommentText((prev) => `${prev}${emoji}`);
-  setIsEmojiOpen(false);
-};
+  const handleEmojiClick = (emojiData) => {
+    setCommentText((prev) => `${prev}${emojiData.emoji}`);
+    setIsEmojiOpen(false);
+
+    setTimeout(() => {
+      commentInputRef.current?.focus();
+    }, 0);
+  };
 
   const handleAddComment = async (event) => {
     event.preventDefault();
@@ -203,6 +177,7 @@ const handleEmojiClick = (emoji) => {
 
       setComments((prevComments) => [data, ...prevComments]);
       setCommentText("");
+      setIsEmojiOpen(false);
 
       if (onPostChange) {
         onPostChange({
@@ -230,7 +205,8 @@ const handleEmojiClick = (emoji) => {
     setIsMenuOpen(false);
     onDeletePost();
   };
-    return (
+
+  return (
     <div className="post-preview-modal" onClick={onClose}>
       <button className="post-preview-close" type="button" onClick={onClose}>
         <X size={30} />
@@ -276,8 +252,7 @@ const handleEmojiClick = (emoji) => {
                   </p>
 
                   <div className="post-preview-comment-meta">
-                    {createdDate && <span>{createdDate}</span>}
-
+                    <span>{timeAgo(post.createdAt)}</span>
                     <button type="button">Reply</button>
                   </div>
                 </div>
@@ -304,24 +279,13 @@ const handleEmojiClick = (emoji) => {
 
             {visibleComments.map((comment) => {
               const commentUsername =
-                comment.user?.username ||
-                comment.author?.username ||
-                "user";
+                comment.user?.username || comment.author?.username || "user";
 
-              const commentAvatar =
-                comment.user?.avatar ||
-                comment.author?.avatar;
+              const commentAvatar = comment.user?.avatar || comment.author?.avatar;
 
               return (
-                <article
-                  className="post-preview-comment"
-                  key={comment._id}
-                >
-                  <Avatar
-                    src={commentAvatar}
-                    name={commentUsername}
-                    size={34}
-                  />
+                <article className="post-preview-comment" key={comment._id}>
+                  <Avatar src={commentAvatar} name={commentUsername} size={34} />
 
                   <div className="post-preview-comment-main">
                     <p>
@@ -329,11 +293,9 @@ const handleEmojiClick = (emoji) => {
                     </p>
 
                     <div className="post-preview-comment-meta">
-                      <span>{formatTimeAgo(comment.createdAt)}</span>
+                      <span>{timeAgo(comment.createdAt)}</span>
 
-                      <button type="button">
-                        Reply
-                      </button>
+                      <button type="button">Reply</button>
                     </div>
                   </div>
 
@@ -359,10 +321,7 @@ const handleEmojiClick = (emoji) => {
                   disabled={isLiking}
                   aria-label="Like post"
                 >
-                  <Heart
-                    size={25}
-                    fill={isLiked ? "currentColor" : "none"}
-                  />
+                  <Heart size={25} fill={isLiked ? "currentColor" : "none"} />
                 </button>
 
                 <button
@@ -373,64 +332,55 @@ const handleEmojiClick = (emoji) => {
                   <MessageCircle size={25} />
                 </button>
 
-                <button
-                  type="button"
-                  aria-label="Send post"
-                >
+                <button type="button" aria-label="Send post">
                   <Send size={25} />
                 </button>
               </div>
 
               <button
-          type="button"
-             className={isSaved ? "active-save" : ""}
-             onClick={handleToggleSave}
-             disabled={isSaving}
-             aria-label="Save post"
-             >
-          <Bookmark size={25} fill={isSaved ? "currentColor" : "none"} />
+                type="button"
+                className={isSaved ? "active-save" : ""}
+                onClick={handleToggleSave}
+                disabled={isSaving}
+                aria-label="Save post"
+              >
+                <Bookmark size={25} fill={isSaved ? "currentColor" : "none"} />
               </button>
             </div>
 
             <p className="post-preview-likes">
-              {likesCount === 1
-                ? "1 like"
-                : `${likesCount} likes`}
+              {likesCount === 1 ? "1 like" : `${likesCount} likes`}
             </p>
 
-            {createdDate && (
-              <p className="post-preview-date">
-                {createdDate}
-              </p>
-            )}
+            <p className="post-preview-date">{timeAgo(post.createdAt)}</p>
 
             <form
               className="post-preview-add-comment"
               onSubmit={handleAddComment}
             >
-              <div className="post-preview-emoji">
+              <div className="post-preview-emoji" ref={emojiRef}>
                 <button
                   type="button"
                   className="post-preview-emoji-button"
                   onClick={() => setIsEmojiOpen((prev) => !prev)}
                 >
                   <Smile size={22} />
-               </button>
+                </button>
 
-               {isEmojiOpen && (
-                 <div className="post-preview-emoji-picker">
-                   {EMOJIS.map((emoji) => (
-                     <button
-                       key={emoji}
-                       type="button"
-                       onClick={() => handleEmojiClick(emoji)}
-                     >
-                      {emoji}
-                     </button>
-                   ))}
-                 </div>
-               )}
-            </div>
+                {isEmojiOpen && (
+                  <div className="post-preview-emoji-picker">
+                    <EmojiPicker
+                      onEmojiClick={handleEmojiClick}
+                      width={300}
+                      height={360}
+                      emojiStyle="native"
+                      previewConfig={{ showPreview: false }}
+                      searchDisabled={false}
+                      skinTonesDisabled
+                    />
+                  </div>
+                )}
+              </div>
 
               <input
                 id="post-comment"
@@ -441,15 +391,11 @@ const handleEmojiClick = (emoji) => {
                 onChange={(event) => setCommentText(event.target.value)}
                 placeholder="Add a comment..."
                 autoComplete="off"
+                maxLength={300}
               />
 
-              <button
-                type="submit"
-                disabled={
-                  !commentText.trim() || isCommenting
-                }
-              >
-                Post
+              <button type="submit" disabled={!commentText.trim() || isCommenting}>
+                Send
               </button>
             </form>
           </footer>
