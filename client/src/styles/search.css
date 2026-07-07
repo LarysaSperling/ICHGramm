@@ -33,6 +33,10 @@ body.search-open .right-sidebar {
   box-shadow: 10px 0 24px rgba(0, 0, 0, 0.12);
 
   padding: 28px 18px;
+
+  border-top-right-radius: 18px;
+  border-bottom-right-radius: 18px;
+  overflow: hidden;
 }
 
 .search-header {
@@ -145,5 +149,6 @@ body.search-open .right-sidebar {
     left: 0;
     width: 100%;
     height: calc(100vh - 60px);
+    border-radius: 0;
   }
 }
