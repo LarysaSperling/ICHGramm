@@ -9,6 +9,18 @@ import { useAuth } from "../context/AuthContext";
 
 import "../styles/messages.css";
 
+const getCurrentUserId = () => {
+  const token = localStorage.getItem("token");
+  if (!token) return null;
+
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload.userId || payload.id || payload._id || null;
+  } catch {
+    return null;
+  }
+};
+
 const Messages = () => {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
@@ -27,15 +39,17 @@ const Messages = () => {
   const [error, setError] = useState("");
   const [currentTime] = useState(() => new Date().getTime());
 
+  const currentUserId = user?._id || getCurrentUserId();
+
   const getChatRoom = () => {
-    if (!user?._id || !activeChat?.user?._id) return null;
-    return [user._id, activeChat.user._id].sort().join("_");
+    if (!currentUserId || !activeChat?.user?._id) return null;
+    return [currentUserId, activeChat.user._id].sort().join("_");
   };
 
   useEffect(() => {
     const handleNewMessage = (newMessage) => {
       const otherUser =
-        newMessage.sender._id === user?._id
+        newMessage.sender._id === currentUserId
           ? newMessage.receiver
           : newMessage.sender;
 
@@ -79,7 +93,7 @@ const Messages = () => {
         prev.map((message) => {
           const senderId = message.sender?._id || message.sender;
 
-          if (senderId === user?._id) {
+          if (senderId === currentUserId) {
             return {
               ...message,
               isSeen: true,
@@ -110,7 +124,7 @@ const Messages = () => {
       socket.off("newMessage", handleNewMessage);
       socket.off("messagesSeen", handleMessagesSeen);
     };
-  }, [user]);
+  }, [currentUserId]);
 
   useEffect(() => {
     const handleTyping = (typingUserData) => {
@@ -131,16 +145,16 @@ const Messages = () => {
   }, []);
 
   useEffect(() => {
-  const handleOnlineUsers = (users) => {
-    setOnlineUsers(users);
-  };
+    const handleOnlineUsers = (users) => {
+      setOnlineUsers(users);
+    };
 
-  socket.on("onlineUsers", handleOnlineUsers);
+    socket.on("onlineUsers", handleOnlineUsers);
 
-  return () => {
-    socket.off("onlineUsers", handleOnlineUsers);
-  };
-}, []);
+    return () => {
+      socket.off("onlineUsers", handleOnlineUsers);
+    };
+  }, []);
 
   useEffect(() => {
     const getChats = async () => {
@@ -167,7 +181,7 @@ const Messages = () => {
     const openChatFromProfile = async () => {
       const userId = searchParams.get("user");
 
-      if (!userId || !user?._id) return;
+      if (!userId || !currentUserId) return;
 
       const existingChat = chats.find((chat) => chat.user._id === userId);
 
@@ -190,11 +204,11 @@ const Messages = () => {
     };
 
     openChatFromProfile();
-  }, [searchParams, chats, user]);
+  }, [searchParams, chats, currentUserId]);
 
   useEffect(() => {
     const getMessages = async () => {
-      if (!activeChat?.user?._id || !user?._id) return;
+      if (!activeChat?.user?._id || !currentUserId) return;
 
       try {
         setIsLoadingMessages(true);
@@ -203,7 +217,7 @@ const Messages = () => {
         const { data } = await api.get(`/messages/${activeChat.user._id}`);
         setMessages(data);
 
-        const chatRoom = [user._id, activeChat.user._id].sort().join("_");
+        const chatRoom = [currentUserId, activeChat.user._id].sort().join("_");
         socket.emit("joinChat", chatRoom);
 
         await api.put(`/messages/${activeChat.user._id}/seen`);
@@ -215,7 +229,7 @@ const Messages = () => {
     };
 
     getMessages();
-  }, [activeChat, user]);
+  }, [activeChat, currentUserId]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -227,13 +241,13 @@ const Messages = () => {
 
     const chatRoom = getChatRoom();
 
-    if (!chatRoom || !user?._id) return;
+    if (!chatRoom || !currentUserId) return;
 
     socket.emit("typing", {
       chatRoom,
       user: {
-        _id: user._id,
-        username: user.username,
+        _id: currentUserId,
+        username: user?.username,
       },
     });
 
@@ -292,7 +306,7 @@ const Messages = () => {
   const getLastOwnMessageId = () => {
     const ownMessages = messages.filter((message) => {
       const senderId = message.sender?._id || message.sender;
-      return senderId === user?._id;
+      return senderId === currentUserId;
     });
 
     return ownMessages.at(-1)?._id;
@@ -427,7 +441,7 @@ const Messages = () => {
                   <div className="messages-bubbles">
                     {messages.map((message) => {
                       const senderId = message.sender?._id || message.sender;
-                      const isOwnMessage = senderId === user?._id;
+                      const isOwnMessage = senderId === currentUserId;
                       const isLastOwnMessage = message._id === lastOwnMessageId;
 
                       return (
@@ -444,6 +458,7 @@ const Messages = () => {
                           >
                             {message.text}
                           </div>
+
                           {isOwnMessage && isLastOwnMessage && (
                             <span
                               className={`message-status ${
