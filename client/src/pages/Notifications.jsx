@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { X } from "lucide-react";
+import { Trash2, X } from "lucide-react";
 
 import api from "../api/axios";
 import Avatar from "../components/ui/Avatar";
@@ -28,7 +28,12 @@ const Notifications = () => {
     const getNotifications = async () => {
       try {
         const { data } = await api.get("/notifications");
+
         setNotifications(data);
+
+        if (data.some((notification) => !notification.isRead)) {
+          await api.put("/notifications/read-all");
+        }
       } catch (err) {
         setError(err.response?.data?.message || "Failed to load notifications");
       } finally {
@@ -44,6 +49,27 @@ const Notifications = () => {
     if (type === "comment") return "commented on your post.";
     if (type === "follow") return "started following you.";
     return "sent you a notification.";
+  };
+
+  const handleDeleteNotification = async (notificationId) => {
+    try {
+      await api.delete(`/notifications/${notificationId}`);
+
+      setNotifications((prev) =>
+        prev.filter((notification) => notification._id !== notificationId)
+      );
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to delete notification");
+    }
+  };
+
+  const handleClearAll = async () => {
+    try {
+      await api.delete("/notifications/clear");
+      setNotifications([]);
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to clear notifications");
+    }
   };
 
   return (
@@ -64,7 +90,19 @@ const Notifications = () => {
             </button>
           </div>
 
-          <h2 className="notifications-section-title">New</h2>
+          <div className="notifications-subheader">
+            <h2 className="notifications-section-title">New</h2>
+
+            {notifications.length > 0 && (
+              <button
+                type="button"
+                className="notifications-clear"
+                onClick={handleClearAll}
+              >
+                Clear all
+              </button>
+            )}
+          </div>
 
           {isLoading && <Loader />}
 
@@ -82,6 +120,10 @@ const Notifications = () => {
                   notification.isRead ? "read" : "unread"
                 }`}
               >
+                {!notification.isRead && (
+                  <span className="notification-unread-dot" />
+                )}
+
                 <Avatar
                   src={notification.sender?.avatar}
                   name={
@@ -105,6 +147,15 @@ const Notifications = () => {
                     className="notification-post-image"
                   />
                 )}
+
+                <button
+                  type="button"
+                  className="notification-delete"
+                  onClick={() => handleDeleteNotification(notification._id)}
+                  aria-label="Delete notification"
+                >
+                  <Trash2 size={16} />
+                </button>
               </div>
             ))}
           </div>
