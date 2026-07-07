@@ -90,9 +90,9 @@ const EditProfile = () => {
     try {
       setIsLoading(true);
 
-      const { data } = await api.put("/users/profile", dataToSend);
+      await api.put("/users/profile", dataToSend);
 
-      navigate(`/profile/${data._id}`);
+      navigate("/profile");
     } catch (err) {
       setError(err.response?.data?.message || "Failed to update profile");
     } finally {
@@ -117,6 +117,7 @@ const EditProfile = () => {
             <label className="edit-profile-photo-btn">
               New photo
               <input
+                id="avatar"
                 type="file"
                 name="avatar"
                 accept="image/jpeg,image/png,image/webp"
@@ -128,6 +129,7 @@ const EditProfile = () => {
           <label className="edit-profile-field">
             <span>Full name</span>
             <input
+              id="fullName"
               type="text"
               name="fullName"
               value={formData.fullName}
@@ -140,6 +142,7 @@ const EditProfile = () => {
           <label className="edit-profile-field">
             <span>Website</span>
             <input
+              id="website"
               type="url"
               name="website"
               value={formData.website}
@@ -152,6 +155,7 @@ const EditProfile = () => {
           <label className="edit-profile-field">
             <span>Bio</span>
             <textarea
+              id="bio"
               name="bio"
               value={formData.bio}
               onChange={handleChange}
