@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CloudUpload, Smile, X } from "lucide-react";
+import EmojiPicker from "emoji-picker-react";
 
 import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
@@ -17,8 +18,6 @@ const ALLOWED_FILE_TYPES = [
   "image/webp",
 ];
 
-const EMOJIS = ["😀", "😍", "😂", "❤️", "🔥", "👏", "🥰", "😎", "🌸", "✨"];
-
 const CreatePost = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -30,6 +29,23 @@ const CreatePost = () => {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isEmojiOpen, setIsEmojiOpen] = useState(false);
+
+  const emojiRef = useRef(null);
+  const captionRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutsideEmoji = (event) => {
+      if (emojiRef.current && !emojiRef.current.contains(event.target)) {
+        setIsEmojiOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutsideEmoji);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutsideEmoji);
+    };
+  }, []);
 
   const validateFile = (file) => {
     if (!file) return "Image is required";
@@ -74,9 +90,13 @@ const CreatePost = () => {
     });
   };
 
-  const handleEmojiClick = (emoji) => {
-    setCaption((prev) => `${prev}${emoji}`);
+  const handleEmojiClick = (emojiData) => {
+    setCaption((prev) => `${prev}${emojiData.emoji}`);
     setIsEmojiOpen(false);
+
+    setTimeout(() => {
+      captionRef.current?.focus();
+    }, 0);
   };
 
   const handleSubmit = async (event) => {
@@ -188,6 +208,7 @@ const CreatePost = () => {
             </div>
 
             <textarea
+              ref={captionRef}
               id="caption"
               name="caption"
               placeholder="Write a caption..."
@@ -197,27 +218,29 @@ const CreatePost = () => {
             />
 
             <div className="create-caption-footer">
-              <button
-                type="button"
-                className="emoji-button"
-                onClick={() => setIsEmojiOpen((prev) => !prev)}
-              >
-                <Smile size={20} />
-              </button>
+              <div className="create-post-emoji" ref={emojiRef}>
+                <button
+                  type="button"
+                  className="create-post-emoji-button"
+                  onClick={() => setIsEmojiOpen((prev) => !prev)}
+                >
+                  <Smile size={20} />
+                </button>
 
-              {isEmojiOpen && (
-                <div className="emoji-picker">
-                  {EMOJIS.map((emoji) => (
-                    <button
-                      key={emoji}
-                      type="button"
-                      onClick={() => handleEmojiClick(emoji)}
-                    >
-                      {emoji}
-                    </button>
-                  ))}
-                </div>
-              )}
+                {isEmojiOpen && (
+                  <div className="create-post-emoji-picker">
+                    <EmojiPicker
+                      onEmojiClick={handleEmojiClick}
+                      width={320}
+                      height={380}
+                      emojiStyle="native"
+                      previewConfig={{ showPreview: false }}
+                      searchDisabled={false}
+                      skinTonesDisabled
+                    />
+                  </div>
+                )}
+              </div>
 
               <span className="caption-counter">{caption.length}/2 200</span>
             </div>

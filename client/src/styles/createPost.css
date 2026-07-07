@@ -202,26 +202,37 @@
   padding: 0;
 }
 
-.emoji-picker {
-  position: absolute;
-  bottom: 54px;
-  left: 16px;
-  z-index: 20;
-  background: #ffffff;
-  border: 1px solid #dbdbdb;
-  border-radius: 12px;
-  padding: 8px;
-  display: grid;
-  grid-template-columns: repeat(5, 32px);
-  gap: 6px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+.create-post-emoji {
+  position: relative;
+  display: flex;
+  align-items: center;
 }
 
-.emoji-picker button {
+.create-post-emoji-button {
   border: none;
   background: transparent;
+  color: inherit;
   cursor: pointer;
-  font-size: 20px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+.create-post-emoji-picker {
+  position: absolute;
+  left: 0;
+  bottom: 36px;
+  z-index: 100;
+}
+
+body.dark .create-post-emoji-picker .EmojiPickerReact {
+  --epr-bg-color: #161616;
+  --epr-category-label-bg-color: #161616;
+  --epr-text-color: #f5f5f5;
+  --epr-hover-bg-color: #262626;
+  --epr-highlight-color: #0095f6;
+  --epr-search-input-bg-color: #000;
+  --epr-border-color: #262626;
 }
 
 @media (max-width: 768px) {
