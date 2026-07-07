@@ -14,6 +14,7 @@
   display: flex;
   flex-direction: column;
 }
+
 .page-content {
   flex: 1;
   width: 100%;
@@ -48,6 +49,7 @@
 }
 
 .sidebar-nav a,
+.sidebar-nav button,
 .sidebar-bottom button {
   display: flex;
   align-items: center;
@@ -61,18 +63,78 @@
   border: none;
   font-size: 16px;
   font-weight: 500;
+  font-family: inherit;
   cursor: pointer;
   transition: 0.2s;
+  text-align: left;
 }
 
 .sidebar-nav a:hover,
+.sidebar-nav button:hover,
 .sidebar-nav a.active,
+.sidebar-nav button.active,
 .sidebar-bottom button:hover {
   background: var(--hover-bg);
 }
 
 .sidebar-nav .active {
   font-weight: 700;
+}
+
+.sidebar-link-with-badge {
+  position: relative;
+}
+
+.sidebar-icon-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.sidebar-badge {
+  position: absolute;
+  top: -7px;
+  right: -9px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #ed4956;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
+
+.message-toast {
+  position: fixed;
+  left: 265px;
+  bottom: 24px;
+  z-index: 1400;
+  width: 260px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.16);
+  color: var(--text-color);
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.message-toast strong {
+  font-size: 14px;
+}
+
+.message-toast span {
+  font-size: 13px;
+  color: var(--muted-color);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .sidebar-bottom {
@@ -132,6 +194,10 @@ body.dark .sidebar-logo img {
     width: calc(100% - 80px);
     margin-left: 80px;
   }
+
+  .message-toast {
+    left: 100px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -173,6 +239,13 @@ body.dark .sidebar-logo img {
     z-index: 1000;
     display: block;
     background: rgba(0, 0, 0, 0.55);
+  }
+
+  .message-toast {
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    width: auto;
   }
 }
 

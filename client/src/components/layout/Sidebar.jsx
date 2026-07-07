@@ -1,4 +1,4 @@
-import { Link, NavLink } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   House,
   Search,
@@ -21,43 +21,69 @@ import logo from "../../assets/logos/ichgram-logo.svg";
 import "../../styles/layout.css";
 
 const Sidebar = ({ isOpen, onClose }) => {
+  const location = useLocation();
+  const navigate = useNavigate();
+
   const { logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
-
   const { unreadMessages, messageToast, clearUnreadMessages } = useMessages();
 
-  const handleNavigate = () => {
+  const closeMobileSidebar = () => {
     if (onClose) onClose();
+  };
+
+  const handleToggleNavigate = (path) => {
+    if (location.pathname === path) {
+      navigate("/home");
+    } else {
+      navigate(path);
+    }
+
+    closeMobileSidebar();
   };
 
   return (
     <aside className={`sidebar ${isOpen ? "open" : ""}`}>
-      <Link to="/home" className="sidebar-logo" onClick={handleNavigate}>
+      <Link to="/home" className="sidebar-logo" onClick={closeMobileSidebar}>
         <img src={logo} alt="ICHGramm" />
       </Link>
 
       <nav className="sidebar-nav">
-        <NavLink to="/home" onClick={handleNavigate}>
+        <button
+          type="button"
+          className={location.pathname === "/home" ? "active" : ""}
+          onClick={() => handleToggleNavigate("/home")}
+        >
           <House size={24} />
           <span>Home</span>
-        </NavLink>
+        </button>
 
-        <NavLink to="/search" onClick={handleNavigate}>
+        <button
+          type="button"
+          className={location.pathname === "/search" ? "active" : ""}
+          onClick={() => handleToggleNavigate("/search")}
+        >
           <Search size={24} />
           <span>Search</span>
-        </NavLink>
+        </button>
 
-        <NavLink to="/explore" onClick={handleNavigate}>
+        <button
+          type="button"
+          className={location.pathname === "/explore" ? "active" : ""}
+          onClick={() => handleToggleNavigate("/explore")}
+        >
           <Compass size={24} />
           <span>Explore</span>
-        </NavLink>
+        </button>
 
-        <NavLink
-          to="/messages"
-          className="sidebar-link-with-badge"
+        <button
+          type="button"
+          className={`sidebar-link-with-badge ${
+            location.pathname === "/messages" ? "active" : ""
+          }`}
           onClick={() => {
             clearUnreadMessages();
-            handleNavigate();
+            handleToggleNavigate("/messages");
           }}
         >
           <div className="sidebar-icon-wrap">
@@ -71,22 +97,34 @@ const Sidebar = ({ isOpen, onClose }) => {
           </div>
 
           <span>Messages</span>
-        </NavLink>
+        </button>
 
-        <NavLink to="/notifications" onClick={handleNavigate}>
+        <button
+          type="button"
+          className={location.pathname === "/notifications" ? "active" : ""}
+          onClick={() => handleToggleNavigate("/notifications")}
+        >
           <Heart size={24} />
           <span>Notifications</span>
-        </NavLink>
+        </button>
 
-        <NavLink to="/create" onClick={handleNavigate}>
+        <button
+          type="button"
+          className={location.pathname === "/create" ? "active" : ""}
+          onClick={() => handleToggleNavigate("/create")}
+        >
           <SquarePlus size={24} />
           <span>Create</span>
-        </NavLink>
+        </button>
 
-        <NavLink to="/profile" onClick={handleNavigate}>
+        <button
+          type="button"
+          className={location.pathname === "/profile" ? "active" : ""}
+          onClick={() => handleToggleNavigate("/profile")}
+        >
           <CircleUserRound size={24} />
           <span>Profile</span>
-        </NavLink>
+        </button>
       </nav>
 
       <div className="sidebar-bottom">
@@ -116,7 +154,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           className="message-toast"
           onClick={() => {
             clearUnreadMessages();
-            handleNavigate();
+            closeMobileSidebar();
           }}
         >
           <strong>{messageToast.sender}</strong>

@@ -78,7 +78,10 @@ const Notifications = () => {
         <Home />
       </div>
 
-      <div className="notifications-dark-layer"></div>
+      <div
+        className="notifications-dark-layer"
+        onClick={() => navigate("/home")}
+      />
 
       <div className="notifications-overlay">
         <section className="notifications-panel">
