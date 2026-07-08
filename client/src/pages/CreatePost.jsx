@@ -232,8 +232,8 @@ const CreatePost = () => {
                   <div className="create-post-emoji-picker">
                     <EmojiPicker
                       onEmojiClick={handleEmojiClick}
-                      width={320}
-                      height={380}
+                      width={280}
+                      height={260}
                       emojiStyle="native"
                       previewConfig={{ showPreview: false }}
                       searchDisabled={false}

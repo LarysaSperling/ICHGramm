@@ -9,10 +9,10 @@
   width: calc(100% - 245px);
   margin-left: 245px;
   margin-right: 0;
-  padding: 32px 24px;
   background: var(--bg-color);
   display: flex;
   flex-direction: column;
+  padding: 32px 24px calc(var(--footer-height) + var(--footer-safe-space));
 }
 
 .page-content {
@@ -246,6 +246,15 @@ body.dark .sidebar-logo img {
     bottom: 16px;
     width: auto;
   }
+
+    .sidebar.open {
+    padding-bottom: calc(var(--footer-height) + 24px);
+  }
+
+  .sidebar.open .sidebar-bottom {
+    margin-bottom: calc(var(--footer-height) + 16px);
+  }
+  
 }
 
 @media (max-width: 480px) {
