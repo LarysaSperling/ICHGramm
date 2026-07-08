@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { MoreHorizontal, SendHorizontal, Smile } from "lucide-react";
+import { ArrowLeft, MoreHorizontal, SendHorizontal, Smile } from "lucide-react";
 import EmojiPicker from "emoji-picker-react";
 
 import api from "../api/axios";
@@ -69,8 +69,18 @@ const Messages = () => {
         const { data } = await api.get("/messages");
         setChats(data);
 
-        if (!userIdFromUrl && data.length > 0) {
-          setActiveChat(data[0]);
+        if (!userIdFromUrl) {
+          setActiveChat(null);
+          setMessages([]);
+          return;
+        }
+
+        const existingChat = data.find(
+          (chat) => chat.user._id === userIdFromUrl,
+        );
+
+        if (existingChat) {
+          setActiveChat(existingChat);
         }
       } catch (err) {
         setError(err.response?.data?.message || "Failed to load chats");
@@ -87,12 +97,12 @@ const Messages = () => {
       if (!userIdFromUrl || !currentUserId) return;
 
       const existingChat = chats.find(
-        (chat) => chat.user._id === userIdFromUrl
+        (chat) => chat.user._id === userIdFromUrl,
       );
 
       if (existingChat) {
         setActiveChat((prev) =>
-          prev?.user?._id === existingChat.user._id ? prev : existingChat
+          prev?.user?._id === existingChat.user._id ? prev : existingChat,
         );
         return;
       }
@@ -108,6 +118,7 @@ const Messages = () => {
           lastMessageDate: null,
           lastMessageSeen: false,
           lastMessageSender: null,
+          unreadCount: 0,
         });
       } catch (err) {
         setError(err.response?.data?.message || "Failed to open chat");
@@ -144,6 +155,18 @@ const Messages = () => {
         socket.emit("joinChat", chatRoom);
 
         await api.put(`/messages/${activeUserId}/seen`);
+
+        setChats((prev) =>
+          prev.map((chat) =>
+            chat.user._id === activeUserId
+              ? {
+                  ...chat,
+                  unreadCount: 0,
+                  lastMessageSeen: true,
+                }
+              : chat,
+          ),
+        );
       } catch (err) {
         loadedChatRef.current = null;
         setError(err.response?.data?.message || "Failed to load messages");
@@ -168,6 +191,10 @@ const Messages = () => {
           const exists = prev.some((message) => message._id === newMessage._id);
           return exists ? prev : [...prev, newMessage];
         });
+
+        if (senderId !== currentUserId && activeUserId) {
+          api.put(`/messages/${activeUserId}/seen`).catch(() => {});
+        }
       }
 
       const otherUser =
@@ -184,22 +211,32 @@ const Messages = () => {
               lastMessageDate: newMessage.createdAt,
               lastMessageSeen: newMessage.isSeen,
               lastMessageSender: senderId,
+              unreadCount:
+                senderId !== currentUserId && senderId !== activeUserId ? 1 : 0,
             },
             ...prev,
           ];
         }
 
-        return prev.map((chat) =>
-          chat.user._id === otherUser._id
-            ? {
-                ...chat,
-                lastMessage: newMessage.text,
-                lastMessageDate: newMessage.createdAt,
-                lastMessageSeen: newMessage.isSeen,
-                lastMessageSender: senderId,
-              }
-            : chat
-        );
+        return prev.map((chat) => {
+          if (chat.user._id !== otherUser._id) return chat;
+
+          const shouldIncreaseUnread =
+            senderId !== currentUserId && chat.user._id !== activeUserId;
+
+          return {
+            ...chat,
+            lastMessage: newMessage.text,
+            lastMessageDate: newMessage.createdAt,
+            lastMessageSeen: newMessage.isSeen,
+            lastMessageSender: senderId,
+            unreadCount: shouldIncreaseUnread
+              ? (chat.unreadCount || 0) + 1
+              : chat.user._id === activeUserId
+                ? 0
+                : chat.unreadCount || 0,
+          };
+        });
       });
     };
 
@@ -217,7 +254,7 @@ const Messages = () => {
           }
 
           return message;
-        })
+        }),
       );
 
       setChats((prev) =>
@@ -227,8 +264,8 @@ const Messages = () => {
                 ...chat,
                 lastMessageSeen: true,
               }
-            : chat
-        )
+            : chat,
+        ),
       );
     };
 
@@ -305,6 +342,16 @@ const Messages = () => {
     navigate(`/messages?user=${chat.user._id}`);
   };
 
+  const handleBackToChats = () => {
+    loadedChatRef.current = null;
+    setActiveChat(null);
+    setMessages([]);
+    setEditingMessage(null);
+    setOpenMessageMenuId(null);
+    setMessageText("");
+    navigate("/messages");
+  };
+
   const handleMessageChange = (event) => {
     const value = event.target.value;
     setMessageText(value);
@@ -361,7 +408,7 @@ const Messages = () => {
       await api.delete(`/messages/message/${messageId}`);
 
       setMessages((prev) =>
-        prev.filter((message) => message._id !== messageId)
+        prev.filter((message) => message._id !== messageId),
       );
 
       const chatsResponse = await api.get("/messages");
@@ -403,13 +450,13 @@ const Messages = () => {
           `/messages/message/${editingMessage._id}`,
           {
             text: messageText.trim(),
-          }
+          },
         );
 
         setMessages((prev) =>
           prev.map((message) =>
-            message._id === editingMessage._id ? data : message
-          )
+            message._id === editingMessage._id ? data : message,
+          ),
         );
 
         const chatsResponse = await api.get("/messages");
@@ -490,7 +537,9 @@ const Messages = () => {
   const lastOwnMessageId = getLastOwnMessageId();
 
   return (
-    <main className="messages-page">
+    <main
+      className={`messages-page ${activeChat ? "chat-open" : "chat-list-open"}`}
+    >
       <section className="messages-list-panel">
         <h2 className="messages-account">{user?.username || "Messages"}</h2>
 
@@ -524,6 +573,7 @@ const Messages = () => {
 
                 <div className="messages-chat-info">
                   <strong>{chat.user.username}</strong>
+
                   <span>
                     {typingUser?._id === chat.user._id
                       ? "typing..."
@@ -534,6 +584,12 @@ const Messages = () => {
                         }`}
                   </span>
                 </div>
+
+                {chat.unreadCount > 0 && (
+                  <span className="chat-unread-badge">
+                    {chat.unreadCount > 9 ? "9+" : chat.unreadCount}
+                  </span>
+                )}
 
                 <div
                   className="chat-menu-wrap"
@@ -574,11 +630,19 @@ const Messages = () => {
         {!activeChat ? (
           <div className="messages-no-chat">
             <h2>Your messages</h2>
-            <p>Send a message to start a chat.</p>
+            <p>Choose a chat or open a profile to start messaging.</p>
           </div>
         ) : (
           <>
             <header className="messages-conversation-header">
+              <button
+                type="button"
+                className="messages-back-button"
+                onClick={handleBackToChats}
+              >
+                <ArrowLeft size={22} />
+              </button>
+
               <Link
                 to={`/users/${activeChat.user._id}`}
                 className="messages-header-user"
@@ -601,8 +665,8 @@ const Messages = () => {
                     {typingUser?._id === activeChat.user._id
                       ? "typing..."
                       : onlineUsers.includes(activeChat.user._id)
-                      ? "Active now"
-                      : "Offline"}
+                        ? "Active now"
+                        : "Offline"}
                   </span>
                 </div>
               </Link>
@@ -647,8 +711,7 @@ const Messages = () => {
                     {messages.map((message) => {
                       const senderId = message.sender?._id || message.sender;
                       const isOwnMessage = senderId === currentUserId;
-                      const isLastOwnMessage =
-                        message._id === lastOwnMessageId;
+                      const isLastOwnMessage = message._id === lastOwnMessageId;
 
                       return (
                         <div

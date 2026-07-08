@@ -21,11 +21,15 @@ const sendMessage = asyncHandler(async (req, res) => {
     },
   ]);
 
-  const chatRoom = [req.user._id.toString(), receiver.toString()].sort().join("_");
+  const chatRoom = [req.user._id.toString(), receiver.toString()]
+    .sort()
+    .join("_");
 
   if (req.io) {
     req.io.to(chatRoom).emit("newMessage", populatedMessage);
-    req.io.to(receiver.toString()).emit("newMessageNotification", populatedMessage);
+    req.io
+      .to(receiver.toString())
+      .emit("newMessageNotification", populatedMessage);
   }
 
   res.status(201).json(populatedMessage);
@@ -66,7 +70,7 @@ const markMessagesAsSeen = asyncHandler(async (req, res) => {
     {
       isSeen: true,
       seenAt: new Date(),
-    }
+    },
   );
 
   const chatRoom = [req.user._id.toString(), otherUserId.toString()]
@@ -96,22 +100,31 @@ const getChats = asyncHandler(async (req, res) => {
 
   const chatsMap = new Map();
 
-  messages.forEach((message) => {
+  for (const message of messages) {
     const otherUser =
       message.sender._id.toString() === req.user._id.toString()
         ? message.receiver
         : message.sender;
 
-    if (!chatsMap.has(otherUser._id.toString())) {
-      chatsMap.set(otherUser._id.toString(), {
+    const otherUserId = otherUser._id.toString();
+
+    if (!chatsMap.has(otherUserId)) {
+      const unreadCount = await Message.countDocuments({
+        sender: otherUser._id,
+        receiver: req.user._id,
+        isSeen: false,
+      });
+
+      chatsMap.set(otherUserId, {
         user: otherUser,
         lastMessage: message.text,
         lastMessageDate: message.createdAt,
         lastMessageSeen: message.isSeen,
         lastMessageSender: message.sender._id,
+        unreadCount,
       });
     }
-  });
+  }
 
   res.json([...chatsMap.values()]);
 });

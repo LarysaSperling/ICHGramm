@@ -542,6 +542,38 @@
   background: #efefef;
 }
 
+.chat-unread-badge {
+  margin-left: auto;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #ed4956;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.messages-back-button {
+  display: none;
+  width: 36px;
+  height: 36px;
+  margin-right: 8px;
+  border: none;
+  background: transparent;
+  color: #262626;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+body.dark .messages-back-button {
+  color: #f5f5f5;
+}
+
 body.dark .chat-menu-button:hover {
   background: #262626;
   color: #fff;
@@ -697,100 +729,30 @@ body.dark .messages-online-dot {
     grid-template-columns: 1fr;
   }
 
-  .messages-list-panel {
-    display: none;
-  }
-
+  .messages-list-panel,
   .messages-conversation {
     width: 100%;
     min-width: 0;
-    border-right: none;
   }
 
-  .messages-conversation-header {
-    height: 64px;
-    min-height: 64px;
-    padding: 0 16px;
+  .messages-page.chat-list-open .messages-list-panel {
+    display: flex;
   }
 
-  .messages-conversation-body {
-    padding: 32px 12px 18px;
+  .messages-page.chat-list-open .messages-conversation {
+    display: none;
   }
 
-  .messages-profile-preview {
-    margin-bottom: 52px;
+  .messages-page.chat-open .messages-list-panel {
+    display: none;
   }
 
-  .messages-profile-preview h3 {
-    font-size: 16px;
+  .messages-page.chat-open .messages-conversation {
+    display: flex;
   }
 
-  .messages-profile-preview p {
-    font-size: 12px;
-  }
-
-  .messages-date {
-    margin-bottom: 54px;
-  }
-
-  .messages-bubbles {
-    gap: 14px;
-    padding: 0 8px;
-  }
-
-  .message-row {
-    gap: 7px;
-  }
-
-  .message-content,
-  .message-bubble {
-    max-width: min(72vw, 340px);
-  }
-
-  .message-bubble {
-    min-height: 38px;
-    padding: 10px 13px;
-    font-size: 12px;
-  }
-
-  .message-menu-wrap {
-    opacity: 1;
-  }
-
-  .message-menu-button {
-    width: 26px;
-    height: 26px;
-  }
-
-  .message-menu-dropdown {
-    right: 0;
-    top: 30px;
-  }
-
-  .messages-form {
-    min-height: 82px;
-    padding: 12px 12px 22px;
-  }
-
-  .messages-form input {
-    height: 44px;
-    padding: 0 48px 0 46px;
-    font-size: 13px;
-  }
-
-  .messages-emoji {
-    left: 22px;
-    top: 34px;
-  }
-
-  .messages-send-button {
-    right: 22px;
-    top: 34px;
-  }
-
-  .messages-emoji-picker {
-    left: -6px;
-    bottom: 44px;
+  .messages-back-button {
+    display: flex;
   }
 }
 
