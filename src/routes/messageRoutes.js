@@ -7,6 +7,8 @@ import {
   getMessagesWithUser,
   markMessagesAsSeen,
   getChats,
+  editMessage,
+  deleteMessage,
 } from "../controllers/messageController.js";
 
 import { messageValidator } from "../validators/messageValidator.js";
@@ -34,6 +36,20 @@ router.get(
   "/:userId",
   authMiddleware,
   getMessagesWithUser
+);
+
+router.put(
+  "/message/:messageId",
+  authMiddleware,
+  messageValidator,
+  validationMiddleware,
+  editMessage
+);
+
+router.delete(
+  "/message/:messageId",
+  authMiddleware,
+  deleteMessage
 );
 
 export default router;

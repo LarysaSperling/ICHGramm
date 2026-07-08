@@ -116,9 +116,72 @@ const getChats = asyncHandler(async (req, res) => {
   res.json([...chatsMap.values()]);
 });
 
+const editMessage = asyncHandler(async (req, res) => {
+  const { messageId } = req.params;
+  const { text } = req.body;
+
+  const message = await Message.findById(messageId);
+
+  if (!message) {
+    return res.status(404).json({
+      message: "Message not found",
+    });
+  }
+
+  if (message.sender.toString() !== req.user._id.toString()) {
+    return res.status(403).json({
+      message: "Access denied",
+    });
+  }
+
+  message.text = text.trim();
+
+  await message.save();
+
+  const populatedMessage = await message.populate([
+    {
+      path: "sender",
+      select: "username fullName avatar",
+    },
+    {
+      path: "receiver",
+      select: "username fullName avatar",
+    },
+  ]);
+
+  res.json(populatedMessage);
+});
+
+const deleteMessage = asyncHandler(async (req, res) => {
+  const { messageId } = req.params;
+
+  const message = await Message.findById(messageId);
+
+  if (!message) {
+    return res.status(404).json({
+      message: "Message not found",
+    });
+  }
+
+  if (message.sender.toString() !== req.user._id.toString()) {
+    return res.status(403).json({
+      message: "Access denied",
+    });
+  }
+
+  await message.deleteOne();
+
+  res.json({
+    message: "Message deleted",
+    messageId,
+  });
+});
+
 export {
   sendMessage,
   getMessagesWithUser,
   markMessagesAsSeen,
   getChats,
+  editMessage,
+  deleteMessage,
 };
