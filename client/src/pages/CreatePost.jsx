@@ -188,6 +188,7 @@ const CreatePost = () => {
                 <span>Click to upload image</span>
 
                 <input
+                  id="image"
                   type="file"
                   name="image"
                   accept="image/jpeg,image/jpg,image/png,image/webp"

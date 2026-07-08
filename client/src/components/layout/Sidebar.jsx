@@ -111,7 +111,13 @@ const Sidebar = ({ isOpen, onClose }) => {
         <button
           type="button"
           className={location.pathname === "/create" ? "active" : ""}
-          onClick={() => handleToggleNavigate("/create")}
+          onClick={() => {
+            navigate("/create", {
+              state: { backgroundLocation: location },
+            });
+
+            closeMobileSidebar();
+          }}
         >
           <SquarePlus size={24} />
           <span>Create</span>

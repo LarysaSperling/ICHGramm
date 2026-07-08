@@ -1,5 +1,7 @@
 import { createContext, useContext, useMemo, useState } from "react";
 
+import socket from "../socket";
+
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
@@ -11,6 +13,11 @@ export const AuthProvider = ({ children }) => {
   const [isAuthLoading] = useState(false);
 
   const login = (data) => {
+    socket.disconnect();
+
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+
     localStorage.setItem("token", data.token);
 
     const userData = {
@@ -18,15 +25,22 @@ export const AuthProvider = ({ children }) => {
       username: data.username,
       fullName: data.fullName,
       email: data.email,
+      avatar: data.avatar || "",
     };
 
     localStorage.setItem("user", JSON.stringify(userData));
     setUser(userData);
+
+    socket.auth = { userId: userData._id };
+    socket.connect();
   };
 
   const logout = () => {
+    socket.disconnect();
+
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+
     setUser(null);
   };
 

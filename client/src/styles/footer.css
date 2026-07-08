@@ -1,6 +1,6 @@
 .footer {
   position: fixed;
-  left: 245px;
+  left: 0;
   right: 0;
   bottom: 0;
   height: var(--footer-height);

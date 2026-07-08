@@ -1,21 +1,27 @@
 .create-post-overlay {
   position: fixed;
-  inset: 0;
-  z-index: 1000;
+  top: 0;
+  left: 245px;
+  right: 0;
+  bottom: var(--footer-height);
+
+  z-index: 1500;
   background: rgba(0, 0, 0, 0.65);
+
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   padding: 24px;
 }
 
 .create-post-close {
   position: fixed;
-  top: 20px;
-  right: 24px;
+  top: 24px;
+  right: 28px;
+  z-index: 1600;
   border: none;
   background: transparent;
-  color: #ffffff;
+  color: #fff;
   cursor: pointer;
 }
 
@@ -235,7 +241,19 @@ body.dark .create-post-emoji-picker .EmojiPickerReact {
   --epr-border-color: #262626;
 }
 
+@media (max-width: 992px) {
+  .create-post-overlay {
+    left: 80px;
+  }
+}
+
 @media (max-width: 768px) {
+  .create-post-overlay {
+    left: 0;
+    bottom: var(--footer-height);
+    padding: 16px;
+  }
+
   .create-post-modal {
     height: 90vh;
   }

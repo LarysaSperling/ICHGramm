@@ -18,7 +18,12 @@ export const MessagesProvider = ({ children }) => {
   useEffect(() => {
     if (!user?._id) return;
 
-    socket.connect();
+    socket.auth = { userId: user._id };
+
+    if (!socket.connected) {
+      socket.connect();
+    }
+
     socket.emit("joinUserRoom", user._id);
 
     const handleNewMessageNotification = (message) => {
@@ -49,7 +54,7 @@ export const MessagesProvider = ({ children }) => {
         clearTimeout(toastTimeoutRef.current);
       }
     };
-  }, [user, location.pathname]);
+  }, [user?._id, location.pathname]);
 
   const clearUnreadMessages = () => {
     setUnreadMessages(0);
