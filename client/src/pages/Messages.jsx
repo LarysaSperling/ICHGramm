@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { MoreHorizontal, SendHorizontal, Smile } from "lucide-react";
+import EmojiPicker from "emoji-picker-react";
 
 import api from "../api/axios";
 import socket from "../socket";
 import Avatar from "../components/ui/Avatar";
 import Loader from "../components/ui/Loader";
 import { useAuth } from "../context/AuthContext";
-import { Smile } from "lucide-react";
-import EmojiPicker from "emoji-picker-react";
 
 import "../styles/messages.css";
 
@@ -31,15 +31,16 @@ const Messages = () => {
   const typingTimeoutRef = useRef(null);
   const messagesEndRef = useRef(null);
   const loadedChatRef = useRef(null);
+  const emojiRef = useRef(null);
+  const inputRef = useRef(null);
 
   const [chats, setChats] = useState([]);
   const [activeChat, setActiveChat] = useState(null);
   const [messages, setMessages] = useState([]);
   const [messageText, setMessageText] = useState("");
+  const [editingMessage, setEditingMessage] = useState(null);
+  const [openMessageMenuId, setOpenMessageMenuId] = useState(null);
   const [isEmojiOpen, setIsEmojiOpen] = useState(false);
-
-  const emojiRef = useRef(null);
-  const inputRef = useRef(null);
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [typingUser, setTypingUser] = useState(null);
   const [isLoadingChats, setIsLoadingChats] = useState(true);
@@ -138,8 +139,9 @@ const Messages = () => {
         setMessages(data);
 
         const chatRoom = [currentUserId, activeUserId].sort().join("_");
-        socket.emit("joinChat", chatRoom);
+
         socket.emit("joinUserRoom", currentUserId);
+        socket.emit("joinChat", chatRoom);
 
         await api.put(`/messages/${activeUserId}/seen`);
       } catch (err) {
@@ -274,6 +276,10 @@ const Messages = () => {
       if (emojiRef.current && !emojiRef.current.contains(event.target)) {
         setIsEmojiOpen(false);
       }
+
+      if (!event.target.closest(".message-menu-wrap")) {
+        setOpenMessageMenuId(null);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
@@ -289,6 +295,9 @@ const Messages = () => {
 
   const handleSelectChat = (chat) => {
     loadedChatRef.current = null;
+    setEditingMessage(null);
+    setOpenMessageMenuId(null);
+    setMessageText("");
     setActiveChat(chat);
     navigate(`/messages?user=${chat.user._id}`);
   };
@@ -296,6 +305,8 @@ const Messages = () => {
   const handleMessageChange = (event) => {
     const value = event.target.value;
     setMessageText(value);
+
+    if (editingMessage) return;
 
     const chatRoom = getChatRoom();
 
@@ -320,7 +331,6 @@ const Messages = () => {
 
   const handleEmojiClick = (emojiData) => {
     setMessageText((prev) => prev + emojiData.emoji);
-
     setIsEmojiOpen(false);
 
     setTimeout(() => {
@@ -328,12 +338,67 @@ const Messages = () => {
     }, 0);
   };
 
+  const toggleMessageMenu = (messageId) => {
+    setOpenMessageMenuId((prev) => (prev === messageId ? null : messageId));
+  };
+
+  const startEditingMessage = (message) => {
+    setEditingMessage(message);
+    setMessageText(message.text);
+    setOpenMessageMenuId(null);
+    setIsEmojiOpen(false);
+
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 0);
+  };
+
+  const handleDeleteMessage = async (messageId) => {
+    try {
+      await api.delete(`/messages/message/${messageId}`);
+
+      setMessages((prev) =>
+        prev.filter((message) => message._id !== messageId),
+      );
+
+      const chatsResponse = await api.get("/messages");
+      setChats(chatsResponse.data);
+      setOpenMessageMenuId(null);
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to delete message");
+    }
+  };
+
   const handleSendMessage = async (event) => {
     event.preventDefault();
 
-    if (!messageText.trim() || !activeUserId) return;
+    if (!messageText.trim()) return;
 
     try {
+      if (editingMessage) {
+        const { data } = await api.put(
+          `/messages/message/${editingMessage._id}`,
+          {
+            text: messageText.trim(),
+          },
+        );
+
+        setMessages((prev) =>
+          prev.map((message) =>
+            message._id === editingMessage._id ? data : message,
+          ),
+        );
+
+        const chatsResponse = await api.get("/messages");
+        setChats(chatsResponse.data);
+
+        setEditingMessage(null);
+        setMessageText("");
+        return;
+      }
+
+      if (!activeUserId) return;
+
       const chatRoom = getChatRoom();
 
       if (chatRoom) {
@@ -353,38 +418,9 @@ const Messages = () => {
       const chatsResponse = await api.get("/messages");
       setChats(chatsResponse.data);
 
-      setChats((prev) => {
-        const chatExists = prev.some((chat) => chat.user._id === activeUserId);
-
-        if (!chatExists) {
-          return [
-            {
-              user: activeChat.user,
-              lastMessage: data.text,
-              lastMessageDate: data.createdAt,
-              lastMessageSeen: data.isSeen,
-              lastMessageSender: data.sender?._id || data.sender,
-            },
-            ...prev,
-          ];
-        }
-
-        return prev.map((chat) =>
-          chat.user._id === activeUserId
-            ? {
-                ...chat,
-                lastMessage: data.text,
-                lastMessageDate: data.createdAt,
-                lastMessageSeen: data.isSeen,
-                lastMessageSender: data.sender?._id || data.sender,
-              }
-            : chat,
-        );
-      });
-
       setMessageText("");
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to send message");
+      setError(err.response?.data?.message || "Failed to save message");
     }
   };
 
@@ -570,6 +606,38 @@ const Messages = () => {
                         >
                           {isOwnMessage ? (
                             <>
+                              <div className="message-menu-wrap">
+                                <button
+                                  type="button"
+                                  className="message-menu-button"
+                                  onClick={() => toggleMessageMenu(message._id)}
+                                >
+                                  <MoreHorizontal size={18} />
+                                </button>
+
+                                {openMessageMenuId === message._id && (
+                                  <div className="message-menu-dropdown">
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        startEditingMessage(message)
+                                      }
+                                    >
+                                      Edit
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        handleDeleteMessage(message._id)
+                                      }
+                                    >
+                                      Delete
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+
                               <div className="message-content">
                                 <div className="message-bubble sent">
                                   {message.text}
@@ -581,9 +649,7 @@ const Messages = () => {
 
                                 {isLastOwnMessage && (
                                   <span
-                                    className={`message-status ${
-                                      message.isSeen ? "seen" : "sent"
-                                    }`}
+                                    className={`message-status ${message.isSeen ? "seen" : "sent"}`}
                                   >
                                     {message.isSeen ? "✓✓ Seen" : "✓ Sent"}
                                   </span>
@@ -670,14 +736,21 @@ const Messages = () => {
                 id="message-text"
                 name="message"
                 type="text"
-                placeholder="Write message..."
+                placeholder={
+                  editingMessage ? "Edit message..." : "Write message..."
+                }
                 autoComplete="off"
                 value={messageText}
                 onChange={handleMessageChange}
               />
 
-              <button type="submit" disabled={!messageText.trim()}>
-                Send
+              <button
+                type="submit"
+                className="messages-send-button"
+                disabled={!messageText.trim()}
+                title={editingMessage ? "Save" : "Send"}
+              >
+                <SendHorizontal size={20} />
               </button>
             </form>
           </>

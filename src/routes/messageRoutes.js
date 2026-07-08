@@ -41,8 +41,6 @@ router.get(
 router.put(
   "/message/:messageId",
   authMiddleware,
-  messageValidator,
-  validationMiddleware,
   editMessage
 );
 
