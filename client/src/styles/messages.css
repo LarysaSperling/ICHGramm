@@ -73,7 +73,7 @@
 }
 
 .messages-chat-info strong {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   color: #262626;
 }
@@ -122,7 +122,7 @@
 }
 
 .messages-header-info strong {
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 700;
   color: #262626;
 }
@@ -151,27 +151,27 @@
 
 .messages-profile-preview h3 {
   margin-top: 12px;
-  font-size: 14px;
+  font-size: 19px;
   font-weight: 700;
   color: #262626;
 }
 
 .messages-profile-preview p {
   margin-top: 3px;
-  font-size: 11px;
+  font-size: 14px;
   color: #8e8e8e;
 }
 
 .messages-view-profile {
   margin-top: 13px;
   height: 30px;
-  min-width: 112px;
+  min-width: 173px;
   padding: 0 18px;
   border-radius: 7px;
   background: #efefef;
   color: #262626;
   text-decoration: none;
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -180,7 +180,7 @@
 
 .messages-date {
   text-align: center;
-  font-size: 11px;
+  font-size: 12px;
   color: #8e8e8e;
   margin-bottom: 108px;
 }
@@ -284,7 +284,7 @@
   border-radius: 22px;
   padding: 0 22px;
   outline: none;
-  font-size: 11px;
+  font-size: 15px;
   color: #262626;
 }
 
@@ -368,6 +368,57 @@
   min-width: 74px;
   color: #8e8e8e;
   font-style: italic;
+}
+
+.messages-emoji {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.messages-emoji-button {
+  width: 42px;
+  height: 42px;
+
+  border: none;
+  background: transparent;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+
+  color: #8e8e8e;
+}
+
+.messages-emoji-button:hover {
+  color: #262626;
+}
+
+.messages-emoji-picker {
+  position: absolute;
+  bottom: 54px;
+  left: 0;
+  z-index: 200;
+}
+
+body.dark .messages-emoji-button {
+  color: #d5d5d5;
+}
+
+body.dark .messages-emoji-button:hover {
+  color: #ffffff;
+}
+
+body.dark .messages-emoji-picker .EmojiPickerReact {
+  --epr-bg-color: #161616;
+  --epr-category-label-bg-color: #161616;
+  --epr-text-color: #f5f5f5;
+  --epr-hover-bg-color: #262626;
+  --epr-highlight-color: #0095f6;
+  --epr-search-input-bg-color: #000;
+  --epr-border-color: #262626;
 }
 
 body.dark .messages-page,

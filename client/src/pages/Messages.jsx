@@ -6,6 +6,8 @@ import socket from "../socket";
 import Avatar from "../components/ui/Avatar";
 import Loader from "../components/ui/Loader";
 import { useAuth } from "../context/AuthContext";
+import { Smile } from "lucide-react";
+import EmojiPicker from "emoji-picker-react";
 
 import "../styles/messages.css";
 
@@ -34,6 +36,10 @@ const Messages = () => {
   const [activeChat, setActiveChat] = useState(null);
   const [messages, setMessages] = useState([]);
   const [messageText, setMessageText] = useState("");
+  const [isEmojiOpen, setIsEmojiOpen] = useState(false);
+
+  const emojiRef = useRef(null);
+  const inputRef = useRef(null);
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [typingUser, setTypingUser] = useState(null);
   const [isLoadingChats, setIsLoadingChats] = useState(true);
@@ -79,11 +85,13 @@ const Messages = () => {
     const openChatFromProfile = async () => {
       if (!userIdFromUrl || !currentUserId) return;
 
-      const existingChat = chats.find((chat) => chat.user._id === userIdFromUrl);
+      const existingChat = chats.find(
+        (chat) => chat.user._id === userIdFromUrl,
+      );
 
       if (existingChat) {
         setActiveChat((prev) =>
-          prev?.user?._id === existingChat.user._id ? prev : existingChat
+          prev?.user?._id === existingChat.user._id ? prev : existingChat,
         );
         return;
       }
@@ -188,7 +196,7 @@ const Messages = () => {
                 lastMessageSeen: newMessage.isSeen,
                 lastMessageSender: senderId,
               }
-            : chat
+            : chat,
         );
       });
     };
@@ -207,7 +215,7 @@ const Messages = () => {
           }
 
           return message;
-        })
+        }),
       );
 
       setChats((prev) =>
@@ -217,8 +225,8 @@ const Messages = () => {
                 ...chat,
                 lastMessageSeen: true,
               }
-            : chat
-        )
+            : chat,
+        ),
       );
     };
 
@@ -262,6 +270,20 @@ const Messages = () => {
   }, []);
 
   useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (emojiRef.current && !emojiRef.current.contains(event.target)) {
+        setIsEmojiOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, typingUser]);
 
@@ -294,6 +316,16 @@ const Messages = () => {
     typingTimeoutRef.current = setTimeout(() => {
       socket.emit("stopTyping", chatRoom);
     }, 1200);
+  };
+
+  const handleEmojiClick = (emojiData) => {
+    setMessageText((prev) => prev + emojiData.emoji);
+
+    setIsEmojiOpen(false);
+
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 0);
   };
 
   const handleSendMessage = async (event) => {
@@ -346,7 +378,7 @@ const Messages = () => {
                 lastMessageSeen: data.isSeen,
                 lastMessageSender: data.sender?._id || data.sender,
               }
-            : chat
+            : chat,
         );
       });
 
@@ -481,8 +513,8 @@ const Messages = () => {
                     {typingUser?._id === activeChat.user._id
                       ? "typing..."
                       : onlineUsers.includes(activeChat.user._id)
-                      ? "Active now"
-                      : "Offline"}
+                        ? "Active now"
+                        : "Offline"}
                   </span>
                 </div>
               </Link>
@@ -527,8 +559,7 @@ const Messages = () => {
                     {messages.map((message) => {
                       const senderId = message.sender?._id || message.sender;
                       const isOwnMessage = senderId === currentUserId;
-                      const isLastOwnMessage =
-                        message._id === lastOwnMessageId;
+                      const isLastOwnMessage = message._id === lastOwnMessageId;
 
                       return (
                         <div
@@ -611,14 +642,38 @@ const Messages = () => {
             </div>
 
             <form className="messages-form" onSubmit={handleSendMessage}>
+              <div className="messages-emoji" ref={emojiRef}>
+                <button
+                  type="button"
+                  className="messages-emoji-button"
+                  onClick={() => setIsEmojiOpen((prev) => !prev)}
+                >
+                  <Smile size={20} />
+                </button>
+
+                {isEmojiOpen && (
+                  <div className="messages-emoji-picker">
+                    <EmojiPicker
+                      onEmojiClick={handleEmojiClick}
+                      width={320}
+                      height={380}
+                      emojiStyle="native"
+                      previewConfig={{ showPreview: false }}
+                      skinTonesDisabled
+                    />
+                  </div>
+                )}
+              </div>
+
               <input
+                ref={inputRef}
                 id="message-text"
                 name="message"
                 type="text"
-                placeholder="Write message"
+                placeholder="Write message..."
+                autoComplete="off"
                 value={messageText}
                 onChange={handleMessageChange}
-                autoComplete="off"
               />
 
               <button type="submit" disabled={!messageText.trim()}>
