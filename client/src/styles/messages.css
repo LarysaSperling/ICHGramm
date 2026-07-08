@@ -754,6 +754,39 @@ body.dark .messages-online-dot {
   .messages-back-button {
     display: flex;
   }
+
+   .messages-form {
+    min-height: 82px;
+    padding: 12px 12px 22px;
+  }
+
+  .messages-form input {
+    height: 44px;
+    padding: 0 48px 0 46px;
+    font-size: 13px;
+  }
+
+  .messages-emoji {
+    left: 22px;
+    top: 34px;
+    transform: translateY(-50%);
+  }
+
+  .messages-send-button {
+    right: 22px;
+    top: 34px;
+    transform: translateY(-50%);
+  }
+
+  .messages-emoji-button,
+  .messages-send-button {
+    height: 32px;
+    width: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
 }
 
 @media (max-width: 480px) {
@@ -783,11 +816,16 @@ body.dark .messages-online-dot {
     padding: 10px 8px 18px;
   }
 
-  .messages-emoji {
-    left: 17px;
-  }
+.messages-emoji {
+  left: 17px;
+  top: 32px;
+  transform: translateY(-50%);
+}
 
-  .messages-send-button {
-    right: 17px;
-  }
+.messages-send-button {
+  right: 17px;
+  top: 32px;
+  transform: translateY(-50%);
+}
+  
 }

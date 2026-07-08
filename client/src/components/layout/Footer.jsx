@@ -12,7 +12,7 @@ const Footer = () => {
         <a href="/create">Create</a>
       </nav>
 
-      <p className="footer-copy">© 2026 ICHGramm</p>
+      <p className="footer-copy">© 2026 ICHGram</p>
     </footer>
   );
 };
