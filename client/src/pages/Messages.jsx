@@ -87,12 +87,12 @@ const Messages = () => {
       if (!userIdFromUrl || !currentUserId) return;
 
       const existingChat = chats.find(
-        (chat) => chat.user._id === userIdFromUrl,
+        (chat) => chat.user._id === userIdFromUrl
       );
 
       if (existingChat) {
         setActiveChat((prev) =>
-          prev?.user?._id === existingChat.user._id ? prev : existingChat,
+          prev?.user?._id === existingChat.user._id ? prev : existingChat
         );
         return;
       }
@@ -198,7 +198,7 @@ const Messages = () => {
                 lastMessageSeen: newMessage.isSeen,
                 lastMessageSender: senderId,
               }
-            : chat,
+            : chat
         );
       });
     };
@@ -217,7 +217,7 @@ const Messages = () => {
           }
 
           return message;
-        }),
+        })
       );
 
       setChats((prev) =>
@@ -227,8 +227,8 @@ const Messages = () => {
                 ...chat,
                 lastMessageSeen: true,
               }
-            : chat,
-        ),
+            : chat
+        )
       );
     };
 
@@ -277,7 +277,10 @@ const Messages = () => {
         setIsEmojiOpen(false);
       }
 
-      if (!event.target.closest(".message-menu-wrap")) {
+      if (
+        !event.target.closest(".message-menu-wrap") &&
+        !event.target.closest(".chat-menu-wrap")
+      ) {
         setOpenMessageMenuId(null);
       }
     };
@@ -358,7 +361,7 @@ const Messages = () => {
       await api.delete(`/messages/message/${messageId}`);
 
       setMessages((prev) =>
-        prev.filter((message) => message._id !== messageId),
+        prev.filter((message) => message._id !== messageId)
       );
 
       const chatsResponse = await api.get("/messages");
@@ -366,6 +369,26 @@ const Messages = () => {
       setOpenMessageMenuId(null);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to delete message");
+    }
+  };
+
+  const handleDeleteChat = async (userId) => {
+    try {
+      await api.delete(`/messages/chat/${userId}`);
+
+      setChats((prev) => prev.filter((chat) => chat.user._id !== userId));
+
+      if (activeUserId === userId) {
+        setActiveChat(null);
+        setMessages([]);
+        setEditingMessage(null);
+        setMessageText("");
+        navigate("/messages");
+      }
+
+      setOpenMessageMenuId(null);
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to delete chat");
     }
   };
 
@@ -380,13 +403,13 @@ const Messages = () => {
           `/messages/message/${editingMessage._id}`,
           {
             text: messageText.trim(),
-          },
+          }
         );
 
         setMessages((prev) =>
           prev.map((message) =>
-            message._id === editingMessage._id ? data : message,
-          ),
+            message._id === editingMessage._id ? data : message
+          )
         );
 
         const chatsResponse = await api.get("/messages");
@@ -482,9 +505,8 @@ const Messages = () => {
             const isOnline = onlineUsers.includes(chat.user._id);
 
             return (
-              <button
+              <div
                 key={chat.user._id}
-                type="button"
                 className={`messages-chat-item ${
                   activeUserId === chat.user._id ? "active" : ""
                 }`}
@@ -512,7 +534,37 @@ const Messages = () => {
                         }`}
                   </span>
                 </div>
-              </button>
+
+                <div
+                  className="chat-menu-wrap"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <button
+                    type="button"
+                    className="chat-menu-button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      toggleMessageMenu(`chat-${chat.user._id}`);
+                    }}
+                  >
+                    <MoreHorizontal size={18} />
+                  </button>
+
+                  {openMessageMenuId === `chat-${chat.user._id}` && (
+                    <div className="chat-menu-dropdown">
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleDeleteChat(chat.user._id);
+                        }}
+                      >
+                        Delete chat
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
             );
           })}
         </div>
@@ -549,8 +601,8 @@ const Messages = () => {
                     {typingUser?._id === activeChat.user._id
                       ? "typing..."
                       : onlineUsers.includes(activeChat.user._id)
-                        ? "Active now"
-                        : "Offline"}
+                      ? "Active now"
+                      : "Offline"}
                   </span>
                 </div>
               </Link>
@@ -595,7 +647,8 @@ const Messages = () => {
                     {messages.map((message) => {
                       const senderId = message.sender?._id || message.sender;
                       const isOwnMessage = senderId === currentUserId;
-                      const isLastOwnMessage = message._id === lastOwnMessageId;
+                      const isLastOwnMessage =
+                        message._id === lastOwnMessageId;
 
                       return (
                         <div
@@ -649,7 +702,9 @@ const Messages = () => {
 
                                 {isLastOwnMessage && (
                                   <span
-                                    className={`message-status ${message.isSeen ? "seen" : "sent"}`}
+                                    className={`message-status ${
+                                      message.isSeen ? "seen" : "sent"
+                                    }`}
                                   >
                                     {message.isSeen ? "✓✓ Seen" : "✓ Sent"}
                                   </span>

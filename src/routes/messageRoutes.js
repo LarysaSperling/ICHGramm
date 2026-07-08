@@ -9,6 +9,7 @@ import {
   getChats,
   editMessage,
   deleteMessage,
+  deleteChat,
 } from "../controllers/messageController.js";
 
 import { messageValidator } from "../validators/messageValidator.js";
@@ -24,30 +25,33 @@ router.post(
   sendMessage
 );
 
-router.get("/", authMiddleware, getChats);
-
-router.put(
-  "/:userId/seen",
-  authMiddleware,
-  markMessagesAsSeen
-);
-
 router.get(
-  "/:userId",
-  authMiddleware,
-  getMessagesWithUser
-);
+  "/",
+   authMiddleware, 
+   getChats);
 
 router.put(
   "/message/:messageId",
-  authMiddleware,
-  editMessage
-);
+   authMiddleware, 
+   editMessage);
 
 router.delete(
   "/message/:messageId",
-  authMiddleware,
-  deleteMessage
-);
+   authMiddleware,
+    deleteMessage);
+
+router.delete(
+  "/chat/:userId",
+   authMiddleware, 
+   deleteChat);
+
+router.put(
+  "/:userId/seen",
+   authMiddleware,
+    markMessagesAsSeen);
+
+router.get("/:userId",
+   authMiddleware,
+    getMessagesWithUser);
 
 export default router;

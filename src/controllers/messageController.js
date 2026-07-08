@@ -177,6 +177,28 @@ const deleteMessage = asyncHandler(async (req, res) => {
   });
 });
 
+const deleteChat = asyncHandler(async (req, res) => {
+  const otherUserId = req.params.userId;
+
+  await Message.deleteMany({
+    $or: [
+      {
+        sender: req.user._id,
+        receiver: otherUserId,
+      },
+      {
+        sender: otherUserId,
+        receiver: req.user._id,
+      },
+    ],
+  });
+
+  res.json({
+    message: "Chat deleted",
+    userId: otherUserId,
+  });
+});
+
 export {
   sendMessage,
   getMessagesWithUser,
@@ -184,4 +206,5 @@ export {
   getChats,
   editMessage,
   deleteMessage,
+  deleteChat,
 };
