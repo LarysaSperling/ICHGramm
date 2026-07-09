@@ -45,9 +45,9 @@ const AppRoutes = () => {
           <Route path="/profile/edit" element={<EditProfile />} />
 
           <Route path="/users/:id" element={<UserProfile />} />
-        </Route>
 
-        <Route path="*" element={<NotFound />} />
+          <Route path="*" element={<NotFound />} />
+        </Route>
       </Routes>
 
       {backgroundLocation && (

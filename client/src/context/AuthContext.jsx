@@ -1,4 +1,10 @@
-import { createContext, useContext, useMemo, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useMemo,
+  useState,
+  useCallback,
+} from "react";
 
 import socket from "../socket";
 
@@ -35,6 +41,20 @@ export const AuthProvider = ({ children }) => {
     socket.connect();
   };
 
+  const updateUser = useCallback((newData) => {
+    setUser((prev) => {
+      const updatedUser = {
+        ...prev,
+        ...newData,
+        avatar: newData.avatar || prev?.avatar || "",
+      };
+
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+
+      return updatedUser;
+    });
+  }, []);
+
   const logout = () => {
     socket.disconnect();
 
@@ -49,13 +69,18 @@ export const AuthProvider = ({ children }) => {
       user,
       login,
       logout,
+      updateUser,
       isAuthLoading,
       isAuthenticated: Boolean(localStorage.getItem("token") && user),
     }),
-    [user, isAuthLoading]
+    [user, updateUser, isAuthLoading]
   );
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
 export const useAuth = () => useContext(AuthContext);

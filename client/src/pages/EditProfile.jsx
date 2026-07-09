@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 import api from "../api/axios";
 import Avatar from "../components/ui/Avatar";
+import { useAuth } from "../context/AuthContext";
 
 import "../styles/editProfile.css";
 
@@ -11,6 +12,7 @@ const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 const EditProfile = () => {
   const navigate = useNavigate();
+  const { updateUser } = useAuth();
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -90,7 +92,9 @@ const EditProfile = () => {
     try {
       setIsLoading(true);
 
-      await api.put("/users/profile", dataToSend);
+      const { data } = await api.put("/users/profile", dataToSend);
+
+      updateUser(data.user || data);
 
       navigate("/profile");
     } catch (err) {
