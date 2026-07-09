@@ -92,9 +92,11 @@ const EditProfile = () => {
     try {
       setIsLoading(true);
 
-      const { data } = await api.put("/users/profile", dataToSend);
+      await api.put("/users/profile", dataToSend);
 
-      updateUser(data.user || data);
+      const { data: updatedProfile } = await api.get("/users/profile");
+
+      updateUser(updatedProfile);
 
       navigate("/profile");
     } catch (err) {

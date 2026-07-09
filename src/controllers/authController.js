@@ -26,14 +26,15 @@ const register = asyncHandler(async (req, res) => {
   });
 
   if (!user) {
-  throw new ApiError(500, "Failed to create user");
-}
+    throw new ApiError(500, "Failed to create user");
+  }
 
   res.status(201).json({
     _id: user._id,
     username: user.username,
     fullName: user.fullName,
     email: user.email,
+    avatar: user.avatar || "",
     token: generateToken(user._id),
   });
 });
@@ -47,10 +48,7 @@ const login = asyncHandler(async (req, res) => {
     throw new ApiError(401, "Invalid credentials");
   }
 
-  const isPasswordCorrect = await bcrypt.compare(
-    password,
-    user.password
-  );
+  const isPasswordCorrect = await bcrypt.compare(password, user.password);
 
   if (!isPasswordCorrect) {
     throw new ApiError(401, "Invalid credentials");
@@ -61,6 +59,7 @@ const login = asyncHandler(async (req, res) => {
     username: user.username,
     fullName: user.fullName,
     email: user.email,
+    avatar: user.avatar || "",
     token: generateToken(user._id),
   });
 });
