@@ -17,8 +17,7 @@ body {
   --muted-color: #737373;
   --border-color: #dbdbdb;
   --hover-bg: #f2f2f2;
-  --footer-height: 158px;
-  --footer-safe-space: 56px;
+  --footer-height: 120px;
 }
 
 body.dark {
@@ -46,18 +45,27 @@ img {
   max-width: 100%;
 }
 
-.page-content,
+.page-content {
+  padding-bottom: 0;
+}
+
 .home-page,
 .explore-page,
 .profile-page,
 .user-profile-page,
 .search-page,
 .notifications-page {
-  padding-bottom: calc(var(--footer-height) + var(--footer-safe-space));
+  padding-bottom: 70px;
 }
+
 body:has(.post-modal-backdrop) .footer,
 body:has(.post-preview-modal) .footer,
 body:has(.create-post-overlay) .footer,
 body:has(.edit-post-overlay) .footer {
+  display: none;
+}
+
+body:has(.search-panel) .footer,
+body:has(.notifications-overlay) .footer {
   display: none;
 }

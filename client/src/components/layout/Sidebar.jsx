@@ -54,7 +54,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           className={location.pathname === "/home" ? "active" : ""}
           onClick={() => handleToggleNavigate("/home")}
         >
-          <House size={24} />
+          <House size={20} />
           <span>Home</span>
         </button>
 
@@ -63,7 +63,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           className={location.pathname === "/search" ? "active" : ""}
           onClick={() => handleToggleNavigate("/search")}
         >
-          <Search size={24} />
+          <Search size={20} />
           <span>Search</span>
         </button>
 
@@ -72,7 +72,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           className={location.pathname === "/explore" ? "active" : ""}
           onClick={() => handleToggleNavigate("/explore")}
         >
-          <Compass size={24} />
+          <Compass size={20} />
           <span>Explore</span>
         </button>
 
@@ -87,7 +87,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           }}
         >
           <div className="sidebar-icon-wrap">
-            <MessageCircle size={24} />
+            <MessageCircle size={20} />
 
             {unreadMessages > 0 && (
               <span className="sidebar-badge">
@@ -104,7 +104,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           className={location.pathname === "/notifications" ? "active" : ""}
           onClick={() => handleToggleNavigate("/notifications")}
         >
-          <Heart size={24} />
+          <Heart size={20} />
           <span>Notifications</span>
         </button>
 
@@ -119,7 +119,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             closeMobileSidebar();
           }}
         >
-          <SquarePlus size={24} />
+          <SquarePlus size={20} />
           <span>Create</span>
         </button>
 
@@ -128,7 +128,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           className={location.pathname === "/profile" ? "active" : ""}
           onClick={() => handleToggleNavigate("/profile")}
         >
-          <CircleUserRound size={24} />
+          <CircleUserRound size={20} />
           <span>Profile</span>
         </button>
       </nav>
@@ -137,19 +137,19 @@ const Sidebar = ({ isOpen, onClose }) => {
         <button type="button" onClick={toggleTheme}>
           {theme === "light" ? (
             <>
-              <Moon size={22} />
+              <Moon size={20} />
               <span>Dark mode</span>
             </>
           ) : (
             <>
-              <Sun size={22} />
+              <Sun size={20} />
               <span>Light mode</span>
             </>
           )}
         </button>
 
         <button type="button" onClick={logout}>
-          <LogOut size={22} />
+          <LogOut size={20} />
           <span>Logout</span>
         </button>
       </div>

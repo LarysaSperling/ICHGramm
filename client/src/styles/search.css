@@ -9,7 +9,7 @@ body.search-open .right-sidebar {
   top: 0;
   left: 245px;
   right: 0;
-  bottom: var(--footer-height);
+  bottom: 0;
   z-index: 850;
   background: rgba(0, 0, 0, 0.6);
   pointer-events: auto;
@@ -27,7 +27,7 @@ body.search-open .right-sidebar {
   left: 245px;
   top: 0;
   width: 397px;
-  height: calc(100dvh - var(--footer-height));
+   height: 100dvh;
   background: var(--card-bg);
   border-right: 1px solid var(--border-color);
   box-shadow: 10px 0 24px rgba(0, 0, 0, 0.12);
@@ -150,7 +150,7 @@ body.search-open .right-sidebar {
   .search-panel {
     left: 0;
     width: 100%;
-    height: calc(100vh - 60px);
+    height: 100dvh;
     border-radius: 0;
   }
 }

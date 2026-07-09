@@ -11,7 +11,7 @@
   top: 0;
   left: 245px;
   right: 0;
-  bottom: var(--footer-height);
+  bottom: 0;
   background: rgba(0, 0, 0, 0.58);
   z-index: 20;
 }
@@ -21,7 +21,7 @@
   top: 0;
   left: 245px;
   width: 397px;
-  height: calc(100dvh - var(--footer-height));
+  height: 100dvh;
   background: #fff;
   z-index: 30;
   border-right: 1px solid #dbdbdb;

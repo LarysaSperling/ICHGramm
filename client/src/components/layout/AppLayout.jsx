@@ -28,18 +28,18 @@ const AppLayout = () => {
         />
       )}
 
-      <Sidebar
+       <Sidebar
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
       />
 
       <main className="app-main">
-  <div className="page-content">
-    <Outlet />
-  </div>
+        <div className="page-content">
+          <Outlet />
+        </div>
+      </main>
 
-  <Footer />
-</main>
+      <Footer />
     </div>
   );
 };

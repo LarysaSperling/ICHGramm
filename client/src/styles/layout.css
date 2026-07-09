@@ -2,17 +2,23 @@
   min-height: 100vh;
   background: var(--bg-color);
   overflow-x: hidden;
+
+  display: flex;
+  flex-direction: column;
 }
 
 .app-main {
-  min-height: 100vh;
+  flex: 1;
+
   width: calc(100% - 245px);
   margin-left: 245px;
-  margin-right: 0;
+
   background: var(--bg-color);
+
   display: flex;
   flex-direction: column;
-  padding: 32px 24px calc(var(--footer-height) + var(--footer-safe-space));
+
+  padding: 32px 24px 0;
 }
 
 .page-content {
@@ -21,30 +27,35 @@
 }
 
 .sidebar {
-  width: 245px;
-  height: calc(100dvh - var(--footer-height));
-  min-height: calc(100vh - var(--footer-height));
-  overflow-y: auto;
-  border-right: 1px solid var(--border-color);
-  background: var(--card-bg);
-  padding: 28px 18px;
   position: fixed;
   left: 0;
   top: 0;
   z-index: 1100;
+
+  width: 245px;
+  height: calc(100dvh - var(--footer-height));
+  min-height: 0;
+
+  overflow: hidden;
+  border-right: 1px solid var(--border-color);
+  background: var(--card-bg);
+
+  padding: 14px 18px 10px;
+
   display: flex;
   flex-direction: column;
 }
+
 .sidebar-logo img {
-  width: 150px;
-  margin: 8px 0 36px 8px;
+  width: 97px;
+  margin: 2px 0 14px 8px;
 }
 
 .sidebar-nav {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-top: 40px;
+  gap: 2px;
+  margin-top: 10px;
 }
 
 .sidebar-nav a,
@@ -52,17 +63,23 @@
 .sidebar-bottom button {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
+
   width: 100%;
-  padding: 12px 14px;
+  min-height: 38px;
+  padding: 7px 12px;
+
   border-radius: 12px;
+  border: none;
+  background: transparent;
+
   color: var(--text-color);
   text-decoration: none;
-  background: transparent;
-  border: none;
+
   font-size: 16px;
   font-weight: 500;
   font-family: inherit;
+
   cursor: pointer;
   transition: 0.2s;
   text-align: left;
@@ -80,12 +97,19 @@
   font-weight: 700;
 }
 
-.sidebar-link-with-badge {
+.sidebar-bottom {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebar-link-with-badge,
+.sidebar-icon-wrap {
   position: relative;
 }
 
 .sidebar-icon-wrap {
-  position: relative;
   display: flex;
   align-items: center;
 }
@@ -94,12 +118,15 @@
   position: absolute;
   top: -7px;
   right: -9px;
+
   min-width: 18px;
   height: 18px;
   padding: 0 5px;
+
   border-radius: 999px;
   background: #ed4956;
-  color: #ffffff;
+  color: #fff;
+
   font-size: 11px;
   font-weight: 700;
   line-height: 18px;
@@ -111,14 +138,18 @@
   left: 265px;
   bottom: 24px;
   z-index: 1400;
+
   width: 260px;
   padding: 12px 14px;
+
   border-radius: 12px;
-  background: var(--card-bg);
   border: 1px solid var(--border-color);
+  background: var(--card-bg);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.16);
+
   color: var(--text-color);
   text-decoration: none;
+
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -136,25 +167,21 @@
   white-space: nowrap;
 }
 
-.sidebar-bottom {
-  margin-top: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
 .mobile-menu-button {
   display: none;
   position: fixed;
   top: 20px;
   right: 24px;
   z-index: 1300;
+
   width: 44px;
   height: 44px;
+
   border: 1px solid var(--border-color);
   border-radius: 12px;
   background: var(--card-bg);
   color: var(--text-color);
+
   align-items: center;
   justify-content: center;
   cursor: pointer;
@@ -168,17 +195,39 @@ body.dark .sidebar-logo img {
   filter: brightness(1.8);
 }
 
-@media (max-width: 1200px) {
-  .app-main {
-    width: calc(100% - 245px);
-    margin-right: 0;
+@media (max-width: 1200px) and (min-width: 769px) {
+  .sidebar {
+    padding: 8px 10px 6px;
+  }
+
+  .sidebar-logo img {
+    width: 97px;
+    margin: 0 0 8px 6px;
+  }
+
+  .sidebar-nav {
+    margin-top: 6px;
+    gap: 2px;
+  }
+
+  .sidebar-nav a,
+  .sidebar-nav button,
+  .sidebar-bottom button {
+    min-height: 34px;
+    padding: 6px 8px;
+    font-size: 13px;
+    gap: 8px;
+  }
+
+  .sidebar-bottom {
+    gap: 2px;
   }
 }
 
 @media (max-width: 992px) {
   .sidebar {
     width: 80px;
-    padding: 28px 12px;
+    padding: 8px 10px;
   }
 
   .sidebar span {
@@ -187,6 +236,18 @@ body.dark .sidebar-logo img {
 
   .sidebar-logo img {
     width: 42px;
+    margin: 0 0 12px 6px;
+  }
+
+  .sidebar-nav {
+    margin-top: 10px;
+    gap: 2px;
+  }
+
+  .sidebar-nav a,
+  .sidebar-nav button,
+  .sidebar-bottom button {
+    padding: 8px 10px;
   }
 
   .app-main {
@@ -210,14 +271,25 @@ body.dark .sidebar-logo img {
     display: flex;
     top: 16px;
     right: 16px;
+    z-index: 2600;
   }
 
   .sidebar {
-    width: 260px;
-    padding: 28px 18px;
+    width: min(240px, 74vw);
+    height: auto;
+    top: 0;
+    bottom: 0;
+
+    padding: 22px 14px 90px;
+
     transform: translateX(-100%);
     transition: transform 0.25s ease;
-    height: 100dvh;
+
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    box-sizing: border-box;
+    z-index: 2500;
   }
 
   .sidebar.open {
@@ -229,15 +301,33 @@ body.dark .sidebar-logo img {
   }
 
   .sidebar-logo img {
-    width: 150px;
+    width: 97px;
+    margin: 4px 0 20px 8px;
+  }
+
+  .sidebar-nav {
+    margin-top: 20px;
+    gap: 4px;
+  }
+
+  .sidebar-nav a,
+  .sidebar-nav button,
+  .sidebar-bottom button {
+    min-height: 38px;
+    padding: 8px 12px;
+    font-size: 16px;
   }
 
   .sidebar-overlay {
     position: fixed;
     inset: 0;
-    z-index: 1000;
+    z-index: 2400;
     display: block;
     background: rgba(0, 0, 0, 0.55);
+  }
+
+   .sidebar::-webkit-scrollbar {
+    display: none;
   }
 
   .message-toast {
@@ -246,15 +336,6 @@ body.dark .sidebar-logo img {
     bottom: 16px;
     width: auto;
   }
-
-    .sidebar.open {
-    padding-bottom: calc(var(--footer-height) + 24px);
-  }
-
-  .sidebar.open .sidebar-bottom {
-    margin-bottom: calc(var(--footer-height) + 16px);
-  }
-  
 }
 
 @media (max-width: 480px) {
@@ -264,5 +345,29 @@ body.dark .sidebar-logo img {
 
   .mobile-menu-button {
     right: 12px;
+  }
+
+  .sidebar {
+    width: min(220px, 70vw);
+    padding: 18px 12px 90px;
+  }
+
+  .sidebar-logo img {
+    width:95px;
+    margin-bottom: 24px;
+  }
+
+  .sidebar-nav {
+    margin-top: 24px;
+    gap: 4px;
+  }
+
+  .sidebar-nav a,
+  .sidebar-nav button,
+  .sidebar-bottom button {
+    min-height: 40px;
+    padding: 10px 12px;
+    font-size: 15px;
+    gap: 12px;
   }
 }

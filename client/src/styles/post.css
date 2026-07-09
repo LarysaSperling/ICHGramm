@@ -361,3 +361,24 @@ body.dark .comment-form input::placeholder {
 body.dark .comment-form {
   border-top-color: #262626;
 }
+
+@media (max-width: 480px) {
+  .comment-form {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .comment-form input {
+    min-width: 0;
+    font-size: 13px;
+  }
+
+  .comment-form button {
+    flex-shrink: 0;
+    font-size: 13px;
+  }
+
+  .post-card-emoji {
+    flex-shrink: 0;
+  }
+}

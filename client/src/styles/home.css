@@ -1,6 +1,5 @@
 .home-page {
   width: 100%;
-  min-height: 100vh;
   background: var(--bg-color);
 }
 
@@ -96,4 +95,12 @@
   .feed-end {
     margin: 32px 0 72px;
   }
+}
+
+.home-page,
+.feed,
+.post-list {
+  height: auto;
+  max-height: none;
+  overflow: visible;
 }
