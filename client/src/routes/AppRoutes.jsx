@@ -5,6 +5,7 @@ import ProtectedRoute from "../components/layout/ProtectedRoute";
 
 import Login from "../pages/Login";
 import Register from "../pages/Register";
+import ResetPassword from "../pages/ResetPassword";
 import Home from "../pages/Home";
 import Search from "../pages/Search";
 import CreatePost from "../pages/CreatePost";
@@ -27,6 +28,7 @@ const AppRoutes = () => {
 
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/reset" element={<ResetPassword />} />
 
         <Route
           element={
@@ -45,9 +47,9 @@ const AppRoutes = () => {
           <Route path="/profile/edit" element={<EditProfile />} />
 
           <Route path="/users/:id" element={<UserProfile />} />
-
-          <Route path="*" element={<NotFound />} />
         </Route>
+
+        <Route path="*" element={<NotFound />} />
       </Routes>
 
       {backgroundLocation && (
