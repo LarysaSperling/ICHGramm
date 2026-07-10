@@ -77,7 +77,7 @@ const PostModal = ({ post, onClose, onPostChange }) => {
           ]);
 
         setComments(
-          Array.isArray(commentsResponse.data) ? commentsResponse.data : []
+          Array.isArray(commentsResponse.data) ? commentsResponse.data : [],
         );
 
         const followingIds = Array.isArray(profileResponse.data.following)
@@ -99,14 +99,14 @@ const PostModal = ({ post, onClose, onPostChange }) => {
     loadModalData();
   }, [_id, authorId]);
 
- const handleEmojiClick = (emojiData) => {
-  setCommentText((prev) => `${prev}${emojiData.emoji}`);
-  setIsEmojiOpen(false);
+  const handleEmojiClick = (emojiData) => {
+    setCommentText((prev) => `${prev}${emojiData.emoji}`);
+    setIsEmojiOpen(false);
 
-  setTimeout(() => {
-    inputRef.current?.focus();
-  }, 0);
-};
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 0);
+  };
 
   const handleToggleLike = async () => {
     if (isLiking) return;
@@ -157,6 +157,17 @@ const PostModal = ({ post, onClose, onPostChange }) => {
     } finally {
       setIsFollowLoading(false);
     }
+  };
+
+  const handleCommentIconClick = () => {
+    inputRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 300);
   };
 
   const handleAddComment = async (event) => {
@@ -273,7 +284,11 @@ const PostModal = ({ post, onClose, onPostChange }) => {
                 />
               </button>
 
-              <button type="button">
+              <button
+                type="button"
+                onClick={handleCommentIconClick}
+                aria-label="Write a comment"
+              >
                 <MessageCircle size={24} />
               </button>
 
@@ -282,7 +297,11 @@ const PostModal = ({ post, onClose, onPostChange }) => {
               </button>
             </div>
 
-            <button type="button" onClick={handleToggleSave} disabled={isSaving}>
+            <button
+              type="button"
+              onClick={handleToggleSave}
+              disabled={isSaving}
+            >
               <Bookmark size={24} fill={isSaved ? "currentColor" : "none"} />
             </button>
           </div>
@@ -330,7 +349,10 @@ const PostModal = ({ post, onClose, onPostChange }) => {
               maxLength={300}
             />
 
-            <button type="submit" disabled={isSubmitting || !commentText.trim()}>
+            <button
+              type="submit"
+              disabled={isSubmitting || !commentText.trim()}
+            >
               Send
             </button>
           </form>

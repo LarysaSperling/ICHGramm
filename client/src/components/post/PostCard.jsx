@@ -46,7 +46,6 @@ const PostComment = ({ comment }) => {
     <p className="post-comment">
       <strong>{comment.user?.username || "unknown"}</strong>{" "}
       <span>{displayedComment}</span>
-
       {isLongComment && !showFullText && (
         <button
           type="button"
@@ -150,13 +149,13 @@ const PostCard = ({ post, savedPostIds = [], onPostChange, onOpenPost }) => {
   }, [authorId, isOwnPost]);
 
   const handleEmojiClick = (emojiData) => {
-  setCommentText((prev) => `${prev}${emojiData.emoji}`);
-  setIsEmojiOpen(false);
+    setCommentText((prev) => `${prev}${emojiData.emoji}`);
+    setIsEmojiOpen(false);
 
-  setTimeout(() => {
-    inputRef.current?.focus();
-  }, 0);
-};
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 0);
+  };
 
   const handleToggleFollow = async () => {
     if (!authorId || isOwnPost || isFollowLoading) return;
@@ -214,6 +213,17 @@ const PostCard = ({ post, savedPostIds = [], onPostChange, onOpenPost }) => {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleCommentIconClick = () => {
+    inputRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 300);
   };
 
   const handleAddComment = async (event) => {
@@ -298,7 +308,11 @@ const PostCard = ({ post, savedPostIds = [], onPostChange, onOpenPost }) => {
             />
           </button>
 
-          <button type="button">
+          <button
+            type="button"
+            onClick={handleCommentIconClick}
+            aria-label="Write a comment"
+          >
             <MessageCircle size={24} />
           </button>
 
@@ -321,7 +335,6 @@ const PostCard = ({ post, savedPostIds = [], onPostChange, onOpenPost }) => {
           <strong>{author?.username || "unknown"}</strong>
         </Link>{" "}
         <span className="post-caption-text">{displayedCaption}</span>
-
         {isLongCaption && !showFullCaption && (
           <button
             type="button"
