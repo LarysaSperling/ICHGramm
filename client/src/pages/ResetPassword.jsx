@@ -1,12 +1,17 @@
 import { Link } from "react-router-dom";
 
 import resetPasswordIcon from "../assets/icons/reset-password-icon.svg";
-
+import logo from "../assets/logos/ichgram-logo.svg";
 import "../styles/resetPassword.css";
 
 const ResetPassword = () => {
   return (
     <main className="reset-page">
+      <header className="reset-header">
+        <Link to="/login">
+          <img src={logo} alt="ICHGram" />
+        </Link>
+      </header>
       <section className="reset-card">
         <div className="reset-content">
           <img
