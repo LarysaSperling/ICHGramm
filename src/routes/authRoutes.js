@@ -3,6 +3,8 @@ import express from "express";
 import {
   register,
   login,
+  requestPasswordReset,
+  resetPassword,
 } from "../controllers/authController.js";
 
 import {
@@ -26,6 +28,16 @@ router.post(
   loginValidator,
   validationMiddleware,
   login
+);
+
+router.post(
+  "/reset-password",
+  requestPasswordReset
+);
+
+router.post(
+  "/reset-password/:token",
+  resetPassword
 );
 
 export default router;

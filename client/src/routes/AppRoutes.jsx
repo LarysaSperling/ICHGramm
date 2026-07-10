@@ -6,6 +6,7 @@ import ProtectedRoute from "../components/layout/ProtectedRoute";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
 import ResetPassword from "../pages/ResetPassword";
+import NewPassword from "../pages/NewPassword";
 import Home from "../pages/Home";
 import Search from "../pages/Search";
 import CreatePost from "../pages/CreatePost";
@@ -29,7 +30,7 @@ const AppRoutes = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/reset" element={<ResetPassword />} />
-
+        <Route path="/new-password" element={<NewPassword />} />
         <Route
           element={
             <ProtectedRoute>

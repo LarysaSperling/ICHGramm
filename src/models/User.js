@@ -6,17 +6,21 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
+      trim: true,
     },
 
     fullName: {
       type: String,
       required: true,
+      trim: true,
     },
 
     email: {
       type: String,
       required: true,
       unique: true,
+      trim: true,
+      lowercase: true,
     },
 
     password: {
@@ -39,6 +43,18 @@ const userSchema = new mongoose.Schema(
       default: "",
     },
 
+    resetPasswordToken: {
+      type: String,
+      default: null,
+      select: false,
+    },
+
+    resetPasswordExpires: {
+      type: Date,
+      default: null,
+      select: false,
+    },
+
     followers: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -52,12 +68,13 @@ const userSchema = new mongoose.Schema(
         ref: "User",
       },
     ],
+
     savedPosts: [
-  {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Post",
-  },
-],
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Post",
+      },
+    ],
   },
   {
     timestamps: true,
