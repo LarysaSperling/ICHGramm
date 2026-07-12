@@ -1,11 +1,25 @@
 import "../../styles/postActionMenu.css";
 
-const PostActionMenu = ({ isOpen, onClose, onEdit, onDelete }) => {
+const PostActionMenu = ({
+  isOpen,
+  onClose,
+  isOwnPost = false,
+  isFollowing = false,
+  onEdit,
+  onDelete,
+  onOpenPost,
+  onGoToProfile,
+  onToggleFollow,
+  authorId,
+}) => {
   if (!isOpen) return null;
 
   const handleCopyLink = async () => {
+    const postUrl = authorId
+      ? `${window.location.origin}/users/${authorId}`
+      : window.location.href;
     try {
-      await navigator.clipboard.writeText(window.location.href);
+      await navigator.clipboard.writeText(postUrl);
     } catch (error) {
       console.error("Copy link failed:", error);
     }
@@ -15,12 +29,27 @@ const PostActionMenu = ({ isOpen, onClose, onEdit, onDelete }) => {
 
   const handleEdit = () => {
     onClose();
-    onEdit();
+    onEdit?.();
   };
 
   const handleDelete = () => {
     onClose();
-    onDelete();
+    onDelete?.();
+  };
+
+  const handleOpenPost = () => {
+    onClose();
+    onOpenPost?.();
+  };
+
+  const handleGoToProfile = () => {
+    onClose();
+    onGoToProfile?.();
+  };
+
+  const handleToggleFollow = () => {
+    onClose();
+    onToggleFollow?.();
   };
 
   return (
@@ -29,23 +58,53 @@ const PostActionMenu = ({ isOpen, onClose, onEdit, onDelete }) => {
         className="post-action-menu-dialog"
         onClick={(event) => event.stopPropagation()}
       >
-        <button
-          type="button"
-          className="post-action-menu-item danger"
-          onClick={handleDelete}
-        >
-          Delete
-        </button>
+        {isOwnPost ? (
+          <>
+            <button
+              type="button"
+              className="post-action-menu-item danger"
+              onClick={handleDelete}
+            >
+              Delete
+            </button>
+
+            <button
+              type="button"
+              className="post-action-menu-item strong"
+              onClick={handleEdit}
+            >
+              Edit caption
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              type="button"
+              className="post-action-menu-item strong"
+              onClick={handleGoToProfile}
+            >
+              Go to profile
+            </button>
+
+            <button
+              type="button"
+              className={
+                isFollowing
+                  ? "post-action-menu-item danger"
+                  : "post-action-menu-item strong"
+              }
+              onClick={handleToggleFollow}
+            >
+              {isFollowing ? "Unfollow" : "Follow"}
+            </button>
+          </>
+        )}
 
         <button
           type="button"
-          className="post-action-menu-item strong"
-          onClick={handleEdit}
+          className="post-action-menu-item"
+          onClick={handleOpenPost}
         >
-          Edit caption
-        </button>
-
-        <button type="button" className="post-action-menu-item" onClick={onClose}>
           Go to post
         </button>
 
@@ -57,7 +116,11 @@ const PostActionMenu = ({ isOpen, onClose, onEdit, onDelete }) => {
           Copy link
         </button>
 
-        <button type="button" className="post-action-menu-item" onClick={onClose}>
+        <button
+          type="button"
+          className="post-action-menu-item"
+          onClick={onClose}
+        >
           Cancel
         </button>
       </div>

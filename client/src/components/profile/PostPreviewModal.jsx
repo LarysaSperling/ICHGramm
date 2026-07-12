@@ -423,6 +423,9 @@ const PostPreviewModal = ({
       <PostActionMenu
         isOpen={isMenuOpen}
         onClose={() => setIsMenuOpen(false)}
+        isOwnPost={true}
+        postId={post._id}
+        authorId={post.author?._id}
         onEdit={handleEdit}
         onDelete={handleDelete}
       />

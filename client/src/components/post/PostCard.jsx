@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import EmojiPicker from "emoji-picker-react";
 import {
   Bookmark,
@@ -14,6 +14,7 @@ import api from "../../api/axios";
 import Avatar from "../ui/Avatar";
 import timeAgo from "../../utils/timeAgo";
 import SharePostModal from "./SharePostModal";
+import PostActionMenu from "../profile/PostActionMenu";
 
 import "../../styles/post.css";
 
@@ -22,10 +23,12 @@ const COMMENT_LIMIT = 35;
 
 const getCurrentUserId = () => {
   const token = localStorage.getItem("token");
+
   if (!token) return null;
 
   try {
     const payload = JSON.parse(atob(token.split(".")[1]));
+
     return payload.id || payload._id || payload.userId || null;
   } catch {
     return null;
@@ -61,21 +64,29 @@ const PostComment = ({ comment }) => {
 };
 
 const PostCard = ({ post, savedPostIds = [], onPostChange, onOpenPost }) => {
-  const [localPost, setUpdatedPost] = useState(post);
+  const navigate = useNavigate();
+
+  const [localPost, setLocalPost] = useState(post);
   const [comments, setComments] = useState([]);
   const [commentText, setCommentText] = useState("");
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
   const [isFollowing, setIsFollowing] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
+
   const [showAllComments, setShowAllComments] = useState(false);
   const [showFullCaption, setShowFullCaption] = useState(false);
+
   const [isEmojiOpen, setIsEmojiOpen] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
+  const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
 
   const emojiRef = useRef(null);
   const inputRef = useRef(null);
+
   const currentUserId = getCurrentUserId();
 
   const { _id, image, caption, author, createdAt } = localPost;
@@ -88,11 +99,13 @@ const PostCard = ({ post, savedPostIds = [], onPostChange, onOpenPost }) => {
 
   const isLiked = postLikes.some((like) => {
     const likeId = typeof like === "string" ? like : like?._id;
+
     return likeId === currentUserId;
   });
 
   const likesCount = postLikes.length;
   const isSaved = savedPostIds.includes(_id);
+
   const visibleComments = showAllComments ? comments : comments.slice(0, 2);
 
   const safeCaption = caption || "";
@@ -102,6 +115,10 @@ const PostCard = ({ post, savedPostIds = [], onPostChange, onOpenPost }) => {
     showFullCaption || !isLongCaption
       ? safeCaption
       : `${safeCaption.slice(0, CAPTION_LIMIT)}...`;
+
+  useEffect(() => {
+    setLocalPost(post);
+  }, [post]);
 
   useEffect(() => {
     const handleClickOutsideEmoji = (event) => {
@@ -121,6 +138,7 @@ const PostCard = ({ post, savedPostIds = [], onPostChange, onOpenPost }) => {
     const getComments = async () => {
       try {
         const { data } = await api.get(`/comments/${_id}`);
+
         setComments(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error(err.response?.data?.message || "Failed to load comments");
@@ -184,11 +202,8 @@ const PostCard = ({ post, savedPostIds = [], onPostChange, onOpenPost }) => {
       const { data } = await api.post(`/posts/${_id}/like`);
 
       if (data.post) {
-        setUpdatedPost(data.post);
-
-        if (onPostChange) {
-          onPostChange(data.post);
-        }
+        setLocalPost(data.post);
+        onPostChange?.(data.post);
       }
     } catch (err) {
       console.error(err.response?.data?.message || "Failed to like post");
@@ -205,11 +220,9 @@ const PostCard = ({ post, savedPostIds = [], onPostChange, onOpenPost }) => {
 
       const { data } = await api.post(`/users/saved/${_id}`);
 
-      if (onPostChange) {
-        onPostChange(localPost, {
-          saved: data.saved,
-        });
-      }
+      onPostChange?.(localPost, {
+        saved: data.saved,
+      });
     } catch (err) {
       console.error(err.response?.data?.message || "Failed to save post");
     } finally {
@@ -244,17 +257,70 @@ const PostCard = ({ post, savedPostIds = [], onPostChange, onOpenPost }) => {
       setCommentText("");
       setIsEmojiOpen(false);
 
-      if (onPostChange) {
-        onPostChange({
-          ...localPost,
-          commentsCount: comments.length + 1,
-        });
-      }
+      onPostChange?.({
+        ...localPost,
+        commentsCount: comments.length + 1,
+      });
     } catch (err) {
       console.error(err.response?.data?.message || "Failed to add comment");
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleEditCaption = async () => {
+    const newCaption = window.prompt("Edit caption", safeCaption);
+
+    if (newCaption === null) return;
+
+    const normalizedCaption = newCaption.trim();
+
+    if (!normalizedCaption) {
+      window.alert("Caption cannot be empty");
+      return;
+    }
+
+    try {
+      const { data } = await api.put(`/posts/${_id}`, {
+        caption: normalizedCaption,
+      });
+
+      const updatedPost = data.post || data;
+
+      setLocalPost(updatedPost);
+      setShowFullCaption(false);
+      onPostChange?.(updatedPost);
+    } catch (err) {
+      console.error(err.response?.data?.message || "Failed to edit post");
+    }
+  };
+
+  const handleDeletePost = async () => {
+    const shouldDelete = window.confirm(
+      "Are you sure you want to delete this post?",
+    );
+
+    if (!shouldDelete) return;
+
+    try {
+      await api.delete(`/posts/${_id}`);
+
+      onPostChange?.(null, {
+        deletedPostId: _id,
+      });
+    } catch (err) {
+      console.error(err.response?.data?.message || "Failed to delete post");
+    }
+  };
+
+  const handleGoToProfile = () => {
+    if (!authorId) return;
+
+    navigate(`/users/${authorId}`);
+  };
+
+  const handleOpenPost = () => {
+    onOpenPost?.(localPost);
   };
 
   return (
@@ -270,6 +336,7 @@ const PostCard = ({ post, savedPostIds = [], onPostChange, onOpenPost }) => {
 
             <div>
               <strong>{author?.username || "unknown"}</strong>
+
               <span>{timeAgo(createdAt)}</span>
             </div>
           </Link>
@@ -286,7 +353,12 @@ const PostCard = ({ post, savedPostIds = [], onPostChange, onOpenPost }) => {
           )}
         </div>
 
-        <button className="post-more" type="button">
+        <button
+          className="post-more"
+          type="button"
+          onClick={() => setIsActionMenuOpen(true)}
+          aria-label="Open post menu"
+        >
           <MoreHorizontal size={22} />
         </button>
       </header>
@@ -297,12 +369,17 @@ const PostCard = ({ post, savedPostIds = [], onPostChange, onOpenPost }) => {
         alt={safeCaption || "Post"}
         loading="lazy"
         decoding="async"
-        onClick={() => onOpenPost?.(localPost)}
+        onClick={handleOpenPost}
       />
 
       <div className="post-actions">
         <div>
-          <button type="button" onClick={handleToggleLike} disabled={isLiking}>
+          <button
+            type="button"
+            onClick={handleToggleLike}
+            disabled={isLiking}
+            aria-label="Like post"
+          >
             <Heart
               size={24}
               fill={isLiked ? "red" : "none"}
@@ -327,7 +404,12 @@ const PostCard = ({ post, savedPostIds = [], onPostChange, onOpenPost }) => {
           </button>
         </div>
 
-        <button type="button" onClick={handleToggleSave} disabled={isSaving}>
+        <button
+          type="button"
+          onClick={handleToggleSave}
+          disabled={isSaving}
+          aria-label="Save post"
+        >
           <Bookmark size={24} fill={isSaved ? "currentColor" : "none"} />
         </button>
       </div>
@@ -378,6 +460,7 @@ const PostCard = ({ post, savedPostIds = [], onPostChange, onOpenPost }) => {
             type="button"
             className="post-card-emoji-button"
             onClick={() => setIsEmojiOpen((prev) => !prev)}
+            aria-label="Choose emoji"
           >
             <Smile size={20} />
           </button>
@@ -389,7 +472,9 @@ const PostCard = ({ post, savedPostIds = [], onPostChange, onOpenPost }) => {
                 width={300}
                 height={360}
                 emojiStyle="native"
-                previewConfig={{ showPreview: false }}
+                previewConfig={{
+                  showPreview: false,
+                }}
                 searchDisabled={false}
                 skinTonesDisabled
               />
@@ -413,10 +498,25 @@ const PostCard = ({ post, savedPostIds = [], onPostChange, onOpenPost }) => {
           Send
         </button>
       </form>
+
       <SharePostModal
         post={localPost}
         isOpen={isShareOpen}
         onClose={() => setIsShareOpen(false)}
+      />
+
+      <PostActionMenu
+        isOpen={isActionMenuOpen}
+        onClose={() => setIsActionMenuOpen(false)}
+        isOwnPost={isOwnPost}
+        isFollowing={isFollowing}
+        postId={_id}
+        authorId={authorId}
+        onEdit={handleEditCaption}
+        onDelete={handleDeletePost}
+        onOpenPost={handleOpenPost}
+        onGoToProfile={handleGoToProfile}
+        onToggleFollow={handleToggleFollow}
       />
     </article>
   );
