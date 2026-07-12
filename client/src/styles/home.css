@@ -9,15 +9,6 @@
   margin: 0 auto;
 }
 
-.stories {
-  width: 220px;
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 20px;
-  margin-bottom: 28px;
-}
-
 .post-list {
   display: grid;
   grid-template-columns: repeat(2, 404px);
@@ -27,15 +18,19 @@
 
 .feed-infinite-loader {
   grid-column: 1 / -1;
+
   display: flex;
   justify-content: center;
-  padding: 24px 0;
+
   min-height: 80px;
+  padding: 24px 0;
 }
 
 .feed-end,
 .feed-error {
   grid-column: 1 / -1;
+
+  width: 100%;
   text-align: center;
   color: var(--text-color);
 }
@@ -44,17 +39,12 @@
   margin: 40px 0 80px;
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 1024px) {
   .feed {
     max-width: 404px;
   }
 
-  .stories {
-    width: 404px;
-  }
-
   .post-list {
-    display: grid;
     grid-template-columns: 404px;
     justify-content: center;
     gap: 32px;
@@ -64,10 +54,6 @@
 @media (max-width: 768px) {
   .feed {
     max-width: 100%;
-  }
-
-  .stories {
-    width: 100%;
   }
 
   .post-list {
@@ -82,13 +68,8 @@
     max-width: 100%;
   }
 
-  .stories {
-    width: 100%;
-    padding: 16px;
-  }
-
   .post-list {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 20px;
   }
 

@@ -1,17 +1,27 @@
 import Avatar from "../ui/Avatar";
 
-const StoryItem = ({ story }) => {
+const StoryItem = ({ storyGroup, onClick }) => {
+  const user = storyGroup?.user;
+  const storiesCount = storyGroup?.stories?.length || 0;
+
+  if (!user || storiesCount === 0) return null;
+
   return (
-    <button className="story-item" type="button">
-      <div className="story-ring">
+    <button
+      className="story-item"
+      type="button"
+      onClick={onClick}
+      aria-label={`View ${user.username}'s story`}
+    >
+      <div className="story-ring has-story">
         <Avatar
-          src={story.avatar}
-          name={story.username}
+          src={user.avatar}
+          name={user.username || user.fullName}
           size={64}
         />
       </div>
 
-      <span>{story.username}</span>
+      <span>{user.username}</span>
     </button>
   );
 };
