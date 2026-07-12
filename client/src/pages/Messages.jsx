@@ -755,9 +755,30 @@ const Messages = () => {
                               </div>
 
                               <div className="message-content">
-                                <div className="message-bubble sent">
-                                  {message.text}
-                                </div>
+                                {message.messageType === "post" &&
+                                message.sharedPost ? (
+                                  <div className="shared-post-message">
+                                    <img
+                                      src={message.sharedPost.image}
+                                      alt={
+                                        message.sharedPost.caption ||
+                                        "Shared post"
+                                      }
+                                    />
+
+                                    <div className="shared-post-message-info">
+                                      <strong>
+                                        {message.sharedPost.author?.username}
+                                      </strong>
+
+                                      <span>{message.sharedPost.caption}</span>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="message-bubble sent">
+                                    {message.text}
+                                  </div>
+                                )}
 
                                 <span className="message-time">
                                   {formatTime(message.createdAt)}
@@ -789,9 +810,30 @@ const Messages = () => {
                               />
 
                               <div className="message-content">
-                                <div className="message-bubble received">
-                                  {message.text}
-                                </div>
+                                {message.messageType === "post" &&
+                                message.sharedPost ? (
+                                  <div className="shared-post-message">
+                                    <img
+                                      src={message.sharedPost.image}
+                                      alt={
+                                        message.sharedPost.caption ||
+                                        "Shared post"
+                                      }
+                                    />
+
+                                    <div className="shared-post-message-info">
+                                      <strong>
+                                        {message.sharedPost.author?.username}
+                                      </strong>
+
+                                      <span>{message.sharedPost.caption}</span>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="message-bubble received">
+                                    {message.text}
+                                  </div>
+                                )}
 
                                 <span className="message-time">
                                   {formatTime(message.createdAt)}

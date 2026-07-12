@@ -14,10 +14,23 @@ const messageSchema = new mongoose.Schema(
       required: true,
     },
 
+    messageType: {
+      type: String,
+      enum: ["text", "post"],
+      default: "text",
+    },
+
     text: {
       type: String,
-      required: true,
+      default: "",
       trim: true,
+      maxlength: 1000,
+    },
+
+    sharedPost: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Post",
+      default: null,
     },
 
     isSeen: {
@@ -34,6 +47,23 @@ const messageSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+messageSchema.pre("validate", function () {
+  const hasText = Boolean(this.text?.trim());
+  const hasSharedPost = Boolean(this.sharedPost);
+
+  if (!hasText && !hasSharedPost) {
+    throw new Error("Message must contain text or a shared post");
+  }
+
+  if (this.messageType === "post" && !hasSharedPost) {
+    throw new Error("Shared post is required for post messages");
+  }
+
+  if (this.messageType === "text" && !hasText) {
+    throw new Error("Text is required for text messages");
+  }
+});
 
 messageSchema.index({
   sender: 1,

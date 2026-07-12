@@ -13,6 +13,7 @@ import {
 import api from "../../api/axios";
 import Avatar from "../ui/Avatar";
 import timeAgo from "../../utils/timeAgo";
+import SharePostModal from "./SharePostModal";
 
 import "../../styles/post.css";
 
@@ -71,6 +72,7 @@ const PostCard = ({ post, savedPostIds = [], onPostChange, onOpenPost }) => {
   const [showAllComments, setShowAllComments] = useState(false);
   const [showFullCaption, setShowFullCaption] = useState(false);
   const [isEmojiOpen, setIsEmojiOpen] = useState(false);
+  const [isShareOpen, setIsShareOpen] = useState(false);
 
   const emojiRef = useRef(null);
   const inputRef = useRef(null);
@@ -316,7 +318,11 @@ const PostCard = ({ post, savedPostIds = [], onPostChange, onOpenPost }) => {
             <MessageCircle size={24} />
           </button>
 
-          <button type="button">
+          <button
+            type="button"
+            onClick={() => setIsShareOpen(true)}
+            aria-label="Share post"
+          >
             <Send size={24} />
           </button>
         </div>
@@ -407,6 +413,11 @@ const PostCard = ({ post, savedPostIds = [], onPostChange, onOpenPost }) => {
           Send
         </button>
       </form>
+      <SharePostModal
+        post={localPost}
+        isOpen={isShareOpen}
+        onClose={() => setIsShareOpen(false)}
+      />
     </article>
   );
 };

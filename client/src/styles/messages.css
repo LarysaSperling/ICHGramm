@@ -829,3 +829,104 @@ body.dark .messages-online-dot {
 }
   
 }
+
+.shared-post-message {
+  width: 260px;
+  max-width: 100%;
+  overflow: hidden;
+
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+
+  background: var(--card-bg);
+  color: var(--text-color);
+
+  cursor: pointer;
+}
+
+.shared-post-message img {
+  width: 100%;
+  height: 220px;
+  display: block;
+  object-fit: cover;
+}
+
+.shared-post-message-info {
+  min-width: 0;
+  padding: 10px 12px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.shared-post-message-info strong {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+.shared-post-message-info span {
+  display: block;
+  overflow: hidden;
+
+  color: var(--muted-color);
+  font-size: 13px;
+  line-height: 18px;
+
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.message-row.own .shared-post-message {
+  border-bottom-right-radius: 4px;
+}
+
+.message-row.other .shared-post-message {
+  border-bottom-left-radius: 4px;
+}
+
+body.dark .shared-post-message {
+  background: #161616;
+  border-color: #262626;
+}
+
+body.dark .shared-post-message-info strong {
+  color: #f5f5f5;
+}
+
+body.dark .shared-post-message-info span {
+  color: #a8a8a8;
+}
+
+@media (max-width: 768px) {
+  .shared-post-message {
+    width: min(240px, 72vw);
+  }
+
+  .shared-post-message img {
+    height: 200px;
+  }
+}
+
+@media (max-width: 480px) {
+  .shared-post-message {
+    width: min(210px, 68vw);
+  }
+
+  .shared-post-message img {
+    height: 175px;
+  }
+
+  .shared-post-message-info {
+    padding: 8px 10px;
+  }
+
+  .shared-post-message-info strong {
+    font-size: 13px;
+  }
+
+  .shared-post-message-info span {
+    font-size: 12px;
+  }
+}

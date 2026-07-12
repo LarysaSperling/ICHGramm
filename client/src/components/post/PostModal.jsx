@@ -6,6 +6,7 @@ import EmojiPicker from "emoji-picker-react";
 import api from "../../api/axios";
 import Avatar from "../ui/Avatar";
 import timeAgo from "../../utils/timeAgo";
+import SharePostModal from "./SharePostModal";
 
 import "../../styles/postModal.css";
 
@@ -32,6 +33,7 @@ const PostModal = ({ post, onClose, onPostChange }) => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
   const [isEmojiOpen, setIsEmojiOpen] = useState(false);
+  const [isShareOpen, setIsShareOpen] = useState(false);
 
   const emojiRef = useRef(null);
   const inputRef = useRef(null);
@@ -292,7 +294,11 @@ const PostModal = ({ post, onClose, onPostChange }) => {
                 <MessageCircle size={24} />
               </button>
 
-              <button type="button">
+              <button
+                type="button"
+                onClick={() => setIsShareOpen(true)}
+                aria-label="Share post"
+              >
                 <Send size={24} />
               </button>
             </div>
@@ -357,6 +363,11 @@ const PostModal = ({ post, onClose, onPostChange }) => {
             </button>
           </form>
         </aside>
+        <SharePostModal
+          post={localPost}
+          isOpen={isShareOpen}
+          onClose={() => setIsShareOpen(false)}
+        />
       </div>
     </div>
   );

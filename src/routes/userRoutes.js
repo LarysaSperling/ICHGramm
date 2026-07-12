@@ -12,6 +12,7 @@ import {
   toggleFollowUser,
   toggleSavedPost,
   getSavedPosts,
+  getShareUsers,
 } from "../controllers/userController.js";
 
 const router = express.Router();
@@ -23,6 +24,7 @@ router.get("/profile/posts", authMiddleware, getMyPosts);
 router.get("/me/posts", authMiddleware, getMyPosts);
 
 router.get("/search", authMiddleware, searchUsers);
+router.get("/share-list", authMiddleware, getShareUsers);
 
 router.get("/saved", authMiddleware, getSavedPosts);
 router.post("/saved/:postId", authMiddleware, toggleSavedPost);

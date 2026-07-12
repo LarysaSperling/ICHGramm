@@ -1,25 +1,44 @@
 import Message from "../models/Message.js";
 import asyncHandler from "../utils/asyncHandler.js";
 
+const messagePopulate = [
+  {
+    path: "sender",
+    select: "username fullName avatar",
+  },
+  {
+    path: "receiver",
+    select: "username fullName avatar",
+  },
+  {
+    path: "sharedPost",
+    select: "image caption author createdAt",
+    populate: {
+      path: "author",
+      select: "username fullName avatar",
+    },
+  },
+];
+
 const sendMessage = asyncHandler(async (req, res) => {
-  const { receiver, text } = req.body;
+  const {
+    receiver,
+    text = "",
+    messageType = "text",
+    sharedPost = null,
+  } = req.body;
+
+  const normalizedText = text.trim();
 
   const message = await Message.create({
     sender: req.user._id,
     receiver,
-    text: text.trim(),
+    text: normalizedText,
+    messageType,
+    sharedPost: sharedPost || null,
   });
 
-  const populatedMessage = await message.populate([
-    {
-      path: "sender",
-      select: "username fullName avatar",
-    },
-    {
-      path: "receiver",
-      select: "username fullName avatar",
-    },
-  ]);
+  const populatedMessage = await message.populate(messagePopulate);
 
   const chatRoom = [req.user._id.toString(), receiver.toString()]
     .sort()
@@ -27,6 +46,7 @@ const sendMessage = asyncHandler(async (req, res) => {
 
   if (req.io) {
     req.io.to(chatRoom).emit("newMessage", populatedMessage);
+
     req.io
       .to(receiver.toString())
       .emit("newMessageNotification", populatedMessage);
@@ -50,8 +70,7 @@ const getMessagesWithUser = asyncHandler(async (req, res) => {
       },
     ],
   })
-    .populate("sender", "username fullName avatar")
-    .populate("receiver", "username fullName avatar")
+    .populate(messagePopulate)
     .sort({ createdAt: 1 })
     .lean();
 
@@ -70,7 +89,7 @@ const markMessagesAsSeen = asyncHandler(async (req, res) => {
     {
       isSeen: true,
       seenAt: new Date(),
-    },
+    }
   );
 
   const chatRoom = [req.user._id.toString(), otherUserId.toString()]
@@ -93,8 +112,7 @@ const getChats = asyncHandler(async (req, res) => {
   const messages = await Message.find({
     $or: [{ sender: req.user._id }, { receiver: req.user._id }],
   })
-    .populate("sender", "username fullName avatar")
-    .populate("receiver", "username fullName avatar")
+    .populate(messagePopulate)
     .sort({ createdAt: -1 })
     .lean();
 
@@ -115,13 +133,20 @@ const getChats = asyncHandler(async (req, res) => {
         isSeen: false,
       });
 
+      const lastMessage =
+        message.messageType === "post"
+          ? "Shared a post"
+          : message.text;
+
       chatsMap.set(otherUserId, {
         user: otherUser,
-        lastMessage: message.text,
+        lastMessage,
         lastMessageDate: message.createdAt,
         lastMessageSeen: message.isSeen,
         lastMessageSender: message.sender._id,
         unreadCount,
+        lastMessageType: message.messageType,
+        lastSharedPost: message.sharedPost || null,
       });
     }
   }
@@ -147,20 +172,23 @@ const editMessage = asyncHandler(async (req, res) => {
     });
   }
 
+  if (message.messageType !== "text") {
+    return res.status(400).json({
+      message: "Shared post messages cannot be edited",
+    });
+  }
+
+  if (!text?.trim()) {
+    return res.status(400).json({
+      message: "Message cannot be empty",
+    });
+  }
+
   message.text = text.trim();
 
   await message.save();
 
-  const populatedMessage = await message.populate([
-    {
-      path: "sender",
-      select: "username fullName avatar",
-    },
-    {
-      path: "receiver",
-      select: "username fullName avatar",
-    },
-  ]);
+  const populatedMessage = await message.populate(messagePopulate);
 
   res.json(populatedMessage);
 });

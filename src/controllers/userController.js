@@ -195,6 +195,16 @@ const getSavedPosts = asyncHandler(async (req, res) => {
 
   res.json(user.savedPosts);
 });
+const getShareUsers = asyncHandler(async (req, res) => {
+  const users = await User.find({
+    _id: { $ne: req.user._id },
+  })
+    .select("_id username fullName avatar")
+    .sort({ username: 1 })
+    .lean();
+
+  res.json(users);
+});
 
 export {
   getProfile,
@@ -205,4 +215,5 @@ export {
   toggleFollowUser,
   toggleSavedPost,
   getSavedPosts,
+  getShareUsers,
 };

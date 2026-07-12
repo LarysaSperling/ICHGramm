@@ -14,6 +14,7 @@ import api from "../../api/axios";
 import Avatar from "../ui/Avatar";
 import PostActionMenu from "./PostActionMenu";
 import timeAgo from "../../utils/timeAgo";
+import SharePostModal from "../post/SharePostModal";
 
 import "../../styles/postPreviewModal.css";
 
@@ -49,6 +50,7 @@ const PostPreviewModal = ({
   const [isLiking, setIsLiking] = useState(false);
   const [isCommenting, setIsCommenting] = useState(false);
   const [isEmojiOpen, setIsEmojiOpen] = useState(false);
+  const [isShareOpen, setIsShareOpen] = useState(false);
 
   const currentUserId = getCurrentUserId();
 
@@ -281,11 +283,16 @@ const PostPreviewModal = ({
               const commentUsername =
                 comment.user?.username || comment.author?.username || "user";
 
-              const commentAvatar = comment.user?.avatar || comment.author?.avatar;
+              const commentAvatar =
+                comment.user?.avatar || comment.author?.avatar;
 
               return (
                 <article className="post-preview-comment" key={comment._id}>
-                  <Avatar src={commentAvatar} name={commentUsername} size={34} />
+                  <Avatar
+                    src={commentAvatar}
+                    name={commentUsername}
+                    size={34}
+                  />
 
                   <div className="post-preview-comment-main">
                     <p>
@@ -332,7 +339,11 @@ const PostPreviewModal = ({
                   <MessageCircle size={25} />
                 </button>
 
-                <button type="button" aria-label="Send post">
+                <button
+                  type="button"
+                  aria-label="Send post"
+                  onClick={() => setIsShareOpen(true)}
+                >
                   <Send size={25} />
                 </button>
               </div>
@@ -394,14 +405,21 @@ const PostPreviewModal = ({
                 maxLength={300}
               />
 
-              <button type="submit" disabled={!commentText.trim() || isCommenting}>
+              <button
+                type="submit"
+                disabled={!commentText.trim() || isCommenting}
+              >
                 Send
               </button>
             </form>
           </footer>
         </aside>
       </div>
-
+      <SharePostModal
+        post={post}
+        isOpen={isShareOpen}
+        onClose={() => setIsShareOpen(false)}
+      />
       <PostActionMenu
         isOpen={isMenuOpen}
         onClose={() => setIsMenuOpen(false)}
