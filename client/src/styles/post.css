@@ -68,7 +68,13 @@
 
 .post-author span::before {
   content: "•";
-  margin-right: 4px;
+  margin-right: 6px;
+  color: #8e8e8e;
+}
+
+.post-header-left:has(.post-follow) .post-author span::after {
+  content: "•";
+  margin-left:6px;
   color: #8e8e8e;
 }
 
@@ -81,6 +87,7 @@
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
+  margin-left: 12px;
 }
 
 .post-follow.following {

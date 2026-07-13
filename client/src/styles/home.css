@@ -13,7 +13,9 @@
   display: grid;
   grid-template-columns: repeat(2, 404px);
   justify-content: center;
-  gap: 24px;
+
+  column-gap: 38px;
+  row-gap: 42px;
 }
 
 .feed-infinite-loader {
