@@ -137,11 +137,14 @@
 }
 
 .post-caption {
+  display: block;
+  max-width: 100%;
   margin: 0;
   padding: 6px 16px 2px;
   font-size: 14px;
   line-height: 1.4;
   color: #262626;
+  white-space: normal;
   word-break: break-word;
   overflow-wrap: anywhere;
 }
@@ -151,6 +154,9 @@
 }
 
 .post-caption-text {
+  display: inline;
+  max-width: 100%;
+  white-space: normal;
   word-break: break-word;
   overflow-wrap: anywhere;
 }
@@ -173,16 +179,43 @@
 }
 
 .post-comment {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  max-width: 100%;
+  min-width: 0;
   margin: 0;
   font-size: 14px;
   line-height: 1.4;
   color: #262626;
+  white-space: normal;
+}
+
+.post-comment strong {
+  display: inline;
+  flex-shrink: 0;
+  margin-right: 4px;
+}
+
+.post-comment span {
+  display: block;
+  flex: 1;
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
   word-break: break-word;
   overflow-wrap: anywhere;
 }
 
-.post-comment strong {
-  margin-right: 4px;
+.post-comment-more {
+  border: none;
+  background: transparent;
+  color: #8e8e8e;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0;
+  margin-left: 4px;
+  flex-shrink: 0;
 }
 
 .post-view-comments {
@@ -207,6 +240,7 @@
 
 .comment-form input {
   flex: 1;
+  min-width: 0;
   border: none;
   outline: none;
   background: transparent;
@@ -221,7 +255,7 @@
 .comment-form button {
   border: none;
   background: transparent;
-  color: #0095F6;
+  color: #0095f6;
   font-weight: 600;
   cursor: pointer;
   padding: 0;
@@ -232,77 +266,11 @@
   cursor: not-allowed;
 }
 
-.post-caption,
-.post-caption-text,
-.post-comment,
-.post-comment span {
-  max-width: 100%;
-  white-space: normal;
-  word-break: break-word;
-  overflow-wrap: anywhere;
-}
-
-.post-comment {
-  display: block;
-}
-
-.post-comment strong {
-  display: inline;
-}
-.post-caption {
-  display: block;
-  max-width: 100%;
-  white-space: normal;
-  word-break: break-word;
-  overflow-wrap: anywhere;
-}
-
-.post-caption-text {
-  display: inline;
-  max-width: 100%;
-  white-space: normal;
-  word-break: break-word;
-  overflow-wrap: anywhere;
-}
-
-.post-comment {
-  display: flex;
-  align-items: flex-start;
-  gap: 4px;
-  max-width: 100%;
-  min-width: 0;
-  white-space: normal;
-}
-
-.post-comment strong {
-  flex-shrink: 0;
-}
-
-.post-comment span {
-  flex: 1;
-  min-width: 0;
-  max-width: 100%;
-  display: block;
-  white-space: normal;
-  word-break: break-word;
-  overflow-wrap: anywhere;
-}
-
-.post-comment-more {
-  border: none;
-  background: transparent;
-  color: #8e8e8e;
-  cursor: pointer;
-  font-size: 14px;
-  padding: 0;
-  margin-left: 4px;
-  flex-shrink: 0;
-}
-
 .post-card-emoji {
   position: relative;
   display: flex;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .post-card-emoji-button {
@@ -320,6 +288,13 @@
   left: 0;
   bottom: 34px;
   z-index: 30;
+  width: 300px;
+  max-width: calc(100vw - 32px);
+}
+
+.post-card-emoji-picker .EmojiPickerReact {
+  width: 100% !important;
+  max-width: 100%;
 }
 
 body.dark .post-card-emoji-picker .EmojiPickerReact {
@@ -363,6 +338,28 @@ body.dark .comment-form {
 }
 
 @media (max-width: 480px) {
+  .post-header {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .post-actions {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .post-likes,
+  .post-caption,
+  .post-comments {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .post-view-comments {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
   .comment-form {
     padding: 10px 12px;
     gap: 8px;
@@ -378,7 +375,30 @@ body.dark .comment-form {
     font-size: 13px;
   }
 
-  .post-card-emoji {
-    flex-shrink: 0;
+  .post-card-emoji-picker {
+    width: 280px;
+    max-width: calc(100vw - 24px);
+  }
+}
+
+@media (max-width: 360px) {
+  .post-card-emoji-picker {
+    width: 250px;
+    max-width: calc(100vw - 24px);
+  }
+
+  .post-card-emoji-picker .EmojiPickerReact {
+    height: 310px !important;
+  }
+}
+
+@media (max-width: 330px) {
+  .post-card-emoji-picker {
+    width: 228px;
+    max-width: calc(100vw - 24px);
+  }
+
+  .post-card-emoji-picker .EmojiPickerReact {
+    height: 280px !important;
   }
 }
