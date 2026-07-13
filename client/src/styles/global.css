@@ -69,3 +69,54 @@ body:has(.search-panel) .footer,
 body:has(.notifications-overlay) .footer {
   display: none;
 }
+
+/* Emoji Picker — restore visible category navigation icons */
+.EmojiPickerReact {
+  --epr-text-color: #737373;
+  --epr-category-icon-active-color: #0095f6;
+  --epr-category-navigation-button-size: 30px;
+}
+
+.EmojiPickerReact [class*="category-nav"] button,
+.EmojiPickerReact [class*="category-navigation"] button {
+  color: #737373 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.EmojiPickerReact [class*="category-nav"] button svg,
+.EmojiPickerReact [class*="category-navigation"] button svg {
+  display: block !important;
+  width: 20px !important;
+  height: 20px !important;
+  color: currentColor !important;
+  stroke: currentColor !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.EmojiPickerReact [class*="category-nav"] button[aria-selected="true"],
+.EmojiPickerReact [class*="category-navigation"] button[aria-selected="true"] {
+  color: #0095f6 !important;
+}
+
+body.dark .EmojiPickerReact {
+  --epr-text-color: #a8a8a8;
+  --epr-category-icon-active-color: #0095f6;
+}
+
+body.dark .EmojiPickerReact [class*="category-nav"] button,
+body.dark .EmojiPickerReact [class*="category-navigation"] button {
+  color: #a8a8a8 !important;
+}
+
+body.dark
+  .EmojiPickerReact
+  [class*="category-nav"]
+  button[aria-selected="true"],
+body.dark
+  .EmojiPickerReact
+  [class*="category-navigation"]
+  button[aria-selected="true"] {
+  color: #0095f6 !important;
+}

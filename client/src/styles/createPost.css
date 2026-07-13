@@ -1,17 +1,18 @@
 .create-post-overlay {
   position: fixed;
   top: 0;
-  left: 245px;
   right: 0;
   bottom: 0;
-
+  left: 245px;
   z-index: 1500;
+
+  padding: 24px;
+
   background: rgba(0, 0, 0, 0.65);
 
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
 }
 
 .create-post-close {
@@ -19,31 +20,41 @@
   top: 24px;
   right: 28px;
   z-index: 1600;
+
+  padding: 0;
+
   border: none;
   background: transparent;
-  color: #fff;
+  color: #ffffff;
+
   cursor: pointer;
 }
 
 .create-post-modal {
   width: min(913px, 95vw);
   height: min(564px, 90vh);
-  background: #ffffff;
-  border-radius: 12px;
+
   overflow: hidden;
+
+  border-radius: 12px;
+  background: #ffffff;
+
   display: flex;
   flex-direction: column;
 }
 
 .create-post-header {
+  position: relative;
+
   height: 48px;
   min-height: 48px;
   flex-shrink: 0;
+
   border-bottom: 1px solid #dbdbdb;
+
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
 }
 
 .create-post-header h2 {
@@ -54,10 +65,15 @@
 .create-post-header button {
   position: absolute;
   right: 16px;
+
+  padding: 0;
+
   border: none;
   background: transparent;
   color: #0095f6;
+
   font-weight: 700;
+
   cursor: pointer;
 }
 
@@ -69,40 +85,51 @@
 .create-post-body {
   flex: 1;
   min-height: 0;
+
   display: grid;
   grid-template-columns: 1.55fr 0.75fr;
 }
 
 .create-upload-area {
   position: relative;
+
+  overflow: hidden;
+
   border-right: 1px solid #dbdbdb;
+  background: #fafafa;
+
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #fafafa;
-  overflow: hidden;
 }
 
 .create-upload-area img {
   width: 100%;
   height: 100%;
+
   object-fit: cover;
+
   cursor: crosshair;
+
   -webkit-user-select: none;
   user-select: none;
 }
 
 .create-upload-placeholder {
-  height: 100%;
   width: 100%;
-  cursor: pointer;
+  height: 100%;
+
+  color: #737373;
+
+  font-weight: 600;
+
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 14px;
-  color: #737373;
-  font-weight: 600;
+
+  cursor: pointer;
 }
 
 .create-upload-placeholder input,
@@ -112,49 +139,41 @@
 
 .change-photo-button {
   position: absolute;
-  bottom: 16px;
   right: 16px;
+  bottom: 16px;
   z-index: 100;
 
-  background: rgba(0, 0, 0, 0.75);
-  color: #fff;
-
   padding: 8px 14px;
+
   border-radius: 8px;
+  background: rgba(0, 0, 0, 0.75);
+  color: #ffffff;
 
   font-size: 13px;
   font-weight: 600;
 
-  cursor: pointer;
-
   display: flex;
   align-items: center;
   justify-content: center;
+
+  cursor: pointer;
 }
 
 .create-caption-area {
   height: 100%;
   min-height: 0;
+
   display: grid;
   grid-template-rows: 56px 150px 44px 1fr;
 }
 
-.create-caption-area textarea {
-  width: 100%;
-  height: 100%;
-  border: none;
-  outline: none;
-  resize: none;
-  padding: 12px 16px;
-  font-size: 14px;
-  font-family: inherit;
-}
-
 .create-user {
+  padding: 0 16px;
+
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 0 16px;
+
   font-size: 14px;
 }
 
@@ -162,66 +181,82 @@
   width: 100%;
   height: 100%;
   min-height: 0;
+
+  padding: 12px 16px;
+
   border: none;
   outline: none;
   resize: none;
-  padding: 12px 16px;
-  font-size: 14px;
+
+  background: transparent;
+  color: #262626;
+
   font-family: inherit;
+  font-size: 14px;
 }
+
+.create-caption-area textarea::placeholder {
+  color: #8e8e8e;
+}
+
 .create-caption-footer {
   position: relative;
+
   height: 44px;
-  border-bottom: 1px solid #efefef;
+  padding: 0 16px;
+
   border-top: none;
+  border-bottom: 1px solid #efefef;
+
+  color: #8e8e8e;
+
+  font-size: 12px;
 
   display: flex;
   align-items: center;
   justify-content: space-between;
-
-  padding: 0 16px;
-  color: #8e8e8e;
-  font-size: 12px;
 }
 
 .caption-counter {
   position: relative;
   top: -40px;
-  color:#e2dddd;
-}
 
-.create-caption-footer svg {
-  color: #8e8e8e;
+  color: #a8a8a8;
 }
 
 .create-post-error {
-  color: #ed4956;
-  font-size: 13px;
   padding: 0 16px 12px;
-}
 
-.emoji-button {
-  border: none;
-  background: transparent;
-  color: #8e8e8e;
-  cursor: pointer;
-  padding: 0;
+  color: #ed4956;
+
+  font-size: 13px;
 }
 
 .create-post-emoji {
   position: relative;
+
+  flex-shrink: 0;
+
   display: flex;
   align-items: center;
 }
 
 .create-post-emoji-button {
+  padding: 0;
+
   border: none;
   background: transparent;
-  color: inherit;
-  cursor: pointer;
-  padding: 0;
+  color: #8e8e8e;
+
   display: flex;
   align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+}
+
+.create-post-emoji-button:hover {
+  color: #262626;
 }
 
 .create-post-emoji-picker {
@@ -229,6 +264,51 @@
   left: 0;
   bottom: 36px;
   z-index: 100;
+
+  width: 300px;
+  max-width: calc(100vw - 32px);
+}
+
+.create-post-emoji-picker .EmojiPickerReact {
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 360px !important;
+}
+
+body.dark .create-post-modal {
+  background: #000000;
+  color: #f5f5f5;
+}
+
+body.dark .create-post-header,
+body.dark .create-upload-area,
+body.dark .create-caption-footer {
+  border-color: #262626;
+}
+
+body.dark .create-upload-area {
+  background: #0a0a0a;
+}
+
+body.dark .create-upload-placeholder {
+  color: #a8a8a8;
+}
+
+body.dark .create-caption-area textarea {
+  background: #000000;
+  color: #f5f5f5;
+}
+
+body.dark .create-caption-area textarea::placeholder {
+  color: #737373;
+}
+
+body.dark .create-post-emoji-button {
+  color: #d5d5d5;
+}
+
+body.dark .create-post-emoji-button:hover {
+  color: #ffffff;
 }
 
 body.dark .create-post-emoji-picker .EmojiPickerReact {
@@ -237,7 +317,7 @@ body.dark .create-post-emoji-picker .EmojiPickerReact {
   --epr-text-color: #f5f5f5;
   --epr-hover-bg-color: #262626;
   --epr-highlight-color: #0095f6;
-  --epr-search-input-bg-color: #000;
+  --epr-search-input-bg-color: #000000;
   --epr-border-color: #262626;
 }
 
@@ -249,20 +329,24 @@ body.dark .create-post-emoji-picker .EmojiPickerReact {
 
 @media (max-width: 768px) {
   .create-post-overlay {
-    left: 0;
     right: 0;
     bottom: 0;
+    left: 0;
+
     padding: 14px;
+
     align-items: center;
   }
 
   .create-post-modal {
-  width: min(100%, 390px);
-  height: 82dvh;
-  max-height: 82dvh;
-  border-radius: 12px;
-  overflow: hidden;
-}
+    width: min(100%, 390px);
+    height: 82dvh;
+    max-height: 82dvh;
+
+    overflow: hidden;
+
+    border-radius: 12px;
+  }
 
   .create-post-body {
     display: flex;
@@ -273,19 +357,29 @@ body.dark .create-post-emoji-picker .EmojiPickerReact {
     width: 100%;
     height: 240px;
     min-height: 240px;
+
     border-right: none;
     border-bottom: 1px solid #dbdbdb;
   }
 
   .create-caption-area {
     min-height: 220px;
-    display: grid;
+
     grid-template-rows: 52px 90px 40px 1fr;
   }
 
   .create-post-close {
     top: 18px;
     right: 18px;
+  }
+
+  .create-post-emoji-picker {
+    width: 280px;
+    max-width: calc(100vw - 28px);
+  }
+
+  .create-post-emoji-picker .EmojiPickerReact {
+    height: 350px !important;
   }
 }
 
@@ -307,11 +401,52 @@ body.dark .create-post-emoji-picker .EmojiPickerReact {
 
   .create-caption-area {
     min-height: 200px;
+
     grid-template-rows: 50px 80px 38px 1fr;
   }
 
+  .create-user {
+    padding: 0 12px;
+  }
+
+  .create-caption-area textarea {
+    padding: 10px 12px;
+
+    font-size: 13px;
+  }
+
+  .create-caption-footer {
+    padding: 0 12px;
+  }
+
+  .create-post-emoji-picker {
+    width: 280px;
+    max-width: calc(100vw - 24px);
+  }
+
   .create-post-emoji-picker .EmojiPickerReact {
-    width: 250px !important;
-    height: 200px !important;
+    height: 350px !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .create-post-emoji-picker {
+    width: 250px;
+    max-width: calc(100vw - 24px);
+  }
+
+  .create-post-emoji-picker .EmojiPickerReact {
+    height: 330px !important;
+  }
+}
+
+@media (max-width: 330px) {
+  .create-post-emoji-picker {
+    width: 250px;
+    max-width: calc(100vw - 24px);
+  }
+
+  .create-post-emoji-picker .EmojiPickerReact {
+    height: 320px !important;
   }
 }

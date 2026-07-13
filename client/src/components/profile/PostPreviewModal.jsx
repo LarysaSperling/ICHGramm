@@ -20,10 +20,12 @@ import "../../styles/postPreviewModal.css";
 
 const getCurrentUserId = () => {
   const token = localStorage.getItem("token");
+
   if (!token) return null;
 
   try {
     const payload = JSON.parse(atob(token.split(".")[1]));
+
     return payload.id || payload._id || payload.userId || null;
   } catch {
     return null;
@@ -56,15 +58,24 @@ const PostPreviewModal = ({
 
   useEffect(() => {
     const handleClickOutsideEmoji = (event) => {
-      if (emojiRef.current && !emojiRef.current.contains(event.target)) {
+      if (
+        emojiRef.current &&
+        !emojiRef.current.contains(event.target)
+      ) {
         setIsEmojiOpen(false);
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutsideEmoji);
+    document.addEventListener(
+      "mousedown",
+      handleClickOutsideEmoji,
+    );
 
     return () => {
-      document.removeEventListener("mousedown", handleClickOutsideEmoji);
+      document.removeEventListener(
+        "mousedown",
+        handleClickOutsideEmoji,
+      );
     };
   }, []);
 
@@ -73,7 +84,9 @@ const PostPreviewModal = ({
       if (!isOpen || !post?._id) return;
 
       try {
-        const { data } = await api.get(`/comments/${post._id}`);
+        const { data } = await api.get(
+          `/comments/${post._id}`,
+        );
 
         setComments(Array.isArray(data) ? data : []);
         setShowAllComments(false);
@@ -94,7 +107,9 @@ const PostPreviewModal = ({
         const { data } = await api.get("/users/saved");
 
         const saved = Array.isArray(data)
-          ? data.some((savedPost) => savedPost._id === post._id)
+          ? data.some(
+              (savedPost) => savedPost._id === post._id,
+            )
           : false;
 
         setIsSaved(saved);
@@ -112,15 +127,22 @@ const PostPreviewModal = ({
   const fullName = post.author?.fullName || username;
   const avatar = post.author?.avatar;
 
-  const postLikes = Array.isArray(post.likes) ? post.likes : [];
+  const postLikes = Array.isArray(post.likes)
+    ? post.likes
+    : [];
 
   const isLiked = postLikes.some((like) => {
-    const likeId = typeof like === "string" ? like : like?._id;
+    const likeId =
+      typeof like === "string" ? like : like?._id;
+
     return likeId === currentUserId;
   });
 
   const likesCount = postLikes.length;
-  const visibleComments = showAllComments ? comments : comments.slice(0, 2);
+
+  const visibleComments = showAllComments
+    ? comments
+    : comments.slice(0, 2);
 
   const handleToggleLike = async () => {
     if (isLiking) return;
@@ -128,7 +150,9 @@ const PostPreviewModal = ({
     try {
       setIsLiking(true);
 
-      const { data } = await api.post(`/posts/${post._id}/like`);
+      const { data } = await api.post(
+        `/posts/${post._id}/like`,
+      );
 
       if (data.post && onPostChange) {
         onPostChange(data.post);
@@ -146,7 +170,9 @@ const PostPreviewModal = ({
     try {
       setIsSaving(true);
 
-      const { data } = await api.post(`/users/saved/${post._id}`);
+      const { data } = await api.post(
+        `/users/saved/${post._id}`,
+      );
 
       setIsSaved(Boolean(data.saved));
     } catch (error) {
@@ -157,7 +183,11 @@ const PostPreviewModal = ({
   };
 
   const handleEmojiClick = (emojiData) => {
-    setCommentText((prev) => `${prev}${emojiData.emoji}`);
+    setCommentText(
+      (previousText) =>
+        `${previousText}${emojiData.emoji}`,
+    );
+
     setIsEmojiOpen(false);
 
     setTimeout(() => {
@@ -173,11 +203,18 @@ const PostPreviewModal = ({
     try {
       setIsCommenting(true);
 
-      const { data } = await api.post(`/comments/${post._id}`, {
-        text: commentText.trim(),
-      });
+      const { data } = await api.post(
+        `/comments/${post._id}`,
+        {
+          text: commentText.trim(),
+        },
+      );
 
-      setComments((prevComments) => [data, ...prevComments]);
+      setComments((previousComments) => [
+        data,
+        ...previousComments,
+      ]);
+
       setCommentText("");
       setIsEmojiOpen(false);
 
@@ -209,8 +246,16 @@ const PostPreviewModal = ({
   };
 
   return (
-    <div className="post-preview-modal" onClick={onClose}>
-      <button className="post-preview-close" type="button" onClick={onClose}>
+    <div
+      className="post-preview-modal"
+      onClick={onClose}
+    >
+      <button
+        className="post-preview-close"
+        type="button"
+        onClick={onClose}
+        aria-label="Close post preview"
+      >
         <X size={30} />
       </button>
 
@@ -219,13 +264,20 @@ const PostPreviewModal = ({
         onClick={(event) => event.stopPropagation()}
       >
         <div className="post-preview-media">
-          <img src={post.image} alt={post.caption || "Post"} />
+          <img
+            src={post.image}
+            alt={post.caption || "Post"}
+          />
         </div>
 
         <aside className="post-preview-panel">
           <header className="post-preview-header">
             <div className="post-preview-author">
-              <Avatar src={avatar} name={username} size={34} />
+              <Avatar
+                src={avatar}
+                name={username}
+                size={34}
+              />
 
               <div className="post-preview-author-text">
                 <strong>{username}</strong>
@@ -246,16 +298,26 @@ const PostPreviewModal = ({
           <section className="post-preview-comments">
             {post.caption && (
               <article className="post-preview-comment post-preview-caption">
-                <Avatar src={avatar} name={username} size={34} />
+                <Avatar
+                  src={avatar}
+                  name={username}
+                  size={34}
+                />
 
                 <div className="post-preview-comment-main">
                   <p>
-                    <strong>{username}</strong> {post.caption}
+                    <strong>{username}</strong>{" "}
+                    {post.caption}
                   </p>
 
                   <div className="post-preview-comment-meta">
-                    <span>{timeAgo(post.createdAt)}</span>
-                    <button type="button">Reply</button>
+                    <span>
+                      {timeAgo(post.createdAt)}
+                    </span>
+
+                    <button type="button">
+                      Reply
+                    </button>
                   </div>
                 </div>
               </article>
@@ -265,7 +327,11 @@ const PostPreviewModal = ({
               <button
                 className="post-preview-view-comments"
                 type="button"
-                onClick={() => setShowAllComments((prev) => !prev)}
+                onClick={() =>
+                  setShowAllComments(
+                    (previousValue) => !previousValue,
+                  )
+                }
               >
                 {showAllComments
                   ? "Hide comments"
@@ -281,13 +347,19 @@ const PostPreviewModal = ({
 
             {visibleComments.map((comment) => {
               const commentUsername =
-                comment.user?.username || comment.author?.username || "user";
+                comment.user?.username ||
+                comment.author?.username ||
+                "user";
 
               const commentAvatar =
-                comment.user?.avatar || comment.author?.avatar;
+                comment.user?.avatar ||
+                comment.author?.avatar;
 
               return (
-                <article className="post-preview-comment" key={comment._id}>
+                <article
+                  className="post-preview-comment"
+                  key={comment._id}
+                >
                   <Avatar
                     src={commentAvatar}
                     name={commentUsername}
@@ -296,13 +368,20 @@ const PostPreviewModal = ({
 
                   <div className="post-preview-comment-main">
                     <p>
-                      <strong>{commentUsername}</strong> {comment.text}
+                      <strong>
+                        {commentUsername}
+                      </strong>{" "}
+                      {comment.text}
                     </p>
 
                     <div className="post-preview-comment-meta">
-                      <span>{timeAgo(comment.createdAt)}</span>
+                      <span>
+                        {timeAgo(comment.createdAt)}
+                      </span>
 
-                      <button type="button">Reply</button>
+                      <button type="button">
+                        Reply
+                      </button>
                     </div>
                   </div>
 
@@ -323,12 +402,21 @@ const PostPreviewModal = ({
               <div className="post-preview-left-actions">
                 <button
                   type="button"
-                  className={isLiked ? "active-like" : ""}
+                  className={
+                    isLiked ? "active-like" : ""
+                  }
                   onClick={handleToggleLike}
                   disabled={isLiking}
                   aria-label="Like post"
                 >
-                  <Heart size={25} fill={isLiked ? "currentColor" : "none"} />
+                  <Heart
+                    size={25}
+                    fill={
+                      isLiked
+                        ? "currentColor"
+                        : "none"
+                    }
+                  />
                 </button>
 
                 <button
@@ -350,30 +438,52 @@ const PostPreviewModal = ({
 
               <button
                 type="button"
-                className={isSaved ? "active-save" : ""}
+                className={
+                  isSaved ? "active-save" : ""
+                }
                 onClick={handleToggleSave}
                 disabled={isSaving}
                 aria-label="Save post"
               >
-                <Bookmark size={25} fill={isSaved ? "currentColor" : "none"} />
+                <Bookmark
+                  size={25}
+                  fill={
+                    isSaved
+                      ? "currentColor"
+                      : "none"
+                  }
+                />
               </button>
             </div>
 
             <p className="post-preview-likes">
-              {likesCount === 1 ? "1 like" : `${likesCount} likes`}
+              {likesCount === 1
+                ? "1 like"
+                : `${likesCount} likes`}
             </p>
 
-            <p className="post-preview-date">{timeAgo(post.createdAt)}</p>
+            <p className="post-preview-date">
+              {timeAgo(post.createdAt)}
+            </p>
 
             <form
               className="post-preview-add-comment"
               onSubmit={handleAddComment}
             >
-              <div className="post-preview-emoji" ref={emojiRef}>
+              <div
+                className="post-preview-emoji"
+                ref={emojiRef}
+              >
                 <button
                   type="button"
                   className="post-preview-emoji-button"
-                  onClick={() => setIsEmojiOpen((prev) => !prev)}
+                  onClick={() =>
+                    setIsEmojiOpen(
+                      (previousValue) =>
+                        !previousValue,
+                    )
+                  }
+                  aria-label="Choose emoji"
                 >
                   <Smile size={22} />
                 </button>
@@ -382,10 +492,12 @@ const PostPreviewModal = ({
                   <div className="post-preview-emoji-picker">
                     <EmojiPicker
                       onEmojiClick={handleEmojiClick}
-                      width={300}
+                      width="100%"
                       height={360}
                       emojiStyle="native"
-                      previewConfig={{ showPreview: false }}
+                      previewConfig={{
+                        showPreview: false,
+                      }}
                       searchDisabled={false}
                       skinTonesDisabled
                     />
@@ -394,12 +506,14 @@ const PostPreviewModal = ({
               </div>
 
               <input
-                id="post-comment"
-                name="comment"
+                id={`preview-comment-${post._id}`}
+                name="preview-comment"
                 type="text"
                 ref={commentInputRef}
                 value={commentText}
-                onChange={(event) => setCommentText(event.target.value)}
+                onChange={(event) =>
+                  setCommentText(event.target.value)
+                }
                 placeholder="Add a comment..."
                 autoComplete="off"
                 maxLength={300}
@@ -407,7 +521,10 @@ const PostPreviewModal = ({
 
               <button
                 type="submit"
-                disabled={!commentText.trim() || isCommenting}
+                disabled={
+                  !commentText.trim() ||
+                  isCommenting
+                }
               >
                 Send
               </button>
@@ -415,15 +532,17 @@ const PostPreviewModal = ({
           </footer>
         </aside>
       </div>
+
       <SharePostModal
         post={post}
         isOpen={isShareOpen}
         onClose={() => setIsShareOpen(false)}
       />
+
       <PostActionMenu
         isOpen={isMenuOpen}
         onClose={() => setIsMenuOpen(false)}
-        isOwnPost={true}
+        isOwnPost
         postId={post._id}
         authorId={post.author?._id}
         onEdit={handleEdit}
