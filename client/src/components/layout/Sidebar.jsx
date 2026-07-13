@@ -26,10 +26,17 @@ const Sidebar = ({ isOpen, onClose }) => {
 
   const { logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const { unreadMessages, messageToast, clearUnreadMessages } = useMessages();
+
+  const {
+    unreadMessages,
+    messageToast,
+    clearUnreadMessages,
+    unreadNotifications,
+    clearUnreadNotifications,
+  } = useMessages();
 
   const closeMobileSidebar = () => {
-    if (onClose) onClose();
+    onClose?.();
   };
 
   const handleToggleNavigate = (path) => {
@@ -42,16 +49,51 @@ const Sidebar = ({ isOpen, onClose }) => {
     closeMobileSidebar();
   };
 
+  const handleMessagesClick = () => {
+    clearUnreadMessages();
+    handleToggleNavigate("/messages");
+  };
+
+  const handleNotificationsClick = () => {
+    clearUnreadNotifications();
+    handleToggleNavigate("/notifications");
+  };
+
+  const handleCreateClick = () => {
+    navigate("/create", {
+      state: {
+        backgroundLocation: location,
+      },
+    });
+
+    closeMobileSidebar();
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login", {
+      replace: true,
+    });
+  };
+
   return (
     <aside className={`sidebar ${isOpen ? "open" : ""}`}>
-      <Link to="/home" className="sidebar-logo" onClick={closeMobileSidebar}>
+      <Link
+        to="/home"
+        className="sidebar-logo"
+        onClick={closeMobileSidebar}
+      >
         <img src={logo} alt="ICHGramm" />
       </Link>
 
       <nav className="sidebar-nav">
         <button
           type="button"
-          className={location.pathname === "/home" ? "active" : ""}
+          className={
+            location.pathname === "/home"
+              ? "active"
+              : ""
+          }
           onClick={() => handleToggleNavigate("/home")}
         >
           <House size={20} />
@@ -60,7 +102,11 @@ const Sidebar = ({ isOpen, onClose }) => {
 
         <button
           type="button"
-          className={location.pathname === "/search" ? "active" : ""}
+          className={
+            location.pathname === "/search"
+              ? "active"
+              : ""
+          }
           onClick={() => handleToggleNavigate("/search")}
         >
           <Search size={20} />
@@ -69,8 +115,14 @@ const Sidebar = ({ isOpen, onClose }) => {
 
         <button
           type="button"
-          className={location.pathname === "/explore" ? "active" : ""}
-          onClick={() => handleToggleNavigate("/explore")}
+          className={
+            location.pathname === "/explore"
+              ? "active"
+              : ""
+          }
+          onClick={() =>
+            handleToggleNavigate("/explore")
+          }
         >
           <Compass size={20} />
           <span>Explore</span>
@@ -79,19 +131,20 @@ const Sidebar = ({ isOpen, onClose }) => {
         <button
           type="button"
           className={`sidebar-link-with-badge ${
-            location.pathname === "/messages" ? "active" : ""
+            location.pathname === "/messages"
+              ? "active"
+              : ""
           }`}
-          onClick={() => {
-            clearUnreadMessages();
-            handleToggleNavigate("/messages");
-          }}
+          onClick={handleMessagesClick}
         >
           <div className="sidebar-icon-wrap">
             <MessageCircle size={20} />
 
             {unreadMessages > 0 && (
               <span className="sidebar-badge">
-                {unreadMessages > 9 ? "9+" : unreadMessages}
+                {unreadMessages > 9
+                  ? "9+"
+                  : unreadMessages}
               </span>
             )}
           </div>
@@ -101,23 +154,36 @@ const Sidebar = ({ isOpen, onClose }) => {
 
         <button
           type="button"
-          className={location.pathname === "/notifications" ? "active" : ""}
-          onClick={() => handleToggleNavigate("/notifications")}
+          className={`sidebar-link-with-badge ${
+            location.pathname === "/notifications"
+              ? "active"
+              : ""
+          }`}
+          onClick={handleNotificationsClick}
         >
-          <Heart size={20} />
+          <div className="sidebar-icon-wrap">
+            <Heart size={20} />
+
+            {unreadNotifications > 0 && (
+              <span className="sidebar-badge">
+                {unreadNotifications > 9
+                  ? "9+"
+                  : unreadNotifications}
+              </span>
+            )}
+          </div>
+
           <span>Notifications</span>
         </button>
 
         <button
           type="button"
-          className={location.pathname === "/create" ? "active" : ""}
-          onClick={() => {
-            navigate("/create", {
-              state: { backgroundLocation: location },
-            });
-
-            closeMobileSidebar();
-          }}
+          className={
+            location.pathname === "/create"
+              ? "active"
+              : ""
+          }
+          onClick={handleCreateClick}
         >
           <SquarePlus size={20} />
           <span>Create</span>
@@ -125,8 +191,14 @@ const Sidebar = ({ isOpen, onClose }) => {
 
         <button
           type="button"
-          className={location.pathname === "/profile" ? "active" : ""}
-          onClick={() => handleToggleNavigate("/profile")}
+          className={
+            location.pathname === "/profile"
+              ? "active"
+              : ""
+          }
+          onClick={() =>
+            handleToggleNavigate("/profile")
+          }
         >
           <CircleUserRound size={20} />
           <span>Profile</span>
@@ -134,7 +206,10 @@ const Sidebar = ({ isOpen, onClose }) => {
       </nav>
 
       <div className="sidebar-bottom">
-        <button type="button" onClick={toggleTheme}>
+        <button
+          type="button"
+          onClick={toggleTheme}
+        >
           {theme === "light" ? (
             <>
               <Moon size={20} />
@@ -148,7 +223,10 @@ const Sidebar = ({ isOpen, onClose }) => {
           )}
         </button>
 
-        <button type="button" onClick={logout}>
+        <button
+          type="button"
+          onClick={handleLogout}
+        >
           <LogOut size={20} />
           <span>Logout</span>
         </button>

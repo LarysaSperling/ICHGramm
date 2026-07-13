@@ -1,4 +1,8 @@
-const ProfileStats = ({ postsCount }) => {
+const ProfileStats = ({
+  postsCount = 0,
+  followersCount = 0,
+  followingCount = 0,
+}) => {
   return (
     <div className="profile-stats">
       <button type="button">
@@ -7,12 +11,12 @@ const ProfileStats = ({ postsCount }) => {
       </button>
 
       <button type="button">
-        <strong>0</strong>
+        <strong>{followersCount}</strong>
         <span>followers</span>
       </button>
 
       <button type="button">
-        <strong>0</strong>
+        <strong>{followingCount}</strong>
         <span>following</span>
       </button>
     </div>

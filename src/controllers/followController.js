@@ -8,8 +8,9 @@ import { createNotification } from "../services/notificationService.js";
 
 const followUser = asyncHandler(async (req, res) => {
   const targetUserId = req.params.userId;
+  const currentUserId = req.user._id;
 
-  if (targetUserId === req.user._id.toString()) {
+  if (targetUserId === currentUserId.toString()) {
     throw new ApiError(400, "You cannot follow yourself");
   }
 
@@ -20,7 +21,7 @@ const followUser = asyncHandler(async (req, res) => {
   }
 
   const existingFollow = await Follow.findOne({
-    follower: req.user._id,
+    follower: currentUserId,
     following: targetUserId,
   });
 
@@ -29,28 +30,48 @@ const followUser = asyncHandler(async (req, res) => {
   }
 
   const follow = await Follow.create({
-    follower: req.user._id,
+    follower: currentUserId,
     following: targetUserId,
   });
 
+  await Promise.all([
+    User.findByIdAndUpdate(currentUserId, {
+      $addToSet: {
+        following: targetUserId,
+      },
+    }),
+
+    User.findByIdAndUpdate(targetUserId, {
+      $addToSet: {
+        followers: currentUserId,
+      },
+    }),
+  ]);
+
   await createNotification({
     recipient: targetUserId,
-    sender: req.user._id,
+    sender: currentUserId,
     type: "follow",
     io: req.io,
   });
 
   res.status(201).json({
     message: "User followed successfully",
+    isFollowing: true,
     follow,
   });
 });
 
 const unfollowUser = asyncHandler(async (req, res) => {
   const targetUserId = req.params.userId;
+  const currentUserId = req.user._id;
+
+  if (targetUserId === currentUserId.toString()) {
+    throw new ApiError(400, "You cannot unfollow yourself");
+  }
 
   const follow = await Follow.findOne({
-    follower: req.user._id,
+    follower: currentUserId,
     following: targetUserId,
   });
 
@@ -60,8 +81,23 @@ const unfollowUser = asyncHandler(async (req, res) => {
 
   await follow.deleteOne();
 
+  await Promise.all([
+    User.findByIdAndUpdate(currentUserId, {
+      $pull: {
+        following: targetUserId,
+      },
+    }),
+
+    User.findByIdAndUpdate(targetUserId, {
+      $pull: {
+        followers: currentUserId,
+      },
+    }),
+  ]);
+
   res.json({
     message: "User unfollowed successfully",
+    isFollowing: false,
   });
 });
 
@@ -69,8 +105,9 @@ const getFollowers = asyncHandler(async (req, res) => {
   const followers = await Follow.find({
     following: req.params.userId,
   })
-  .populate("follower", "username fullName avatar")
-  .lean();
+    .populate("follower", "username fullName avatar")
+    .sort({ createdAt: -1 })
+    .lean();
 
   res.json(followers);
 });
@@ -79,8 +116,9 @@ const getFollowing = asyncHandler(async (req, res) => {
   const following = await Follow.find({
     follower: req.params.userId,
   })
-  .populate("following", "username fullName avatar")
-  .lean();
+    .populate("following", "username fullName avatar")
+    .sort({ createdAt: -1 })
+    .lean();
 
   res.json(following);
 });

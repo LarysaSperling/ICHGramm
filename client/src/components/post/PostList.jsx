@@ -5,6 +5,8 @@ const PostList = ({
   savedPostIds = [],
   onPostChange,
   onOpenPost,
+  isAuthorFollowing,
+  onAuthorFollowChange,
 }) => {
   if (!posts.length) {
     return <p>No posts yet.</p>;
@@ -19,6 +21,8 @@ const PostList = ({
           savedPostIds={savedPostIds}
           onPostChange={onPostChange}
           onOpenPost={onOpenPost}
+          isAuthorFollowing={isAuthorFollowing}
+          onAuthorFollowChange={onAuthorFollowChange}
         />
       ))}
     </div>

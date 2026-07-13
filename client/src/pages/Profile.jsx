@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import api from "../api/axios";
 
@@ -11,88 +11,207 @@ const Profile = () => {
   const [profile, setProfile] = useState(null);
   const [posts, setPosts] = useState([]);
   const [savedPosts, setSavedPosts] = useState([]);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
+
   const [activeTab, setActiveTab] = useState("posts");
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    const loadProfile = async () => {
-      try {
-        const [profileResponse, postsResponse, savedResponse] =
-          await Promise.all([
-            api.get("/users/profile"),
-            api.get("/users/profile/posts"),
-            api.get("/users/saved"),
-          ]);
+  const loadProfile = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError("");
 
-        setProfile(profileResponse.data);
-        setPosts(postsResponse.data);
-        setSavedPosts(savedResponse.data);
-      } catch (err) {
-        setError(err.response?.data?.message || "Failed to load profile");
+      const profileResponse = await api.get("/users/profile");
+      const loadedProfile = profileResponse.data;
+
+      if (!loadedProfile?._id) {
+        throw new Error("Profile ID is missing");
       }
-    };
 
-    loadProfile();
+      const [
+        postsResponse,
+        savedResponse,
+        followersResponse,
+        followingResponse,
+      ] = await Promise.all([
+        api.get("/users/profile/posts"),
+        api.get("/users/saved"),
+        api.get(`/follows/${loadedProfile._id}/followers`),
+        api.get(`/follows/${loadedProfile._id}/following`),
+      ]);
+
+      setProfile(loadedProfile);
+
+      setPosts(
+        Array.isArray(postsResponse.data)
+          ? postsResponse.data
+          : [],
+      );
+
+      setSavedPosts(
+        Array.isArray(savedResponse.data)
+          ? savedResponse.data
+          : [],
+      );
+
+      setFollowersCount(
+        Array.isArray(followersResponse.data)
+          ? followersResponse.data.length
+          : 0,
+      );
+
+      setFollowingCount(
+        Array.isArray(followingResponse.data)
+          ? followingResponse.data.length
+          : 0,
+      );
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          "Failed to load profile",
+      );
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
+  useEffect(() => {
+    loadProfile();
+  }, [loadProfile]);
+
+  useEffect(() => {
+    const handleWindowFocus = () => {
+      loadProfile();
+    };
+
+    window.addEventListener("focus", handleWindowFocus);
+
+    return () => {
+      window.removeEventListener("focus", handleWindowFocus);
+    };
+  }, [loadProfile]);
+
   const handleDeletePost = async (postId) => {
-    const isConfirmed = window.confirm("Delete this post?");
+    const isConfirmed = window.confirm(
+      "Delete this post?",
+    );
 
     if (!isConfirmed) return;
 
     try {
+      setError("");
+
       await api.delete(`/posts/${postId}`);
 
-      setPosts((prev) => prev.filter((post) => post._id !== postId));
-      setSavedPosts((prev) => prev.filter((post) => post._id !== postId));
+      setPosts((previousPosts) =>
+        previousPosts.filter(
+          (post) => post._id !== postId,
+        ),
+      );
+
+      setSavedPosts((previousPosts) =>
+        previousPosts.filter(
+          (post) => post._id !== postId,
+        ),
+      );
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to delete post");
+      setError(
+        err.response?.data?.message ||
+          "Failed to delete post",
+      );
     }
   };
 
-  const handleUpdatePost = async (postId, newCaption) => {
+  const handleUpdatePost = async (
+    postId,
+    newCaption,
+  ) => {
     try {
-      const { data } = await api.put(`/posts/${postId}`, {
-        caption: newCaption,
-      });
+      setError("");
 
-      setPosts((prev) =>
-        prev.map((post) =>
-          post._id === postId ? { ...post, caption: data.caption } : post
-        )
+      const { data } = await api.put(
+        `/posts/${postId}`,
+        {
+          caption: newCaption,
+        },
       );
 
-      setSavedPosts((prev) =>
-        prev.map((post) =>
-          post._id === postId ? { ...post, caption: data.caption } : post
-        )
+      const updatedPost = data.post || data;
+
+      setPosts((previousPosts) =>
+        previousPosts.map((post) =>
+          post._id === postId
+            ? {
+                ...post,
+                ...updatedPost,
+              }
+            : post,
+        ),
       );
 
-      return data;
+      setSavedPosts((previousPosts) =>
+        previousPosts.map((post) =>
+          post._id === postId
+            ? {
+                ...post,
+                ...updatedPost,
+              }
+            : post,
+        ),
+      );
+
+      return updatedPost;
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to update post");
+      setError(
+        err.response?.data?.message ||
+          "Failed to update post",
+      );
+
       return null;
     }
   };
 
-  const visiblePosts = activeTab === "saved" ? savedPosts : posts;
+  const visiblePosts =
+    activeTab === "saved" ? savedPosts : posts;
+
+  if (isLoading) {
+    return <p>Loading...</p>;
+  }
 
   if (error) {
-    return <p className="profile-error">{error}</p>;
+    return (
+      <p className="profile-error" role="alert">
+        {error}
+      </p>
+    );
   }
 
   if (!profile) {
-    return <p>Loading...</p>;
+    return (
+      <p className="profile-error">
+        Profile not found.
+      </p>
+    );
   }
 
   return (
     <section className="profile-page">
-      <ProfileHeader profile={profile} postsCount={posts.length} />
+      <ProfileHeader
+        profile={profile}
+        postsCount={posts.length}
+        followersCount={followersCount}
+        followingCount={followingCount}
+      />
 
       <div className="profile-tabs">
         <button
           type="button"
-          className={activeTab === "posts" ? "active" : ""}
+          className={
+            activeTab === "posts" ? "active" : ""
+          }
           onClick={() => setActiveTab("posts")}
         >
           POSTS
@@ -100,7 +219,9 @@ const Profile = () => {
 
         <button
           type="button"
-          className={activeTab === "saved" ? "active" : ""}
+          className={
+            activeTab === "saved" ? "active" : ""
+          }
           onClick={() => setActiveTab("saved")}
         >
           SAVED
@@ -108,7 +229,9 @@ const Profile = () => {
 
         <button
           type="button"
-          className={activeTab === "tagged" ? "active" : ""}
+          className={
+            activeTab === "tagged" ? "active" : ""
+          }
           onClick={() => setActiveTab("tagged")}
         >
           TAGGED
@@ -117,15 +240,24 @@ const Profile = () => {
 
       {activeTab === "tagged" ? (
         <div className="profile-empty">
-          <div className="profile-empty-icon">🏷️</div>
+          <div className="profile-empty-icon">
+            🏷️
+          </div>
+
           <h3>No Tagged Posts</h3>
-          <p>Photos you are tagged in will appear here.</p>
+
+          <p>
+            Photos you are tagged in will appear
+            here.
+          </p>
         </div>
       ) : (
         <ProfileGrid
           posts={visiblePosts}
           emptyTitle={
-            activeTab === "saved" ? "No Saved Posts" : "Share Photos"
+            activeTab === "saved"
+              ? "No Saved Posts"
+              : "Share Photos"
           }
           emptyText={
             activeTab === "saved"

@@ -1,5 +1,13 @@
-import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import {
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
+import {
+  Link,
+  useNavigate,
+  useParams,
+} from "react-router-dom";
 
 import api from "../api/axios";
 import Loader from "../components/ui/Loader";
@@ -26,6 +34,16 @@ const normalizeWebsiteUrl = (website) => {
   return `https://${trimmedWebsite}`;
 };
 
+const getFollowerUserId = (followItem) => {
+  const follower = followItem?.follower;
+
+  if (typeof follower === "string") {
+    return follower;
+  }
+
+  return follower?._id || null;
+};
+
 const UserProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -34,10 +52,16 @@ const UserProfile = () => {
   const [profileUser, setProfileUser] = useState(null);
   const [posts, setPosts] = useState([]);
   const [savedPostIds, setSavedPostIds] = useState([]);
+
+  const [followers, setFollowers] = useState([]);
+  const [following, setFollowing] = useState([]);
+
   const [selectedPost, setSelectedPost] = useState(null);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [isFollowLoading, setIsFollowLoading] =
+    useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -48,98 +72,161 @@ const UserProfile = () => {
     }
   }, [id, user?._id, navigate]);
 
-  useEffect(() => {
-    const getUserProfile = async () => {
-      if (!id || id === user?._id) {
-        return;
-      }
+  const loadFollowData = useCallback(async () => {
+    if (!id) return;
 
-      try {
-        setIsLoading(true);
-        setError("");
+    const [
+      followersResponse,
+      followingResponse,
+    ] = await Promise.all([
+      api.get(`/follows/${id}/followers`),
+      api.get(`/follows/${id}/following`),
+    ]);
 
-        const [userResponse, savedResponse] = await Promise.all([
-          api.get(`/users/${id}`),
-          api.get("/users/saved"),
-        ]);
+    const loadedFollowers = Array.isArray(
+      followersResponse.data,
+    )
+      ? followersResponse.data
+      : [];
 
-        const loadedUser = userResponse.data?.user || null;
-        const loadedPosts = Array.isArray(userResponse.data?.posts)
-          ? userResponse.data.posts
-          : [];
+    const loadedFollowing = Array.isArray(
+      followingResponse.data,
+    )
+      ? followingResponse.data
+      : [];
 
-        setProfileUser(loadedUser);
-        setPosts(loadedPosts);
+    setFollowers(loadedFollowers);
+    setFollowing(loadedFollowing);
 
-        setSavedPostIds(
-          Array.isArray(savedResponse.data)
-            ? savedResponse.data.map((post) => post._id)
-            : [],
-        );
-
-        setIsFollowing(
-          loadedUser?.followers?.some((follower) => {
-            const followerId =
-              typeof follower === "string" ? follower : follower?._id;
-
-            return followerId === user?._id;
-          }) || false,
-        );
-      } catch (err) {
-        setError(
-          err.response?.data?.message ||
-            "Failed to load profile",
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    getUserProfile();
+    setIsFollowing(
+      loadedFollowers.some(
+        (followItem) =>
+          getFollowerUserId(followItem) === user?._id,
+      ),
+    );
   }, [id, user?._id]);
+
+  const loadUserProfile = useCallback(async () => {
+    if (!id || id === user?._id) return;
+
+    try {
+      setIsLoading(true);
+      setError("");
+
+      const [
+        userResponse,
+        savedResponse,
+        followersResponse,
+        followingResponse,
+      ] = await Promise.all([
+        api.get(`/users/${id}`),
+        api.get("/users/saved"),
+        api.get(`/follows/${id}/followers`),
+        api.get(`/follows/${id}/following`),
+      ]);
+
+      const loadedUser =
+        userResponse.data?.user || null;
+
+      const loadedPosts = Array.isArray(
+        userResponse.data?.posts,
+      )
+        ? userResponse.data.posts
+        : [];
+
+      const loadedFollowers = Array.isArray(
+        followersResponse.data,
+      )
+        ? followersResponse.data
+        : [];
+
+      const loadedFollowing = Array.isArray(
+        followingResponse.data,
+      )
+        ? followingResponse.data
+        : [];
+
+      setProfileUser(loadedUser);
+      setPosts(loadedPosts);
+      setFollowers(loadedFollowers);
+      setFollowing(loadedFollowing);
+
+      setSavedPostIds(
+        Array.isArray(savedResponse.data)
+          ? savedResponse.data.map((post) => post._id)
+          : [],
+      );
+
+      setIsFollowing(
+        loadedFollowers.some(
+          (followItem) =>
+            getFollowerUserId(followItem) === user?._id,
+        ),
+      );
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+          "Failed to load profile",
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }, [id, user?._id]);
+
+  useEffect(() => {
+    loadUserProfile();
+  }, [loadUserProfile]);
 
   const handleFollow = async () => {
     if (
       !profileUser?._id ||
-      profileUser._id === user?._id
+      profileUser._id === user?._id ||
+      isFollowLoading
     ) {
       return;
     }
 
+    const nextFollowingStatus = !isFollowing;
+
     try {
-      const { data } = await api.post(
-        `/users/${id}/follow`,
-      );
+      setIsFollowLoading(true);
+      setError("");
 
-      setIsFollowing(Boolean(data.isFollowing));
+      if (nextFollowingStatus) {
+        await api.post(`/follows/${profileUser._id}`);
+      } else {
+        await api.delete(`/follows/${profileUser._id}`);
+      }
 
-      setProfileUser((previousProfile) => {
-        if (!previousProfile) return previousProfile;
+      setIsFollowing(nextFollowingStatus);
 
-        const currentFollowers = Array.isArray(
-          previousProfile.followers,
-        )
-          ? previousProfile.followers
-          : [];
-
-        return {
-          ...previousProfile,
-          followers: data.isFollowing
-            ? [...currentFollowers, user._id]
-            : currentFollowers.filter((follower) => {
-                const followerId =
-                  typeof follower === "string"
-                    ? follower
-                    : follower?._id;
-
-                return followerId !== user._id;
-              }),
-        };
-      });
+      await loadFollowData();
     } catch (err) {
       setError(
         err.response?.data?.message ||
-          "Failed to follow user",
+          (nextFollowingStatus
+            ? "Failed to follow user"
+            : "Failed to unfollow user"),
+      );
+    } finally {
+      setIsFollowLoading(false);
+    }
+  };
+
+  const handleAuthorFollowChange = async (
+    nextFollowingStatus,
+    authorId,
+  ) => {
+    if (authorId !== profileUser?._id) return;
+
+    setIsFollowing(nextFollowingStatus);
+
+    try {
+      await loadFollowData();
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+          "Failed to update follow statistics",
       );
     }
   };
@@ -215,8 +302,7 @@ const UserProfile = () => {
               ]),
             ]
           : previousIds.filter(
-              (postId) =>
-                postId !== updatedPost._id,
+              (postId) => postId !== updatedPost._id,
             ),
       );
     }
@@ -287,10 +373,13 @@ const UserProfile = () => {
                       : "follow-btn"
                   }
                   onClick={handleFollow}
+                  disabled={isFollowLoading}
                 >
-                  {isFollowing
-                    ? "Following"
-                    : "Follow"}
+                  {isFollowLoading
+                    ? "Loading..."
+                    : isFollowing
+                      ? "Following"
+                      : "Follow"}
                 </button>
 
                 <button
@@ -311,25 +400,19 @@ const UserProfile = () => {
             </span>
 
             <span>
-              <strong>
-                {profileUser.followers?.length || 0}
-              </strong>{" "}
+              <strong>{followers.length}</strong>{" "}
               followers
             </span>
 
             <span>
-              <strong>
-                {profileUser.following?.length || 0}
-              </strong>{" "}
+              <strong>{following.length}</strong>{" "}
               following
             </span>
           </div>
 
           <div className="profile-bio">
             {profileUser.fullName && (
-              <strong>
-                {profileUser.fullName}
-              </strong>
+              <strong>{profileUser.fullName}</strong>
             )}
 
             {profileUser.bio && (
@@ -356,6 +439,8 @@ const UserProfile = () => {
         savedPostIds={savedPostIds}
         onPostChange={handlePostChange}
         onOpenPost={setSelectedPost}
+        isAuthorFollowing={isFollowing}
+        onAuthorFollowChange={handleAuthorFollowChange}
       />
 
       {selectedPost && (

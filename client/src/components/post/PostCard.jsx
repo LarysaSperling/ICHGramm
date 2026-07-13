@@ -35,6 +35,16 @@ const getCurrentUserId = () => {
   }
 };
 
+const getFollowingUserId = (followItem) => {
+  const following = followItem?.following;
+
+  if (typeof following === "string") {
+    return following;
+  }
+
+  return following?._id || null;
+};
+
 const PostComment = ({ comment }) => {
   const [showFullText, setShowFullText] = useState(false);
 
@@ -69,6 +79,8 @@ const PostCard = ({
   savedPostIds = [],
   onPostChange,
   onOpenPost,
+  isAuthorFollowing,
+  onAuthorFollowChange,
 }) => {
   const navigate = useNavigate();
 
@@ -80,7 +92,11 @@ const PostCard = ({
   const [isLiking, setIsLiking] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  const [isFollowing, setIsFollowing] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(
+    typeof isAuthorFollowing === "boolean"
+      ? isAuthorFollowing
+      : false,
+  );
   const [isFollowLoading, setIsFollowLoading] = useState(false);
 
   const [showAllComments, setShowAllComments] = useState(false);
@@ -112,7 +128,8 @@ const PostCard = ({
     : [];
 
   const isLiked = postLikes.some((like) => {
-    const likeId = typeof like === "string" ? like : like?._id;
+    const likeId =
+      typeof like === "string" ? like : like?._id;
 
     return likeId === currentUserId;
   });
@@ -135,6 +152,12 @@ const PostCard = ({
   useEffect(() => {
     setLocalPost(post);
   }, [post]);
+
+  useEffect(() => {
+    if (typeof isAuthorFollowing === "boolean") {
+      setIsFollowing(isAuthorFollowing);
+    }
+  }, [isAuthorFollowing]);
 
   useEffect(() => {
     const handleClickOutsideEmoji = (event) => {
@@ -177,32 +200,50 @@ const PostCard = ({
   }, [_id]);
 
   useEffect(() => {
-    const getProfile = async () => {
-      if (!authorId || isOwnPost) return;
+    const getFollowingStatus = async () => {
+      if (
+        !authorId ||
+        !currentUserId ||
+        isOwnPost ||
+        typeof isAuthorFollowing === "boolean"
+      ) {
+        return;
+      }
 
       try {
-        const { data } = await api.get("/users/profile");
+        const { data } = await api.get(
+          `/follows/${currentUserId}/following`,
+        );
 
-        const followingIds = Array.isArray(data.following)
-          ? data.following.map((id) => id.toString())
-          : [];
+        const followingList = Array.isArray(data) ? data : [];
 
-        setIsFollowing(followingIds.includes(authorId));
+        const followsAuthor = followingList.some(
+          (followItem) =>
+            getFollowingUserId(followItem) === authorId,
+        );
+
+        setIsFollowing(followsAuthor);
       } catch (err) {
         console.error(
           err.response?.data?.message ||
-            "Failed to load profile",
+            "Failed to load follow status",
         );
       }
     };
 
-    getProfile();
-  }, [authorId, isOwnPost]);
+    getFollowingStatus();
+  }, [
+    authorId,
+    currentUserId,
+    isOwnPost,
+    isAuthorFollowing,
+  ]);
 
   const handleEmojiClick = (emojiData) => {
     setCommentText(
       (previousText) => `${previousText}${emojiData.emoji}`,
     );
+
     setIsEmojiOpen(false);
 
     setTimeout(() => {
@@ -211,20 +252,33 @@ const PostCard = ({
   };
 
   const handleToggleFollow = async () => {
-    if (!authorId || isOwnPost || isFollowLoading) return;
+    if (!authorId || isOwnPost || isFollowLoading) {
+      return;
+    }
+
+    const nextFollowingStatus = !isFollowing;
 
     try {
       setIsFollowLoading(true);
 
-      const { data } = await api.post(
-        `/users/${authorId}/follow`,
-      );
+      if (nextFollowingStatus) {
+        await api.post(`/follows/${authorId}`);
+      } else {
+        await api.delete(`/follows/${authorId}`);
+      }
 
-      setIsFollowing(Boolean(data.isFollowing));
+      setIsFollowing(nextFollowingStatus);
+
+      onAuthorFollowChange?.(
+        nextFollowingStatus,
+        authorId,
+      );
     } catch (err) {
       console.error(
         err.response?.data?.message ||
-          "Failed to follow user",
+          (nextFollowingStatus
+            ? "Failed to follow user"
+            : "Failed to unfollow user"),
       );
     } finally {
       setIsFollowLoading(false);
@@ -308,6 +362,7 @@ const PostCard = ({
         data,
         ...previousComments,
       ]);
+
       setCommentText("");
       setIsEmojiOpen(false);
 
@@ -430,7 +485,11 @@ const PostCard = ({
               onClick={handleToggleFollow}
               disabled={isFollowLoading}
             >
-              {isFollowing ? "Following" : "Follow"}
+              {isFollowLoading
+                ? "Loading..."
+                : isFollowing
+                  ? "Following"
+                  : "Follow"}
             </button>
           )}
         </div>
@@ -465,9 +524,7 @@ const PostCard = ({
             <Heart
               size={24}
               fill={isLiked ? "red" : "none"}
-              color={
-                isLiked ? "red" : "currentColor"
-              }
+              color={isLiked ? "red" : "currentColor"}
             />
           </button>
 
@@ -496,9 +553,7 @@ const PostCard = ({
         >
           <Bookmark
             size={24}
-            fill={
-              isSaved ? "currentColor" : "none"
-            }
+            fill={isSaved ? "currentColor" : "none"}
           />
         </button>
       </div>
@@ -630,9 +685,7 @@ const PostCard = ({
 
       <PostActionMenu
         isOpen={isActionMenuOpen}
-        onClose={() =>
-          setIsActionMenuOpen(false)
-        }
+        onClose={() => setIsActionMenuOpen(false)}
         isOwnPost={isOwnPost}
         isFollowing={isFollowing}
         postId={_id}
