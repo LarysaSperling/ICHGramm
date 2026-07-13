@@ -393,6 +393,10 @@ const Messages = () => {
   };
 
   const startEditingMessage = (message) => {
+    if (message.messageType === "post" || message.sharedPost) {
+      return;
+    }
+
     setEditingMessage(message);
     setMessageText(message.text);
     setOpenMessageMenuId(null);
@@ -733,14 +737,17 @@ const Messages = () => {
 
                                 {openMessageMenuId === message._id && (
                                   <div className="message-menu-dropdown">
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        startEditingMessage(message)
-                                      }
-                                    >
-                                      Edit
-                                    </button>
+                                    {message.messageType !== "post" &&
+                                      !message.sharedPost && (
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            startEditingMessage(message)
+                                          }
+                                        >
+                                          Edit
+                                        </button>
+                                      )}
 
                                     <button
                                       type="button"
