@@ -46,19 +46,24 @@ const Feed = () => {
       }
 
       const postsResponse = await api.get(
-        `/posts?page=${pageNumber}&limit=${POSTS_LIMIT}`
+        `/posts?page=${pageNumber}&limit=${POSTS_LIMIT}`,
       );
 
       const nextPosts = postsResponse.data.posts || [];
 
-      setPosts((prev) =>
-        pageNumber === 1 ? nextPosts : [...prev, ...nextPosts]
+      setPosts((previousPosts) =>
+        pageNumber === 1
+          ? nextPosts
+          : [...previousPosts, ...nextPosts],
       );
 
       setHasMore(Boolean(postsResponse.data.hasMore));
       setPage(pageNumber);
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to load posts");
+      setError(
+        err.response?.data?.message ||
+          "Failed to load posts",
+      );
     } finally {
       setIsLoading(false);
       setIsLoadingMore(false);
@@ -69,9 +74,16 @@ const Feed = () => {
     const loadFeed = async () => {
       try {
         setIsLoading(true);
-        await Promise.all([loadPosts(1), loadSavedPosts()]);
+
+        await Promise.all([
+          loadPosts(1),
+          loadSavedPosts(),
+        ]);
       } catch (err) {
-        setError(err.response?.data?.message || "Failed to load feed");
+        setError(
+          err.response?.data?.message ||
+            "Failed to load feed",
+        );
       } finally {
         setIsLoading(false);
       }
@@ -81,7 +93,12 @@ const Feed = () => {
   }, [loadPosts, loadSavedPosts]);
 
   useEffect(() => {
-    if (!loadMoreRef.current || !hasMore || isLoading || isLoadingMore) {
+    if (
+      !loadMoreRef.current ||
+      !hasMore ||
+      isLoading ||
+      isLoadingMore
+    ) {
       return;
     }
 
@@ -89,7 +106,11 @@ const Feed = () => {
       (entries) => {
         const firstEntry = entries[0];
 
-        if (firstEntry.isIntersecting && hasMore && !isLoadingMore) {
+        if (
+          firstEntry.isIntersecting &&
+          hasMore &&
+          !isLoadingMore
+        ) {
           loadPosts(page + 1);
         }
       },
@@ -97,36 +118,88 @@ const Feed = () => {
         root: null,
         rootMargin: "200px",
         threshold: 0,
-      }
+      },
     );
 
     observerRef.current.observe(loadMoreRef.current);
 
     return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
+      observerRef.current?.disconnect();
     };
-  }, [hasMore, isLoading, isLoadingMore, loadPosts, page]);
+  }, [
+    hasMore,
+    isLoading,
+    isLoadingMore,
+    loadPosts,
+    page,
+  ]);
 
-  const handlePostChange = (updatedPost, options = {}) => {
-    if (updatedPost?._id) {
-      setPosts((prev) =>
-        prev.map((post) =>
-          post._id === updatedPost._id ? { ...post, ...updatedPost } : post
-        )
+  const handlePostChange = (
+    updatedPost,
+    options = {},
+  ) => {
+    const deletedPostId = options.deletedPostId;
+
+    if (deletedPostId) {
+      setPosts((previousPosts) =>
+        previousPosts.filter(
+          (post) => post._id !== deletedPostId,
+        ),
       );
 
-      setSelectedPost((prev) =>
-        prev?._id === updatedPost._id ? { ...prev, ...updatedPost } : prev
+      setSavedPostIds((previousIds) =>
+        previousIds.filter(
+          (postId) => postId !== deletedPostId,
+        ),
+      );
+
+      setSelectedPost((previousPost) =>
+        previousPost?._id === deletedPostId
+          ? null
+          : previousPost,
+      );
+
+      return;
+    }
+
+    if (updatedPost?._id) {
+      setPosts((previousPosts) =>
+        previousPosts.map((post) =>
+          post._id === updatedPost._id
+            ? {
+                ...post,
+                ...updatedPost,
+              }
+            : post,
+        ),
+      );
+
+      setSelectedPost((previousPost) =>
+        previousPost?._id === updatedPost._id
+          ? {
+              ...previousPost,
+              ...updatedPost,
+            }
+          : previousPost,
       );
     }
 
-    if (options.saved !== undefined && updatedPost?._id) {
-      setSavedPostIds((prev) =>
+    if (
+      options.saved !== undefined &&
+      updatedPost?._id
+    ) {
+      setSavedPostIds((previousIds) =>
         options.saved
-          ? [...new Set([...prev, updatedPost._id])]
-          : prev.filter((id) => id !== updatedPost._id)
+          ? [
+              ...new Set([
+                ...previousIds,
+                updatedPost._id,
+              ]),
+            ]
+          : previousIds.filter(
+              (postId) =>
+                postId !== updatedPost._id,
+            ),
       );
     }
   };
@@ -139,7 +212,11 @@ const Feed = () => {
     <section className="feed">
       <StoryList />
 
-      {error && <p className="feed-error">{error}</p>}
+      {error && (
+        <p className="feed-error" role="alert">
+          {error}
+        </p>
+      )}
 
       <PostList
         posts={posts}
@@ -149,7 +226,10 @@ const Feed = () => {
       />
 
       {hasMore && (
-        <div ref={loadMoreRef} className="feed-infinite-loader">
+        <div
+          ref={loadMoreRef}
+          className="feed-infinite-loader"
+        >
           {isLoadingMore && <Loader />}
         </div>
       )}

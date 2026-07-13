@@ -1,6 +1,11 @@
 import PostCard from "./PostCard";
 
-const PostList = ({ posts = [], savedPostIds = [], onPostChange, onOpenPost }) => {
+const PostList = ({
+  posts = [],
+  savedPostIds = [],
+  onPostChange,
+  onOpenPost,
+}) => {
   if (!posts.length) {
     return <p>No posts yet.</p>;
   }

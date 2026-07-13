@@ -915,6 +915,14 @@ body.dark .shared-post-message-info span {
   }
 }
 
+@media (max-width: 1100px) {
+  .message-menu-dropdown {
+    top: 34px;
+    right: -58px;
+    left: auto;
+  }
+}
+
 @media (max-width: 768px) {
   .app-main:has(.messages-page) {
     width: 100%;

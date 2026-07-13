@@ -15,10 +15,17 @@ const Explore = () => {
   useEffect(() => {
     const getPosts = async () => {
       try {
+        setIsLoading(true);
+        setError("");
+
         const { data } = await api.get("/posts/explore");
+
         setPosts(Array.isArray(data) ? data : []);
       } catch (err) {
-        setError(err.response?.data?.message || "Failed to load posts");
+        setError(
+          err.response?.data?.message ||
+            "Failed to load posts",
+        );
       } finally {
         setIsLoading(false);
       }
@@ -27,25 +34,62 @@ const Explore = () => {
     getPosts();
   }, []);
 
-  const handlePostChange = (updatedPost) => {
+  const handlePostChange = (
+    updatedPost,
+    options = {},
+  ) => {
+    const deletedPostId = options.deletedPostId;
+
+    if (deletedPostId) {
+      setPosts((previousPosts) =>
+        previousPosts.filter(
+          (post) => post._id !== deletedPostId,
+        ),
+      );
+
+      setSelectedPost((previousPost) =>
+        previousPost?._id === deletedPostId
+          ? null
+          : previousPost,
+      );
+
+      return;
+    }
+
     if (!updatedPost?._id) return;
 
-    setPosts((prev) =>
-      prev.map((post) =>
-        post._id === updatedPost._id ? { ...post, ...updatedPost } : post
-      )
+    setPosts((previousPosts) =>
+      previousPosts.map((post) =>
+        post._id === updatedPost._id
+          ? {
+              ...post,
+              ...updatedPost,
+            }
+          : post,
+      ),
     );
 
-    setSelectedPost((prev) =>
-      prev?._id === updatedPost._id ? { ...prev, ...updatedPost } : prev
+    setSelectedPost((previousPost) =>
+      previousPost?._id === updatedPost._id
+        ? {
+            ...previousPost,
+            ...updatedPost,
+          }
+        : previousPost,
     );
   };
 
-  if (isLoading) return <Loader />;
+  if (isLoading) {
+    return <Loader />;
+  }
 
   return (
     <main className="explore-page">
-      {error && <p className="explore-error">{error}</p>}
+      {error && (
+        <p className="explore-error" role="alert">
+          {error}
+        </p>
+      )}
 
       <div className="explore-grid">
         {posts.map((post) => (

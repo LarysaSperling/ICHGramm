@@ -17,9 +17,12 @@ const ProfileGridItem = ({ post, onDeletePost, onUpdatePost }) => {
     localPost.commentsCount ??
     (Array.isArray(localPost.comments) ? localPost.comments.length : 0);
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     setIsPreviewOpen(false);
-    onDeletePost(localPost._id);
+
+    await onDeletePost(localPost._id);
+
+    setLocalPost(null);
   };
 
   const handleEdit = async () => {
