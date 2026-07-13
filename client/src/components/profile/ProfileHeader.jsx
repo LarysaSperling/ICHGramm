@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+
 import Avatar from "../ui/Avatar";
 import ProfileStats from "./ProfileStats";
 
@@ -23,10 +24,6 @@ const ProfileHeader = ({ profile, postsCount }) => {
           >
             Edit profile
           </Link>
-
-          <button className="profile-archive-btn">
-            View archive
-          </button>
         </div>
 
         <ProfileStats postsCount={postsCount} />
