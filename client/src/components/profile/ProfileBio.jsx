@@ -23,7 +23,6 @@ const normalizeWebsiteUrl = (website) => {
 };
 
 const ProfileBio = ({
-  fullName = "",
   bio = "",
   website = "",
 }) => {
@@ -76,18 +75,12 @@ const ProfileBio = ({
   const websiteUrl =
     normalizeWebsiteUrl(website);
 
-  if (!fullName && !bio && !websiteUrl) {
+  if (!bio && !websiteUrl) {
     return null;
   }
 
   return (
     <div className="profile-bio">
-      {fullName && (
-        <strong className="profile-bio-name">
-          {fullName}
-        </strong>
-      )}
-
       {bio && (
         <div className="profile-bio-content">
           <p

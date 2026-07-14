@@ -8,14 +8,18 @@ import { useAuth } from "../context/AuthContext";
 import "../styles/editProfile.css";
 
 const MAX_AVATAR_SIZE = 2 * 1024 * 1024;
-const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const ALLOWED_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+];
 
 const EditProfile = () => {
   const navigate = useNavigate();
   const { updateUser } = useAuth();
 
   const [formData, setFormData] = useState({
-    fullName: "",
+    username: "",
     website: "",
     bio: "",
   });
@@ -24,51 +28,90 @@ const EditProfile = () => {
   const [preview, setPreview] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isProfileLoading, setIsProfileLoading] =
+    useState(true);
 
   useEffect(() => {
     const getProfile = async () => {
       try {
-        const { data } = await api.get("/users/profile");
+        setError("");
+
+        const { data } = await api.get(
+          "/users/profile",
+        );
 
         setFormData({
-          fullName: data.fullName || "",
+          username: data.username || "",
           website: data.website || "",
           bio: data.bio || "",
         });
 
         setPreview(data.avatar || "");
       } catch (err) {
-        setError(err.response?.data?.message || "Failed to load profile");
+        setError(
+          err.response?.data?.message ||
+            "Failed to load profile",
+        );
+      } finally {
+        setIsProfileLoading(false);
       }
     };
 
     getProfile();
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (
+        preview &&
+        preview.startsWith("blob:")
+      ) {
+        URL.revokeObjectURL(preview);
+      }
+    };
+  }, [preview]);
+
   const handleChange = (event) => {
     const { name, value } = event.target;
 
-    setFormData((prev) => ({
-      ...prev,
+    setFormData((previousData) => ({
+      ...previousData,
       [name]: value,
     }));
   };
 
   const handleAvatarChange = (event) => {
-    const file = event.target.files[0];
+    const file = event.target.files?.[0];
 
     if (!file) return;
 
     setError("");
 
     if (file.size > MAX_AVATAR_SIZE) {
-      setError("Avatar must not exceed 2 MB");
+      setError(
+        "Avatar must not exceed 2 MB",
+      );
+      event.target.value = "";
       return;
     }
 
-    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-      setError("Only JPG, PNG and WEBP images are allowed");
+    if (
+      !ALLOWED_IMAGE_TYPES.includes(
+        file.type,
+      )
+    ) {
+      setError(
+        "Only JPG, PNG and WEBP images are allowed",
+      );
+      event.target.value = "";
       return;
+    }
+
+    if (
+      preview &&
+      preview.startsWith("blob:")
+    ) {
+      URL.revokeObjectURL(preview);
     }
 
     setAvatar(file);
@@ -77,76 +120,140 @@ const EditProfile = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setError("");
 
-    const dataToSend = new FormData();
+    const normalizedUsername =
+      formData.username.trim();
 
-    dataToSend.append("fullName", formData.fullName.trim());
-    dataToSend.append("website", formData.website.trim());
-    dataToSend.append("bio", formData.bio.trim());
-
-    if (avatar) {
-      dataToSend.append("avatar", avatar);
+    if (!normalizedUsername) {
+      setError("Username is required");
+      return;
     }
 
     try {
       setIsLoading(true);
+      setError("");
 
-      await api.put("/users/profile", dataToSend);
+      const dataToSend = new FormData();
 
-      const { data: updatedProfile } = await api.get("/users/profile");
+      dataToSend.append(
+        "username",
+        normalizedUsername,
+      );
+
+      dataToSend.append(
+        "website",
+        formData.website.trim(),
+      );
+
+      dataToSend.append(
+        "bio",
+        formData.bio.trim(),
+      );
+
+      if (avatar) {
+        dataToSend.append("avatar", avatar);
+      }
+
+      await api.put(
+        "/users/profile",
+        dataToSend,
+      );
+
+      const { data: updatedProfile } =
+        await api.get("/users/profile");
 
       updateUser(updatedProfile);
 
       navigate("/profile");
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to update profile");
+      setError(
+        err.response?.data?.message ||
+          "Failed to update profile",
+      );
     } finally {
       setIsLoading(false);
     }
   };
+
+  if (isProfileLoading) {
+    return (
+      <section className="edit-profile-page">
+        <p>Loading...</p>
+      </section>
+    );
+  }
 
   return (
     <section className="edit-profile-page">
       <div className="edit-profile-container">
         <h1>Edit profile</h1>
 
-        <form className="edit-profile-form" onSubmit={handleSubmit}>
+        <form
+          className="edit-profile-form"
+          onSubmit={handleSubmit}
+        >
           <div className="edit-profile-avatar-box">
-            <Avatar src={preview} name={formData.fullName} size={56} />
+            <Avatar
+              src={preview}
+              name={
+                formData.username ||
+                "User"
+              }
+              size={56}
+            />
 
-            <div>
-              <strong>{formData.fullName || "User"}</strong>
-              <p>Update your profile photo</p>
+            <div className="edit-profile-avatar-info">
+              <strong>
+                {formData.username ||
+                  "Username"}
+              </strong>
+
+              <p>
+                {formData.bio ||
+                  "Add information about yourself"}
+              </p>
             </div>
 
             <label className="edit-profile-photo-btn">
               New photo
+
               <input
                 id="avatar"
                 type="file"
                 name="avatar"
                 accept="image/jpeg,image/png,image/webp"
-                onChange={handleAvatarChange}
+                onChange={
+                  handleAvatarChange
+                }
               />
             </label>
           </div>
 
-          <label className="edit-profile-field">
-            <span>Full name</span>
+          <label
+            className="edit-profile-field"
+            htmlFor="username"
+          >
+            <span>Username</span>
+
             <input
-              id="fullName"
+              id="username"
               type="text"
-              name="fullName"
-              value={formData.fullName}
+              name="username"
+              value={formData.username}
               onChange={handleChange}
-              placeholder="Full name"
-              autoComplete="name"
+              placeholder="Username"
+              autoComplete="username"
+              maxLength={30}
+              required
             />
           </label>
 
-          <label className="edit-profile-field">
+          <label
+            className="edit-profile-field"
+            htmlFor="website"
+          >
             <span>Website</span>
+
             <input
               id="website"
               type="url"
@@ -158,8 +265,12 @@ const EditProfile = () => {
             />
           </label>
 
-          <label className="edit-profile-field">
-            <span>Bio</span>
+          <label
+            className="edit-profile-field"
+            htmlFor="bio"
+          >
+            <span>About</span>
+
             <textarea
               id="bio"
               name="bio"
@@ -168,17 +279,29 @@ const EditProfile = () => {
               placeholder="Tell something about yourself..."
               maxLength={150}
             />
-            <small>{formData.bio.length}/150</small>
+
+            <small>
+              {formData.bio.length} / 150
+            </small>
           </label>
 
-          {error && <p className="edit-profile-error">{error}</p>}
+          {error && (
+            <p
+              className="edit-profile-error"
+              role="alert"
+            >
+              {error}
+            </p>
+          )}
 
           <button
             className="edit-profile-save"
             type="submit"
             disabled={isLoading}
           >
-            {isLoading ? "Saving..." : "Save"}
+            {isLoading
+              ? "Saving..."
+              : "Save"}
           </button>
         </form>
       </div>

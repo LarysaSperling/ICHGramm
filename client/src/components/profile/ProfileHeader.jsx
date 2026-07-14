@@ -42,7 +42,6 @@ const ProfileHeader = ({
         />
 
         <ProfileBio
-          fullName={profile.fullName}
           bio={profile.bio}
           website={profile.website}
         />

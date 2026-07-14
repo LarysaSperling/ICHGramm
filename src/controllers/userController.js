@@ -4,7 +4,9 @@ import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
 
 const getProfile = asyncHandler(async (req, res) => {
- const user = await User.findById(req.user._id).select("-password").lean();
+  const user = await User.findById(req.user._id)
+    .select("-password")
+    .lean();
 
   if (!user) {
     throw new ApiError(404, "User not found");
@@ -20,16 +22,43 @@ const updateProfile = asyncHandler(async (req, res) => {
     throw new ApiError(404, "User not found");
   }
 
+  const username = req.body?.username;
   const fullName = req.body?.fullName;
   const bio = req.body?.bio;
   const website = req.body?.website;
 
+  if (username !== undefined) {
+    const normalizedUsername = username.trim();
+
+    if (!normalizedUsername) {
+      throw new ApiError(400, "Username cannot be empty");
+    }
+
+    const usernameExists = await User.findOne({
+      username: {
+        $regex: `^${normalizedUsername}$`,
+        $options: "i",
+      },
+      _id: {
+        $ne: req.user._id,
+      },
+    });
+
+    if (usernameExists) {
+      throw new ApiError(409, "Username is already taken");
+    }
+
+    user.username = normalizedUsername;
+  }
+
   if (fullName !== undefined) {
-    if (fullName.trim() === "") {
+    const normalizedFullName = fullName.trim();
+
+    if (!normalizedFullName) {
       throw new ApiError(400, "Full name cannot be empty");
     }
 
-    user.fullName = fullName.trim();
+    user.fullName = normalizedFullName;
   }
 
   if (bio !== undefined) {
@@ -41,7 +70,9 @@ const updateProfile = asyncHandler(async (req, res) => {
   }
 
   if (req.file) {
-    user.avatar = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
+    user.avatar = `data:${
+      req.file.mimetype
+    };base64,${req.file.buffer.toString("base64")}`;
   }
 
   const updatedUser = await user.save();
@@ -66,8 +97,18 @@ const searchUsers = asyncHandler(async (req, res) => {
 
   const users = await User.find({
     $or: [
-      { username: { $regex: keyword.trim(), $options: "i" } },
-      { fullName: { $regex: keyword.trim(), $options: "i" } },
+      {
+        username: {
+          $regex: keyword.trim(),
+          $options: "i",
+        },
+      },
+      {
+        fullName: {
+          $regex: keyword.trim(),
+          $options: "i",
+        },
+      },
     ],
   })
     .select("-password")
@@ -77,8 +118,13 @@ const searchUsers = asyncHandler(async (req, res) => {
 });
 
 const getMyPosts = asyncHandler(async (req, res) => {
-  const posts = await Post.find({ author: req.user._id })
-    .populate("author", "username fullName avatar")
+  const posts = await Post.find({
+    author: req.user._id,
+  })
+    .populate(
+      "author",
+      "username fullName avatar",
+    )
     .sort({ createdAt: -1 })
     .lean();
 
@@ -86,14 +132,23 @@ const getMyPosts = asyncHandler(async (req, res) => {
 });
 
 const getUserById = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.params.id).select("-password").lean();
+  const user = await User.findById(
+    req.params.id,
+  )
+    .select("-password")
+    .lean();
 
   if (!user) {
     throw new ApiError(404, "User not found");
   }
 
-  const posts = await Post.find({ author: req.params.id })
-    .populate("author", "username fullName avatar")
+  const posts = await Post.find({
+    author: req.params.id,
+  })
+    .populate(
+      "author",
+      "username fullName avatar",
+    )
     .sort({ createdAt: -1 })
     .lean();
 
@@ -119,17 +174,22 @@ const toggleFollowUser = asyncHandler(async (req, res) => {
   }
 
   const isFollowing = targetUser.followers.some(
-    (followerId) => followerId.toString() === currentUserId
+    (followerId) =>
+      followerId.toString() === currentUserId,
   );
 
   if (isFollowing) {
-    targetUser.followers = targetUser.followers.filter(
-      (followerId) => followerId.toString() !== currentUserId
-    );
+    targetUser.followers =
+      targetUser.followers.filter(
+        (followerId) =>
+          followerId.toString() !== currentUserId,
+      );
 
-    currentUser.following = currentUser.following.filter(
-      (followingId) => followingId.toString() !== targetUserId
-    );
+    currentUser.following =
+      currentUser.following.filter(
+        (followingId) =>
+          followingId.toString() !== targetUserId,
+      );
   } else {
     targetUser.followers.push(currentUserId);
     currentUser.following.push(targetUserId);
@@ -139,7 +199,9 @@ const toggleFollowUser = asyncHandler(async (req, res) => {
   await currentUser.save();
 
   res.json({
-    message: isFollowing ? "Unfollowed successfully" : "Followed successfully",
+    message: isFollowing
+      ? "Unfollowed successfully"
+      : "Followed successfully",
     isFollowing: !isFollowing,
     followersCount: targetUser.followers.length,
     followingCount: currentUser.following.length,
@@ -160,12 +222,15 @@ const toggleSavedPost = asyncHandler(async (req, res) => {
   }
 
   const alreadySaved = user.savedPosts.some(
-    (savedPostId) => savedPostId.toString() === post._id.toString()
+    (savedPostId) =>
+      savedPostId.toString() === post._id.toString(),
   );
 
   if (alreadySaved) {
     user.savedPosts = user.savedPosts.filter(
-      (savedPostId) => savedPostId.toString() !== post._id.toString()
+      (savedPostId) =>
+        savedPostId.toString() !==
+        post._id.toString(),
     );
   } else {
     user.savedPosts.push(post._id);
@@ -178,6 +243,7 @@ const toggleSavedPost = asyncHandler(async (req, res) => {
     savedPosts: user.savedPosts,
   });
 });
+
 const getSavedPosts = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id)
     .populate({
@@ -195,9 +261,12 @@ const getSavedPosts = asyncHandler(async (req, res) => {
 
   res.json(user.savedPosts);
 });
+
 const getShareUsers = asyncHandler(async (req, res) => {
   const users = await User.find({
-    _id: { $ne: req.user._id },
+    _id: {
+      $ne: req.user._id,
+    },
   })
     .select("_id username fullName avatar")
     .sort({ username: 1 })
