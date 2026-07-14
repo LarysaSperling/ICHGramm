@@ -6,11 +6,17 @@ const ProfileGrid = ({
   emptyText = "When you share photos, they will appear on your profile.",
   onDeletePost,
   onUpdatePost,
+  onRemoveSavedPost,
+  onSavedChange,
+  isSavedView = false,
 }) => {
   if (!posts.length) {
     return (
       <div className="profile-empty">
-        <div className="profile-empty-icon">📷</div>
+        <div className="profile-empty-icon">
+          {isSavedView ? "🔖" : "📷"}
+        </div>
+
         <h3>{emptyTitle}</h3>
         <p>{emptyText}</p>
       </div>
@@ -23,8 +29,11 @@ const ProfileGrid = ({
         <ProfileGridItem
           key={post._id}
           post={post}
+          isSavedView={isSavedView}
           onDeletePost={onDeletePost}
           onUpdatePost={onUpdatePost}
+          onRemoveSavedPost={onRemoveSavedPost}
+          onSavedChange={onSavedChange}
         />
       ))}
     </div>

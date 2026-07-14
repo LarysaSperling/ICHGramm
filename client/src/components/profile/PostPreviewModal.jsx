@@ -43,9 +43,11 @@ const PostPreviewModal = ({
   const commentInputRef = useRef(null);
   const emojiRef = useRef(null);
 
+  const [localPost, setLocalPost] = useState(post);
   const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState([]);
   const [showAllComments, setShowAllComments] = useState(false);
+
   const [isSaved, setIsSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -57,6 +59,10 @@ const PostPreviewModal = ({
   const currentUserId = getCurrentUserId();
 
   useEffect(() => {
+    setLocalPost(post);
+  }, [post]);
+
+  useEffect(() => {
     const handleClickOutsideEmoji = (event) => {
       if (
         emojiRef.current &&
@@ -66,10 +72,7 @@ const PostPreviewModal = ({
       }
     };
 
-    document.addEventListener(
-      "mousedown",
-      handleClickOutsideEmoji,
-    );
+    document.addEventListener("mousedown", handleClickOutsideEmoji);
 
     return () => {
       document.removeEventListener(
@@ -81,11 +84,11 @@ const PostPreviewModal = ({
 
   useEffect(() => {
     const fetchComments = async () => {
-      if (!isOpen || !post?._id) return;
+      if (!isOpen || !localPost?._id) return;
 
       try {
         const { data } = await api.get(
-          `/comments/${post._id}`,
+          `/comments/${localPost._id}`,
         );
 
         setComments(Array.isArray(data) ? data : []);
@@ -97,18 +100,18 @@ const PostPreviewModal = ({
     };
 
     fetchComments();
-  }, [isOpen, post?._id]);
+  }, [isOpen, localPost?._id]);
 
   useEffect(() => {
     const fetchSavedPosts = async () => {
-      if (!isOpen || !post?._id) return;
+      if (!isOpen || !localPost?._id) return;
 
       try {
         const { data } = await api.get("/users/saved");
 
         const saved = Array.isArray(data)
           ? data.some(
-              (savedPost) => savedPost._id === post._id,
+              (savedPost) => savedPost._id === localPost._id,
             )
           : false;
 
@@ -119,16 +122,20 @@ const PostPreviewModal = ({
     };
 
     fetchSavedPosts();
-  }, [isOpen, post?._id]);
+  }, [isOpen, localPost?._id]);
 
-  if (!isOpen || !post) return null;
+  if (!isOpen || !localPost) return null;
 
-  const username = post.author?.username || "user";
-  const fullName = post.author?.fullName || username;
-  const avatar = post.author?.avatar;
+  const username =
+    localPost.author?.username || "user";
 
-  const postLikes = Array.isArray(post.likes)
-    ? post.likes
+  const fullName =
+    localPost.author?.fullName || username;
+
+  const avatar = localPost.author?.avatar;
+
+  const postLikes = Array.isArray(localPost.likes)
+    ? localPost.likes
     : [];
 
   const isLiked = postLikes.some((like) => {
@@ -151,11 +158,14 @@ const PostPreviewModal = ({
       setIsLiking(true);
 
       const { data } = await api.post(
-        `/posts/${post._id}/like`,
+        `/posts/${localPost._id}/like`,
       );
 
-      if (data.post && onPostChange) {
-        onPostChange(data.post);
+      const updatedPost = data.post || data;
+
+      if (updatedPost?._id) {
+        setLocalPost(updatedPost);
+        onPostChange?.(updatedPost);
       }
     } catch (error) {
       console.error("Like post failed:", error);
@@ -171,10 +181,16 @@ const PostPreviewModal = ({
       setIsSaving(true);
 
       const { data } = await api.post(
-        `/users/saved/${post._id}`,
+        `/users/saved/${localPost._id}`,
       );
 
-      setIsSaved(Boolean(data.saved));
+      const nextSavedState = Boolean(data.saved);
+
+      setIsSaved(nextSavedState);
+
+      onPostChange?.(localPost, {
+        saved: nextSavedState,
+      });
     } catch (error) {
       console.error("Save post failed:", error);
     } finally {
@@ -198,15 +214,17 @@ const PostPreviewModal = ({
   const handleAddComment = async (event) => {
     event.preventDefault();
 
-    if (!commentText.trim() || isCommenting) return;
+    const normalizedComment = commentText.trim();
+
+    if (!normalizedComment || isCommenting) return;
 
     try {
       setIsCommenting(true);
 
       const { data } = await api.post(
-        `/comments/${post._id}`,
+        `/comments/${localPost._id}`,
         {
-          text: commentText.trim(),
+          text: normalizedComment,
         },
       );
 
@@ -218,12 +236,13 @@ const PostPreviewModal = ({
       setCommentText("");
       setIsEmojiOpen(false);
 
-      if (onPostChange) {
-        onPostChange({
-          ...post,
-          commentsCount: comments.length + 1,
-        });
-      }
+      const updatedPost = {
+        ...localPost,
+        commentsCount: comments.length + 1,
+      };
+
+      setLocalPost(updatedPost);
+      onPostChange?.(updatedPost);
     } catch (error) {
       console.error("Add comment failed:", error);
     } finally {
@@ -237,12 +256,12 @@ const PostPreviewModal = ({
 
   const handleEdit = () => {
     setIsMenuOpen(false);
-    onEditPost();
+    onEditPost?.();
   };
 
   const handleDelete = () => {
     setIsMenuOpen(false);
-    onDeletePost();
+    onDeletePost?.();
   };
 
   return (
@@ -265,8 +284,8 @@ const PostPreviewModal = ({
       >
         <div className="post-preview-media">
           <img
-            src={post.image}
-            alt={post.caption || "Post"}
+            src={localPost.image}
+            alt={localPost.caption || "Post"}
           />
         </div>
 
@@ -296,7 +315,7 @@ const PostPreviewModal = ({
           </header>
 
           <section className="post-preview-comments">
-            {post.caption && (
+            {localPost.caption && (
               <article className="post-preview-comment post-preview-caption">
                 <Avatar
                   src={avatar}
@@ -307,12 +326,12 @@ const PostPreviewModal = ({
                 <div className="post-preview-comment-main">
                   <p>
                     <strong>{username}</strong>{" "}
-                    {post.caption}
+                    {localPost.caption}
                   </p>
 
                   <div className="post-preview-comment-meta">
                     <span>
-                      {timeAgo(post.createdAt)}
+                      {timeAgo(localPost.createdAt)}
                     </span>
 
                     <button type="button">
@@ -443,7 +462,11 @@ const PostPreviewModal = ({
                 }
                 onClick={handleToggleSave}
                 disabled={isSaving}
-                aria-label="Save post"
+                aria-label={
+                  isSaved
+                    ? "Remove from saved posts"
+                    : "Save post"
+                }
               >
                 <Bookmark
                   size={25}
@@ -463,7 +486,7 @@ const PostPreviewModal = ({
             </p>
 
             <p className="post-preview-date">
-              {timeAgo(post.createdAt)}
+              {timeAgo(localPost.createdAt)}
             </p>
 
             <form
@@ -506,7 +529,7 @@ const PostPreviewModal = ({
               </div>
 
               <input
-                id={`preview-comment-${post._id}`}
+                id={`preview-comment-${localPost._id}`}
                 name="preview-comment"
                 type="text"
                 ref={commentInputRef}
@@ -534,7 +557,7 @@ const PostPreviewModal = ({
       </div>
 
       <SharePostModal
-        post={post}
+        post={localPost}
         isOpen={isShareOpen}
         onClose={() => setIsShareOpen(false)}
       />
@@ -543,8 +566,8 @@ const PostPreviewModal = ({
         isOpen={isMenuOpen}
         onClose={() => setIsMenuOpen(false)}
         isOwnPost
-        postId={post._id}
-        authorId={post.author?._id}
+        postId={localPost._id}
+        authorId={localPost.author?._id}
         onEdit={handleEdit}
         onDelete={handleDelete}
       />

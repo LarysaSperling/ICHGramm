@@ -1,4 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
 
 import api from "../api/axios";
 
@@ -11,11 +15,19 @@ const Profile = () => {
   const [profile, setProfile] = useState(null);
   const [posts, setPosts] = useState([]);
   const [savedPosts, setSavedPosts] = useState([]);
-  const [followersCount, setFollowersCount] = useState(0);
-  const [followingCount, setFollowingCount] = useState(0);
 
-  const [activeTab, setActiveTab] = useState("posts");
-  const [isLoading, setIsLoading] = useState(true);
+  const [followersCount, setFollowersCount] =
+    useState(0);
+
+  const [followingCount, setFollowingCount] =
+    useState(0);
+
+  const [activeTab, setActiveTab] =
+    useState("posts");
+
+  const [isLoading, setIsLoading] =
+    useState(true);
+
   const [error, setError] = useState("");
 
   const loadProfile = useCallback(async () => {
@@ -23,11 +35,16 @@ const Profile = () => {
       setIsLoading(true);
       setError("");
 
-      const profileResponse = await api.get("/users/profile");
-      const loadedProfile = profileResponse.data;
+      const profileResponse =
+        await api.get("/users/profile");
+
+      const loadedProfile =
+        profileResponse.data;
 
       if (!loadedProfile?._id) {
-        throw new Error("Profile ID is missing");
+        throw new Error(
+          "Profile ID is missing",
+        );
       }
 
       const [
@@ -38,8 +55,12 @@ const Profile = () => {
       ] = await Promise.all([
         api.get("/users/profile/posts"),
         api.get("/users/saved"),
-        api.get(`/follows/${loadedProfile._id}/followers`),
-        api.get(`/follows/${loadedProfile._id}/following`),
+        api.get(
+          `/follows/${loadedProfile._id}/followers`,
+        ),
+        api.get(
+          `/follows/${loadedProfile._id}/following`,
+        ),
       ]);
 
       setProfile(loadedProfile);
@@ -87,19 +108,27 @@ const Profile = () => {
       loadProfile();
     };
 
-    window.addEventListener("focus", handleWindowFocus);
+    window.addEventListener(
+      "focus",
+      handleWindowFocus,
+    );
 
     return () => {
-      window.removeEventListener("focus", handleWindowFocus);
+      window.removeEventListener(
+        "focus",
+        handleWindowFocus,
+      );
     };
   }, [loadProfile]);
 
   const handleDeletePost = async (postId) => {
     const isConfirmed = window.confirm(
-      "Delete this post?",
+      "Delete this post permanently?",
     );
 
-    if (!isConfirmed) return;
+    if (!isConfirmed) {
+      return false;
+    }
 
     try {
       setError("");
@@ -117,12 +146,99 @@ const Profile = () => {
           (post) => post._id !== postId,
         ),
       );
+
+      return true;
     } catch (err) {
       setError(
         err.response?.data?.message ||
           "Failed to delete post",
       );
+
+      return false;
     }
+  };
+
+  const handleRemoveSavedPost = async (
+    postId,
+  ) => {
+    if (!postId) return false;
+
+    const isConfirmed = window.confirm(
+      "Remove this post from saved posts?",
+    );
+
+    if (!isConfirmed) {
+      return false;
+    }
+
+    try {
+      setError("");
+
+      const { data } = await api.post(
+        `/users/saved/${postId}`,
+      );
+
+      if (data.saved === true) {
+        setError(
+          "The post is still saved. Please try again.",
+        );
+
+        return false;
+      }
+
+      setSavedPosts((previousPosts) =>
+        previousPosts.filter(
+          (post) => post._id !== postId,
+        ),
+      );
+
+      return true;
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+          "Failed to remove saved post",
+      );
+
+      return false;
+    }
+  };
+
+  const handleSavedChange = (
+    changedPost,
+    isSaved,
+  ) => {
+    if (!changedPost?._id) return;
+
+    setSavedPosts((previousPosts) => {
+      if (!isSaved) {
+        return previousPosts.filter(
+          (post) =>
+            post._id !== changedPost._id,
+        );
+      }
+
+      const alreadySaved =
+        previousPosts.some(
+          (post) =>
+            post._id === changedPost._id,
+        );
+
+      if (alreadySaved) {
+        return previousPosts.map((post) =>
+          post._id === changedPost._id
+            ? {
+                ...post,
+                ...changedPost,
+              }
+            : post,
+        );
+      }
+
+      return [
+        changedPost,
+        ...previousPosts,
+      ];
+    });
   };
 
   const handleUpdatePost = async (
@@ -139,7 +255,8 @@ const Profile = () => {
         },
       );
 
-      const updatedPost = data.post || data;
+      const updatedPost =
+        data.post || data;
 
       setPosts((previousPosts) =>
         previousPosts.map((post) =>
@@ -175,7 +292,9 @@ const Profile = () => {
   };
 
   const visiblePosts =
-    activeTab === "saved" ? savedPosts : posts;
+    activeTab === "saved"
+      ? savedPosts
+      : posts;
 
   if (isLoading) {
     return <p>Loading...</p>;
@@ -183,7 +302,10 @@ const Profile = () => {
 
   if (error) {
     return (
-      <p className="profile-error" role="alert">
+      <p
+        className="profile-error"
+        role="alert"
+      >
         {error}
       </p>
     );
@@ -210,9 +332,13 @@ const Profile = () => {
         <button
           type="button"
           className={
-            activeTab === "posts" ? "active" : ""
+            activeTab === "posts"
+              ? "active"
+              : ""
           }
-          onClick={() => setActiveTab("posts")}
+          onClick={() =>
+            setActiveTab("posts")
+          }
         >
           POSTS
         </button>
@@ -220,9 +346,13 @@ const Profile = () => {
         <button
           type="button"
           className={
-            activeTab === "saved" ? "active" : ""
+            activeTab === "saved"
+              ? "active"
+              : ""
           }
-          onClick={() => setActiveTab("saved")}
+          onClick={() =>
+            setActiveTab("saved")
+          }
         >
           SAVED
         </button>
@@ -230,9 +360,13 @@ const Profile = () => {
         <button
           type="button"
           className={
-            activeTab === "tagged" ? "active" : ""
+            activeTab === "tagged"
+              ? "active"
+              : ""
           }
-          onClick={() => setActiveTab("tagged")}
+          onClick={() =>
+            setActiveTab("tagged")
+          }
         >
           TAGGED
         </button>
@@ -247,13 +381,16 @@ const Profile = () => {
           <h3>No Tagged Posts</h3>
 
           <p>
-            Photos you are tagged in will appear
-            here.
+            Photos you are tagged in will
+            appear here.
           </p>
         </div>
       ) : (
         <ProfileGrid
           posts={visiblePosts}
+          isSavedView={
+            activeTab === "saved"
+          }
           emptyTitle={
             activeTab === "saved"
               ? "No Saved Posts"
@@ -264,8 +401,18 @@ const Profile = () => {
               ? "Posts you save will appear here."
               : "When you share photos, they will appear on your profile."
           }
-          onDeletePost={handleDeletePost}
-          onUpdatePost={handleUpdatePost}
+          onDeletePost={
+            handleDeletePost
+          }
+          onUpdatePost={
+            handleUpdatePost
+          }
+          onRemoveSavedPost={
+            handleRemoveSavedPost
+          }
+          onSavedChange={
+            handleSavedChange
+          }
         />
       )}
     </section>
