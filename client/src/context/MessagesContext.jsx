@@ -12,16 +12,23 @@ import api from "../api/axios";
 import socket from "../socket";
 import { useAuth } from "./AuthContext";
 
-export const MessagesContext = createContext(null);
+export const MessagesContext =
+  createContext(null);
 
-export const MessagesProvider = ({ children }) => {
+export const MessagesProvider = ({
+  children,
+}) => {
   const { user } = useAuth();
   const location = useLocation();
 
   const toastTimeoutRef = useRef(null);
+  const pathnameRef = useRef(
+    location.pathname,
+  );
 
   const [unreadMessages, setUnreadMessages] =
     useState(0);
+
   const [messageToast, setMessageToast] =
     useState(null);
 
@@ -29,6 +36,24 @@ export const MessagesProvider = ({ children }) => {
     unreadNotifications,
     setUnreadNotifications,
   ] = useState(0);
+
+  useEffect(() => {
+    pathnameRef.current =
+      location.pathname;
+  }, [location.pathname]);
+
+  const clearToastTimeout =
+    useCallback(() => {
+      if (!toastTimeoutRef.current) {
+        return;
+      }
+
+      clearTimeout(
+        toastTimeoutRef.current,
+      );
+
+      toastTimeoutRef.current = null;
+    }, []);
 
   const loadUnreadNotifications =
     useCallback(async () => {
@@ -42,16 +67,18 @@ export const MessagesProvider = ({ children }) => {
           "/notifications",
         );
 
-        const notifications = Array.isArray(data)
-          ? data
-          : [];
+        const notifications =
+          Array.isArray(data) ? data : [];
 
-        const unreadCount = notifications.filter(
-          (notification) =>
-            !notification.isRead,
-        ).length;
+        const unreadCount =
+          notifications.filter(
+            (notification) =>
+              !notification.isRead,
+          ).length;
 
-        setUnreadNotifications(unreadCount);
+        setUnreadNotifications(
+          unreadCount,
+        );
       } catch (error) {
         console.error(
           error.response?.data?.message ||
@@ -65,29 +92,50 @@ export const MessagesProvider = ({ children }) => {
   }, [loadUnreadNotifications]);
 
   useEffect(() => {
-    if (!user?._id) {
+    const userId = user?._id;
+
+    if (!userId) {
       setUnreadMessages(0);
       setUnreadNotifications(0);
       setMessageToast(null);
 
-      return;
+      clearToastTimeout();
+
+      if (socket.connected) {
+        socket.disconnect();
+      }
+
+      socket.auth = {};
+
+      return undefined;
     }
 
-    socket.auth = {
-      userId: user._id,
+    const joinUserRoom = () => {
+      socket.emit(
+        "joinUserRoom",
+        userId,
+      );
     };
 
-    if (!socket.connected) {
-      socket.connect();
-    }
+    const handleConnect = () => {
+      joinUserRoom();
+    };
 
-    socket.emit("joinUserRoom", user._id);
+    const handleConnectError = (
+      error,
+    ) => {
+      console.error(
+        "Socket connection failed:",
+        error.message,
+      );
+    };
 
     const handleNewMessageNotification = (
       message,
     ) => {
       if (
-        location.pathname === "/messages"
+        pathnameRef.current ===
+        "/messages"
       ) {
         return;
       }
@@ -107,23 +155,18 @@ export const MessagesProvider = ({ children }) => {
             : message.text || "",
       });
 
-      if (toastTimeoutRef.current) {
-        clearTimeout(
-          toastTimeoutRef.current,
-        );
-      }
+      clearToastTimeout();
 
-      toastTimeoutRef.current = setTimeout(
-        () => {
+      toastTimeoutRef.current =
+        setTimeout(() => {
           setMessageToast(null);
-        },
-        3500,
-      );
+          toastTimeoutRef.current = null;
+        }, 3500);
     };
 
     const handleNewNotification = () => {
       if (
-        location.pathname ===
+        pathnameRef.current ===
         "/notifications"
       ) {
         return;
@@ -135,6 +178,20 @@ export const MessagesProvider = ({ children }) => {
       );
     };
 
+    socket.auth = {
+      userId,
+    };
+
+    socket.on(
+      "connect",
+      handleConnect,
+    );
+
+    socket.on(
+      "connect_error",
+      handleConnectError,
+    );
+
     socket.on(
       "newMessageNotification",
       handleNewMessageNotification,
@@ -145,7 +202,23 @@ export const MessagesProvider = ({ children }) => {
       handleNewNotification,
     );
 
+    if (socket.connected) {
+      joinUserRoom();
+    } else {
+      socket.connect();
+    }
+
     return () => {
+      socket.off(
+        "connect",
+        handleConnect,
+      );
+
+      socket.off(
+        "connect_error",
+        handleConnectError,
+      );
+
       socket.off(
         "newMessageNotification",
         handleNewMessageNotification,
@@ -156,29 +229,17 @@ export const MessagesProvider = ({ children }) => {
         handleNewNotification,
       );
 
-      if (toastTimeoutRef.current) {
-        clearTimeout(
-          toastTimeoutRef.current,
-        );
-
-        toastTimeoutRef.current = null;
-      }
+      clearToastTimeout();
     };
-  }, [user?._id, location.pathname]);
+  }, [user?._id, clearToastTimeout]);
 
   const clearUnreadMessages =
     useCallback(() => {
       setUnreadMessages(0);
       setMessageToast(null);
 
-      if (toastTimeoutRef.current) {
-        clearTimeout(
-          toastTimeoutRef.current,
-        );
-
-        toastTimeoutRef.current = null;
-      }
-    }, []);
+      clearToastTimeout();
+    }, [clearToastTimeout]);
 
   const clearUnreadNotifications =
     useCallback(() => {

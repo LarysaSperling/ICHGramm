@@ -258,10 +258,6 @@ const Messages = () => {
           .sort()
           .join("_");
 
-        socket.emit(
-          "joinUserRoom",
-          currentUserId,
-        );
         socket.emit("joinChat", chatRoom);
 
         await api.put(
@@ -443,6 +439,7 @@ const Messages = () => {
       "newMessage",
       handleNewMessage,
     );
+
     socket.on(
       "messagesSeen",
       handleMessagesSeen,
@@ -453,6 +450,7 @@ const Messages = () => {
         "newMessage",
         handleNewMessage,
       );
+
       socket.off(
         "messagesSeen",
         handleMessagesSeen,
@@ -473,6 +471,7 @@ const Messages = () => {
     };
 
     socket.on("typing", handleTyping);
+
     socket.on(
       "stopTyping",
       handleStopTyping,
@@ -480,6 +479,7 @@ const Messages = () => {
 
     return () => {
       socket.off("typing", handleTyping);
+
       socket.off(
         "stopTyping",
         handleStopTyping,
@@ -816,7 +816,10 @@ const Messages = () => {
           return previousMessages;
         }
 
-        return [...previousMessages, data];
+        return [
+          ...previousMessages,
+          data,
+        ];
       });
 
       const chatsResponse =
@@ -855,6 +858,7 @@ const Messages = () => {
     const days = Math.floor(hours / 24);
 
     if (minutes < 1) return "now";
+
     if (minutes < 60) {
       return `${minutes}m`;
     }

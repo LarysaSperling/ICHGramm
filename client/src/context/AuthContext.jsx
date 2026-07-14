@@ -1,9 +1,9 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useMemo,
   useState,
-  useCallback,
 } from "react";
 
 import socket from "../socket";
@@ -12,19 +12,28 @@ const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
-    const savedUser = localStorage.getItem("user");
-    return savedUser ? JSON.parse(savedUser) : null;
+    const savedUser =
+      localStorage.getItem("user");
+
+    if (!savedUser) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(savedUser);
+    } catch {
+      localStorage.removeItem("user");
+      return null;
+    }
   });
 
   const [isAuthLoading] = useState(false);
 
-  const login = (data) => {
-    socket.disconnect();
-
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-
-    localStorage.setItem("token", data.token);
+  const login = useCallback((data) => {
+    localStorage.setItem(
+      "token",
+      data.token,
+    );
 
     const userData = {
       _id: data._id,
@@ -34,35 +43,53 @@ export const AuthProvider = ({ children }) => {
       avatar: data.avatar || "",
     };
 
-    localStorage.setItem("user", JSON.stringify(userData));
+    localStorage.setItem(
+      "user",
+      JSON.stringify(userData),
+    );
+
     setUser(userData);
-
-    socket.auth = { userId: userData._id };
-    socket.connect();
-  };
-
-  const updateUser = useCallback((newData) => {
-    setUser((prev) => {
-      const updatedUser = {
-        ...prev,
-        ...newData,
-        avatar: newData.avatar || prev?.avatar || "",
-      };
-
-      localStorage.setItem("user", JSON.stringify(updatedUser));
-
-      return updatedUser;
-    });
   }, []);
 
-  const logout = () => {
-    socket.disconnect();
+  const updateUser = useCallback(
+    (newData) => {
+      setUser((previousUser) => {
+        if (!previousUser) {
+          return previousUser;
+        }
+
+        const updatedUser = {
+          ...previousUser,
+          ...newData,
+          avatar:
+            newData.avatar ??
+            previousUser.avatar ??
+            "",
+        };
+
+        localStorage.setItem(
+          "user",
+          JSON.stringify(updatedUser),
+        );
+
+        return updatedUser;
+      });
+    },
+    [],
+  );
+
+  const logout = useCallback(() => {
+    if (socket.connected) {
+      socket.disconnect();
+    }
+
+    socket.auth = {};
 
     localStorage.removeItem("token");
     localStorage.removeItem("user");
 
     setUser(null);
-  };
+  }, []);
 
   const value = useMemo(
     () => ({
@@ -71,9 +98,18 @@ export const AuthProvider = ({ children }) => {
       logout,
       updateUser,
       isAuthLoading,
-      isAuthenticated: Boolean(localStorage.getItem("token") && user),
+      isAuthenticated: Boolean(
+        localStorage.getItem("token") &&
+          user,
+      ),
     }),
-    [user, updateUser, isAuthLoading]
+    [
+      user,
+      login,
+      logout,
+      updateUser,
+      isAuthLoading,
+    ],
   );
 
   return (
@@ -83,4 +119,5 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () =>
+  useContext(AuthContext);
