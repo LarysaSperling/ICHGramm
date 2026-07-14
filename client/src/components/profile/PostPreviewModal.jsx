@@ -403,14 +403,6 @@ const PostPreviewModal = ({
                       </button>
                     </div>
                   </div>
-
-                  <button
-                    className="post-preview-comment-like"
-                    type="button"
-                    aria-label="Like comment"
-                  >
-                    <Heart size={13} />
-                  </button>
                 </article>
               );
             })}

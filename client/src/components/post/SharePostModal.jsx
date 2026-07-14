@@ -29,8 +29,11 @@ const SharePostModal = ({ post, isOpen, onClose }) => {
 
         setUsers(Array.isArray(data) ? data : []);
       } catch (err) {
+        setUsers([]);
+
         setError(
-          err.response?.data?.message || "Failed to load users"
+          err.response?.data?.message ||
+            "Failed to load users",
         );
       } finally {
         setIsLoading(false);
@@ -52,20 +55,28 @@ const SharePostModal = ({ post, isOpen, onClose }) => {
     document.addEventListener("keydown", handleEscape);
 
     return () => {
-      document.removeEventListener("keydown", handleEscape);
+      document.removeEventListener(
+        "keydown",
+        handleEscape,
+      );
     };
   }, [isOpen, onClose]);
 
   const filteredUsers = useMemo(() => {
-    const normalizedSearch = searchText.trim().toLowerCase();
+    const normalizedSearch = searchText
+      .trim()
+      .toLowerCase();
 
     if (!normalizedSearch) {
       return users;
     }
 
     return users.filter((user) => {
-      const username = user.username?.toLowerCase() || "";
-      const fullName = user.fullName?.toLowerCase() || "";
+      const username =
+        user.username?.toLowerCase() || "";
+
+      const fullName =
+        user.fullName?.toLowerCase() || "";
 
       return (
         username.includes(normalizedSearch) ||
@@ -74,8 +85,18 @@ const SharePostModal = ({ post, isOpen, onClose }) => {
     });
   }, [users, searchText]);
 
+  const handleBackdropClick = (event) => {
+    event.stopPropagation();
+
+    if (event.target === event.currentTarget) {
+      onClose();
+    }
+  };
+
   const handleSendPost = async (userId) => {
-    if (!post?._id || !userId || sendingUserId) return;
+    if (!post?._id || !userId || sendingUserId) {
+      return;
+    }
 
     try {
       setSendingUserId(userId);
@@ -87,12 +108,15 @@ const SharePostModal = ({ post, isOpen, onClose }) => {
         sharedPost: post._id,
       });
 
-      setSentUserIds((prev) =>
-        prev.includes(userId) ? prev : [...prev, userId]
+      setSentUserIds((previousUserIds) =>
+        previousUserIds.includes(userId)
+          ? previousUserIds
+          : [...previousUserIds, userId],
       );
     } catch (err) {
       setError(
-        err.response?.data?.message || "Failed to send post"
+        err.response?.data?.message ||
+          "Failed to send post",
       );
     } finally {
       setSendingUserId(null);
@@ -102,13 +126,19 @@ const SharePostModal = ({ post, isOpen, onClose }) => {
   if (!isOpen || !post) return null;
 
   return (
-    <div className="share-post-backdrop" onClick={onClose}>
+    <div
+      className="share-post-backdrop"
+      onClick={handleBackdropClick}
+    >
       <section
         className="share-post-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="share-post-title"
         onClick={(event) => event.stopPropagation()}
       >
         <header className="share-post-header">
-          <h2>Share</h2>
+          <h2 id="share-post-title">Share</h2>
 
           <button
             type="button"
@@ -127,52 +157,83 @@ const SharePostModal = ({ post, isOpen, onClose }) => {
             type="search"
             placeholder="Search"
             value={searchText}
-            onChange={(event) => setSearchText(event.target.value)}
+            onChange={(event) =>
+              setSearchText(event.target.value)
+            }
             autoComplete="off"
+            aria-label="Search users"
           />
         </div>
 
         <div className="share-post-preview">
           <img
             src={post.image}
-            alt={post.caption || "Shared post preview"}
+            alt={
+              post.caption || "Shared post preview"
+            }
           />
 
           <div>
-            <strong>{post.author?.username || "Post"}</strong>
-            <span>{post.caption || "Shared post"}</span>
+            <strong>
+              {post.author?.username || "Post"}
+            </strong>
+
+            <span>
+              {post.caption || "Shared post"}
+            </span>
           </div>
         </div>
 
-        {error && <p className="share-post-error">{error}</p>}
+        {error && (
+          <p className="share-post-error">
+            {error}
+          </p>
+        )}
 
         <div className="share-post-list">
           {isLoading ? (
-            <Loader />
+            <div className="share-post-loading">
+              <Loader />
+            </div>
           ) : filteredUsers.length === 0 ? (
-            <p className="share-post-empty">No users found.</p>
+            <p className="share-post-empty">
+              No users found.
+            </p>
           ) : (
             filteredUsers.map((user) => {
               const userId = user._id;
-              const isSending = sendingUserId === userId;
-              const isSent = sentUserIds.includes(userId);
+              const isSending =
+                sendingUserId === userId;
+              const isSent =
+                sentUserIds.includes(userId);
 
               return (
-                <div className="share-post-user" key={userId}>
+                <div
+                  className="share-post-user"
+                  key={userId}
+                >
                   <Avatar
                     src={user.avatar}
-                    name={user.username || user.fullName}
+                    name={
+                      user.username ||
+                      user.fullName
+                    }
                     size={44}
                   />
 
                   <div className="share-post-user-info">
-                    <strong>{user.username}</strong>
+                    <strong>
+                      {user.username}
+                    </strong>
+
                     <span>{user.fullName}</span>
                   </div>
 
                   <button
                     type="button"
-                    onClick={() => handleSendPost(userId)}
+                    onClick={() =>
+                      handleSendPost(userId)
+                    }
                     disabled={isSending || isSent}
                   >
                     {isSent

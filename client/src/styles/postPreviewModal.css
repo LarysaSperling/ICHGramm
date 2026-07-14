@@ -247,28 +247,6 @@
   color: #262626;
 }
 
-.post-preview-comment-like {
-  width: 26px;
-  height: 26px;
-  padding: 0;
-
-  flex-shrink: 0;
-
-  border: none;
-  background: transparent;
-  color: #8e8e8e;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  cursor: pointer;
-}
-
-.post-preview-comment-like:hover {
-  color: #ed4956;
-}
-
 .post-preview-view-comments {
   align-self: flex-start;
 
@@ -553,8 +531,7 @@ body.dark .post-preview-comment-meta span,
 body.dark .post-preview-comment-meta button,
 body.dark .post-preview-view-comments,
 body.dark .post-preview-empty-comments,
-body.dark .post-preview-date,
-body.dark .post-preview-comment-like {
+body.dark .post-preview-date {
   color: #a8a8a8;
 }
 
