@@ -1,6 +1,13 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 import api from "../../api/axios";
+import { useAuth } from "../../context/AuthContext";
+
 import Loader from "../ui/Loader";
 import PostList from "../post/PostList";
 import StoryList from "../story/StoryList";
@@ -12,85 +19,203 @@ import "../../styles/feed.css";
 
 const POSTS_LIMIT = 5;
 
+const getFollowingUserId = (followItem) => {
+  const following = followItem?.following;
+
+  if (typeof following === "string") {
+    return following;
+  }
+
+  return following?._id || null;
+};
+
+const mergeUniquePosts = (
+  previousPosts,
+  nextPosts,
+) => {
+  const postsMap = new Map();
+
+  [...previousPosts, ...nextPosts].forEach(
+    (post) => {
+      if (post?._id) {
+        postsMap.set(post._id, post);
+      }
+    },
+  );
+
+  return [...postsMap.values()];
+};
+
 const Feed = () => {
+  const { user } = useAuth();
+  const currentUserId = user?._id || null;
+
   const [posts, setPosts] = useState([]);
-  const [savedPostIds, setSavedPostIds] = useState([]);
+  const [savedPostIds, setSavedPostIds] =
+    useState([]);
+
+  const [
+    followingUserIds,
+    setFollowingUserIds,
+  ] = useState([]);
+
   const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] =
+    useState(true);
+
+  const [isLoading, setIsLoading] =
+    useState(true);
+
+  const [
+    isLoadingMore,
+    setIsLoadingMore,
+  ] = useState(false);
+
   const [error, setError] = useState("");
-  const [selectedPost, setSelectedPost] = useState(null);
+
+  const [selectedPost, setSelectedPost] =
+    useState(null);
 
   const observerRef = useRef(null);
   const loadMoreRef = useRef(null);
 
-  const loadSavedPosts = useCallback(async () => {
-    const savedResponse = await api.get("/users/saved");
+  const isLoadingMoreRef = useRef(false);
+  const loadedPagesRef = useRef(new Set());
 
-    const savedIds = Array.isArray(savedResponse.data)
-      ? savedResponse.data.map((post) => post._id)
-      : [];
+  const loadSavedPosts =
+    useCallback(async () => {
+      try {
+        const { data } = await api.get(
+          "/users/saved",
+        );
 
-    setSavedPostIds(savedIds);
-  }, []);
+        const savedIds = Array.isArray(data)
+          ? data
+              .map((post) => post?._id)
+              .filter(Boolean)
+          : [];
 
-  const loadPosts = useCallback(async (pageNumber) => {
-    try {
-      setError("");
+        setSavedPostIds(savedIds);
+      } catch (err) {
+        console.error(
+          err.response?.data?.message ||
+            "Failed to load saved posts",
+        );
 
-      if (pageNumber === 1) {
-        setIsLoading(true);
-      } else {
+        setSavedPostIds([]);
+      }
+    }, []);
+
+  const loadFollowingUsers =
+    useCallback(async () => {
+      if (!currentUserId) {
+        setFollowingUserIds([]);
+        return;
+      }
+
+      try {
+        const { data } = await api.get(
+          `/follows/${currentUserId}/following`,
+        );
+
+        const followingIds = Array.isArray(data)
+          ? data
+              .map(getFollowingUserId)
+              .filter(Boolean)
+          : [];
+
+        setFollowingUserIds(followingIds);
+      } catch (err) {
+        console.error(
+          err.response?.data?.message ||
+            "Failed to load following users",
+        );
+
+        setFollowingUserIds([]);
+      }
+    }, [currentUserId]);
+
+  const loadPosts = useCallback(
+    async (pageNumber) => {
+      if (
+        pageNumber > 1 &&
+        (isLoadingMoreRef.current ||
+          loadedPagesRef.current.has(pageNumber))
+      ) {
+        return;
+      }
+
+      if (pageNumber > 1) {
+        isLoadingMoreRef.current = true;
         setIsLoadingMore(true);
       }
 
-      const postsResponse = await api.get(
-        `/posts?page=${pageNumber}&limit=${POSTS_LIMIT}`,
-      );
+      try {
+        setError("");
 
-      const nextPosts = postsResponse.data.posts || [];
+        const { data } = await api.get(
+          `/posts?page=${pageNumber}&limit=${POSTS_LIMIT}`,
+        );
 
-      setPosts((previousPosts) =>
-        pageNumber === 1
-          ? nextPosts
-          : [...previousPosts, ...nextPosts],
-      );
+        const nextPosts = Array.isArray(
+          data?.posts,
+        )
+          ? data.posts
+          : [];
 
-      setHasMore(Boolean(postsResponse.data.hasMore));
-      setPage(pageNumber);
-    } catch (err) {
-      setError(
-        err.response?.data?.message ||
-          "Failed to load posts",
-      );
-    } finally {
-      setIsLoading(false);
-      setIsLoadingMore(false);
-    }
-  }, []);
+        setPosts((previousPosts) =>
+          pageNumber === 1
+            ? mergeUniquePosts([], nextPosts)
+            : mergeUniquePosts(
+                previousPosts,
+                nextPosts,
+              ),
+        );
+
+        loadedPagesRef.current.add(pageNumber);
+
+        setHasMore(Boolean(data?.hasMore));
+        setPage(pageNumber);
+      } catch (err) {
+        setError(
+          err.response?.data?.message ||
+            "Failed to load posts",
+        );
+      } finally {
+        if (pageNumber > 1) {
+          isLoadingMoreRef.current = false;
+          setIsLoadingMore(false);
+        }
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
     const loadFeed = async () => {
       try {
         setIsLoading(true);
+        setError("");
 
-        await Promise.all([
+        loadedPagesRef.current = new Set();
+        isLoadingMoreRef.current = false;
+
+        await Promise.allSettled([
           loadPosts(1),
           loadSavedPosts(),
+          loadFollowingUsers(),
         ]);
-      } catch (err) {
-        setError(
-          err.response?.data?.message ||
-            "Failed to load feed",
-        );
       } finally {
         setIsLoading(false);
       }
     };
 
     loadFeed();
-  }, [loadPosts, loadSavedPosts]);
+  }, [
+    loadPosts,
+    loadSavedPosts,
+    loadFollowingUsers,
+  ]);
 
   useEffect(() => {
     if (
@@ -99,29 +224,34 @@ const Feed = () => {
       isLoading ||
       isLoadingMore
     ) {
-      return;
+      return undefined;
     }
 
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        const firstEntry = entries[0];
+    observerRef.current?.disconnect();
 
-        if (
-          firstEntry.isIntersecting &&
-          hasMore &&
-          !isLoadingMore
-        ) {
-          loadPosts(page + 1);
-        }
-      },
-      {
-        root: null,
-        rootMargin: "200px",
-        threshold: 0,
-      },
+    observerRef.current =
+      new IntersectionObserver(
+        (entries) => {
+          const firstEntry = entries[0];
+
+          if (
+            firstEntry.isIntersecting &&
+            hasMore &&
+            !isLoadingMoreRef.current
+          ) {
+            loadPosts(page + 1);
+          }
+        },
+        {
+          root: null,
+          rootMargin: "200px",
+          threshold: 0,
+        },
+      );
+
+    observerRef.current.observe(
+      loadMoreRef.current,
     );
-
-    observerRef.current.observe(loadMoreRef.current);
 
     return () => {
       observerRef.current?.disconnect();
@@ -134,29 +264,60 @@ const Feed = () => {
     page,
   ]);
 
+  const handleAuthorFollowChange =
+    useCallback(
+      (
+        nextFollowingStatus,
+        authorId,
+      ) => {
+        if (!authorId) return;
+
+        setFollowingUserIds(
+          (previousIds) =>
+            nextFollowingStatus
+              ? [
+                  ...new Set([
+                    ...previousIds,
+                    authorId,
+                  ]),
+                ]
+              : previousIds.filter(
+                  (userId) =>
+                    userId !== authorId,
+                ),
+        );
+      },
+      [],
+    );
+
   const handlePostChange = (
     updatedPost,
     options = {},
   ) => {
-    const deletedPostId = options.deletedPostId;
+    const deletedPostId =
+      options.deletedPostId;
 
     if (deletedPostId) {
       setPosts((previousPosts) =>
         previousPosts.filter(
-          (post) => post._id !== deletedPostId,
+          (post) =>
+            post._id !== deletedPostId,
         ),
       );
 
       setSavedPostIds((previousIds) =>
         previousIds.filter(
-          (postId) => postId !== deletedPostId,
+          (postId) =>
+            postId !== deletedPostId,
         ),
       );
 
-      setSelectedPost((previousPost) =>
-        previousPost?._id === deletedPostId
-          ? null
-          : previousPost,
+      setSelectedPost(
+        (previousPost) =>
+          previousPost?._id ===
+          deletedPostId
+            ? null
+            : previousPost,
       );
 
       return;
@@ -174,32 +335,37 @@ const Feed = () => {
         ),
       );
 
-      setSelectedPost((previousPost) =>
-        previousPost?._id === updatedPost._id
-          ? {
-              ...previousPost,
-              ...updatedPost,
-            }
-          : previousPost,
+      setSelectedPost(
+        (previousPost) =>
+          previousPost?._id ===
+          updatedPost._id
+            ? {
+                ...previousPost,
+                ...updatedPost,
+              }
+            : previousPost,
       );
     }
 
     if (
-      options.saved !== undefined &&
+      typeof options.saved ===
+        "boolean" &&
       updatedPost?._id
     ) {
-      setSavedPostIds((previousIds) =>
-        options.saved
-          ? [
-              ...new Set([
-                ...previousIds,
-                updatedPost._id,
-              ]),
-            ]
-          : previousIds.filter(
-              (postId) =>
-                postId !== updatedPost._id,
-            ),
+      setSavedPostIds(
+        (previousIds) =>
+          options.saved
+            ? [
+                ...new Set([
+                  ...previousIds,
+                  updatedPost._id,
+                ]),
+              ]
+            : previousIds.filter(
+                (postId) =>
+                  postId !==
+                  updatedPost._id,
+              ),
       );
     }
   };
@@ -213,7 +379,10 @@ const Feed = () => {
       <StoryList />
 
       {error && (
-        <p className="feed-error" role="alert">
+        <p
+          className="feed-error"
+          role="alert"
+        >
           {error}
         </p>
       )}
@@ -221,8 +390,14 @@ const Feed = () => {
       <PostList
         posts={posts}
         savedPostIds={savedPostIds}
+        followingUserIds={
+          followingUserIds
+        }
         onPostChange={handlePostChange}
         onOpenPost={setSelectedPost}
+        onAuthorFollowChange={
+          handleAuthorFollowChange
+        }
       />
 
       {hasMore && (
@@ -242,16 +417,26 @@ const Feed = () => {
             alt="Seen all updates"
           />
 
-          <h3>You have seen all the updates</h3>
-          <p>You have viewed all new publications</p>
+          <h3>
+            You have seen all the updates
+          </h3>
+
+          <p>
+            You have viewed all new
+            publications
+          </p>
         </div>
       )}
 
       {selectedPost && (
         <PostModal
           post={selectedPost}
-          onClose={() => setSelectedPost(null)}
-          onPostChange={handlePostChange}
+          onClose={() =>
+            setSelectedPost(null)
+          }
+          onPostChange={
+            handlePostChange
+          }
         />
       )}
     </section>
