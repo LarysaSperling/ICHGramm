@@ -1,5 +1,8 @@
 import Post from "../models/Post.js";
+import Comment from "../models/Comment.js";
 import Notification from "../models/Notification.js";
+import User from "../models/User.js";
+
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
 
@@ -15,7 +18,7 @@ const createPost = asyncHandler(async (req, res) => {
   }
 
   const image = `data:${req.file.mimetype};base64,${req.file.buffer.toString(
-    "base64"
+    "base64",
   )}`;
 
   const post = await Post.create({
@@ -32,14 +35,26 @@ const createPost = asyncHandler(async (req, res) => {
 });
 
 const getAllPosts = asyncHandler(async (req, res) => {
-  const page = Math.max(Number(req.query.page) || 1, 1);
-  const limit = Math.min(Math.max(Number(req.query.limit) || 5, 1), 20);
+  const page = Math.max(
+    Number(req.query.page) || 1,
+    1,
+  );
+
+  const limit = Math.min(
+    Math.max(Number(req.query.limit) || 5, 1),
+    20,
+  );
+
   const skip = (page - 1) * limit;
 
   const [totalPosts, posts] = await Promise.all([
     Post.countDocuments(),
+
     Post.find()
-      .populate("author", "username fullName avatar")
+      .populate(
+        "author",
+        "username fullName avatar",
+      )
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
@@ -50,121 +65,221 @@ const getAllPosts = asyncHandler(async (req, res) => {
     page,
     limit,
     totalPosts,
-    totalPages: Math.ceil(totalPosts / limit),
-    hasMore: skip + posts.length < totalPosts,
+    totalPages: Math.ceil(
+      totalPosts / limit,
+    ),
+    hasMore:
+      skip + posts.length < totalPosts,
     posts,
   });
 });
 
-const getPostById = asyncHandler(async (req, res) => {
-  const post = await Post.findById(req.params.id)
-    .populate("author", "username fullName avatar")
-    .lean();
+const getPostById = asyncHandler(
+  async (req, res) => {
+    const post = await Post.findById(
+      req.params.id,
+    )
+      .populate(
+        "author",
+        "username fullName avatar",
+      )
+      .lean();
 
-  if (!post) {
-    throw new ApiError(404, "Post not found");
-  }
-
-  res.json(post);
-});
-
-const updatePost = asyncHandler(async (req, res) => {
-  const post = await Post.findById(req.params.id);
-
-  if (!post) {
-    throw new ApiError(404, "Post not found");
-  }
-
-  if (post.author.toString() !== req.user._id.toString()) {
-    throw new ApiError(403, "Not authorized");
-  }
-
-  if (req.body.caption !== undefined) {
-    if (req.body.caption.trim() === "") {
-      throw new ApiError(400, "Caption cannot be empty");
+    if (!post) {
+      throw new ApiError(
+        404,
+        "Post not found",
+      );
     }
 
-    post.caption = req.body.caption.trim();
-  }
+    res.json(post);
+  },
+);
 
-  if (req.file) {
-    post.image = `data:${req.file.mimetype};base64,${req.file.buffer.toString(
-      "base64"
-    )}`;
-  }
+const updatePost = asyncHandler(
+  async (req, res) => {
+    const post = await Post.findById(
+      req.params.id,
+    );
 
-  await post.save();
+    if (!post) {
+      throw new ApiError(
+        404,
+        "Post not found",
+      );
+    }
 
-  const updatedPost = await Post.findById(post._id)
-    .populate("author", "username fullName avatar")
-    .lean();
+    if (
+      post.author.toString() !==
+      req.user._id.toString()
+    ) {
+      throw new ApiError(
+        403,
+        "Not authorized",
+      );
+    }
 
-  res.json(updatedPost);
-});
+    if (
+      req.body.caption !== undefined
+    ) {
+      const normalizedCaption =
+        req.body.caption.trim();
 
-const deletePost = asyncHandler(async (req, res) => {
-  const post = await Post.findById(req.params.id);
+      if (!normalizedCaption) {
+        throw new ApiError(
+          400,
+          "Caption cannot be empty",
+        );
+      }
 
-  if (!post) {
-    throw new ApiError(404, "Post not found");
-  }
+      post.caption = normalizedCaption;
+    }
 
-  if (post.author.toString() !== req.user._id.toString()) {
-    throw new ApiError(403, "Not authorized");
-  }
+    if (req.file) {
+      post.image = `data:${
+        req.file.mimetype
+      };base64,${req.file.buffer.toString(
+        "base64",
+      )}`;
+    }
 
-  await Notification.deleteMany({ post: post._id });
-  await post.deleteOne();
+    await post.save();
 
-  res.json({
-    message: "Post deleted successfully",
-  });
-});
+    const updatedPost =
+      await Post.findById(post._id)
+        .populate(
+          "author",
+          "username fullName avatar",
+        )
+        .lean();
 
-const getExplorePosts = asyncHandler(async (req, res) => {
-  const posts = await Post.aggregate([
-    {
-      $sample: { size: 60 },
-    },
-  ]);
+    res.json(updatedPost);
+  },
+);
 
-  const populatedPosts = await Post.populate(posts, {
-    path: "author",
-    select: "username fullName avatar",
-  });
+const deletePost = asyncHandler(
+  async (req, res) => {
+    const post = await Post.findById(
+      req.params.id,
+    );
 
-  res.json(populatedPosts);
-});
+    if (!post) {
+      throw new ApiError(
+        404,
+        "Post not found",
+      );
+    }
 
-const toggleLikePost = asyncHandler(async (req, res) => {
-  const post = await Post.findById(req.params.id);
+    if (
+      post.author.toString() !==
+      req.user._id.toString()
+    ) {
+      throw new ApiError(
+        403,
+        "Not authorized",
+      );
+    }
 
-  if (!post) {
-    throw new ApiError(404, "Post not found");
-  }
+    await Promise.all([
+      Comment.deleteMany({
+        post: post._id,
+      }),
 
-  const userId = req.user._id.toString();
+      Notification.deleteMany({
+        post: post._id,
+      }),
 
-  const alreadyLiked = post.likes.some((like) => like.toString() === userId);
+      User.updateMany(
+        {
+          savedPosts: post._id,
+        },
+        {
+          $pull: {
+            savedPosts: post._id,
+          },
+        },
+      ),
+    ]);
 
-  if (alreadyLiked) {
-    post.likes = post.likes.filter((like) => like.toString() !== userId);
-  } else {
-    post.likes.push(req.user._id);
-  }
+    await post.deleteOne();
 
-  await post.save();
+    res.json({
+      message:
+        "Post deleted successfully",
+    });
+  },
+);
 
-  const updatedPost = await Post.findById(post._id)
-    .populate("author", "username fullName avatar")
-    .lean();
+const getExplorePosts = asyncHandler(
+  async (req, res) => {
+    const posts = await Post.aggregate([
+      {
+        $sample: {
+          size: 60,
+        },
+      },
+    ]);
 
-  res.json({
-    post: updatedPost,
-    liked: !alreadyLiked,
-    likesCount: updatedPost.likes.length,
-  });
-});
+    const populatedPosts =
+      await Post.populate(posts, {
+        path: "author",
+        select:
+          "username fullName avatar",
+      });
+
+    res.json(populatedPosts);
+  },
+);
+
+const toggleLikePost = asyncHandler(
+  async (req, res) => {
+    const post = await Post.findById(
+      req.params.id,
+    );
+
+    if (!post) {
+      throw new ApiError(
+        404,
+        "Post not found",
+      );
+    }
+
+    const userId =
+      req.user._id.toString();
+
+    const alreadyLiked =
+      post.likes.some(
+        (like) =>
+          like.toString() === userId,
+      );
+
+    if (alreadyLiked) {
+      post.likes = post.likes.filter(
+        (like) =>
+          like.toString() !== userId,
+      );
+    } else {
+      post.likes.push(req.user._id);
+    }
+
+    await post.save();
+
+    const updatedPost =
+      await Post.findById(post._id)
+        .populate(
+          "author",
+          "username fullName avatar",
+        )
+        .lean();
+
+    res.json({
+      post: updatedPost,
+      liked: !alreadyLiked,
+      likesCount:
+        updatedPost.likes.length,
+    });
+  },
+);
 
 export {
   createPost,

@@ -12,15 +12,24 @@ import ProfileGrid from "../components/profile/ProfileGrid";
 import "../styles/profile.css";
 
 const Profile = () => {
-  const [profile, setProfile] = useState(null);
-  const [posts, setPosts] = useState([]);
-  const [savedPosts, setSavedPosts] = useState([]);
+  const [profile, setProfile] =
+    useState(null);
 
-  const [followersCount, setFollowersCount] =
-    useState(0);
+  const [posts, setPosts] =
+    useState([]);
 
-  const [followingCount, setFollowingCount] =
-    useState(0);
+  const [savedPosts, setSavedPosts] =
+    useState([]);
+
+  const [
+    followersCount,
+    setFollowersCount,
+  ] = useState(0);
+
+  const [
+    followingCount,
+    setFollowingCount,
+  ] = useState(0);
 
   const [activeTab, setActiveTab] =
     useState("posts");
@@ -28,103 +37,113 @@ const Profile = () => {
   const [isLoading, setIsLoading] =
     useState(true);
 
-  const [error, setError] = useState("");
+  const [error, setError] =
+    useState("");
 
-  const loadProfile = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      setError("");
+  const loadProfile =
+    useCallback(async () => {
+      try {
+        setIsLoading(true);
+        setError("");
 
-      const profileResponse =
-        await api.get("/users/profile");
+        const profileResponse =
+          await api.get(
+            "/users/profile",
+          );
 
-      const loadedProfile =
-        profileResponse.data;
+        const loadedProfile =
+          profileResponse.data;
 
-      if (!loadedProfile?._id) {
-        throw new Error(
-          "Profile ID is missing",
+        if (!loadedProfile?._id) {
+          throw new Error(
+            "Profile ID is missing",
+          );
+        }
+
+        const [
+          postsResponse,
+          savedResponse,
+          followersResponse,
+          followingResponse,
+        ] = await Promise.all([
+          api.get(
+            "/users/profile/posts",
+          ),
+
+          api.get("/users/saved"),
+
+          api.get(
+            `/follows/${loadedProfile._id}/followers`,
+          ),
+
+          api.get(
+            `/follows/${loadedProfile._id}/following`,
+          ),
+        ]);
+
+        setProfile(loadedProfile);
+
+        setPosts(
+          Array.isArray(
+            postsResponse.data,
+          )
+            ? postsResponse.data
+            : [],
         );
+
+        setSavedPosts(
+          Array.isArray(
+            savedResponse.data,
+          )
+            ? savedResponse.data.filter(
+                Boolean,
+              )
+            : [],
+        );
+
+        setFollowersCount(
+          Array.isArray(
+            followersResponse.data,
+          )
+            ? followersResponse.data
+                .length
+            : 0,
+        );
+
+        setFollowingCount(
+          Array.isArray(
+            followingResponse.data,
+          )
+            ? followingResponse.data
+                .length
+            : 0,
+        );
+      } catch (err) {
+        setError(
+          err.response?.data?.message ||
+            err.message ||
+            "Failed to load profile",
+        );
+      } finally {
+        setIsLoading(false);
       }
-
-      const [
-        postsResponse,
-        savedResponse,
-        followersResponse,
-        followingResponse,
-      ] = await Promise.all([
-        api.get("/users/profile/posts"),
-        api.get("/users/saved"),
-        api.get(
-          `/follows/${loadedProfile._id}/followers`,
-        ),
-        api.get(
-          `/follows/${loadedProfile._id}/following`,
-        ),
-      ]);
-
-      setProfile(loadedProfile);
-
-      setPosts(
-        Array.isArray(postsResponse.data)
-          ? postsResponse.data
-          : [],
-      );
-
-      setSavedPosts(
-        Array.isArray(savedResponse.data)
-          ? savedResponse.data
-          : [],
-      );
-
-      setFollowersCount(
-        Array.isArray(followersResponse.data)
-          ? followersResponse.data.length
-          : 0,
-      );
-
-      setFollowingCount(
-        Array.isArray(followingResponse.data)
-          ? followingResponse.data.length
-          : 0,
-      );
-    } catch (err) {
-      setError(
-        err.response?.data?.message ||
-          err.message ||
-          "Failed to load profile",
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+    }, []);
 
   useEffect(() => {
     loadProfile();
   }, [loadProfile]);
 
-  useEffect(() => {
-    const handleWindowFocus = () => {
-      loadProfile();
-    };
+  const handleDeletePost = async (
+    postId,
+  ) => {
+    if (!postId) {
+      return false;
+    }
 
-    window.addEventListener(
-      "focus",
-      handleWindowFocus,
-    );
-
-    return () => {
-      window.removeEventListener(
-        "focus",
-        handleWindowFocus,
+    const isConfirmed =
+      window.confirm(
+        "Delete this post permanently?",
       );
-    };
-  }, [loadProfile]);
-
-  const handleDeletePost = async (postId) => {
-    const isConfirmed = window.confirm(
-      "Delete this post permanently?",
-    );
 
     if (!isConfirmed) {
       return false;
@@ -133,22 +152,51 @@ const Profile = () => {
     try {
       setError("");
 
-      await api.delete(`/posts/${postId}`);
+      await api.delete(
+        `/posts/${postId}`,
+      );
 
       setPosts((previousPosts) =>
         previousPosts.filter(
-          (post) => post._id !== postId,
+          (post) =>
+            post._id !== postId,
         ),
       );
 
-      setSavedPosts((previousPosts) =>
-        previousPosts.filter(
-          (post) => post._id !== postId,
-        ),
+      setSavedPosts(
+        (previousPosts) =>
+          previousPosts.filter(
+            (post) =>
+              post?._id !== postId,
+          ),
       );
 
       return true;
     } catch (err) {
+      /*
+       * Якщо пост уже був видалений,
+       * прибираємо застарілу картку
+       * з локального стану.
+       */
+      if (err.response?.status === 404) {
+        setPosts((previousPosts) =>
+          previousPosts.filter(
+            (post) =>
+              post._id !== postId,
+          ),
+        );
+
+        setSavedPosts(
+          (previousPosts) =>
+            previousPosts.filter(
+              (post) =>
+                post?._id !== postId,
+            ),
+        );
+
+        return true;
+      }
+
       setError(
         err.response?.data?.message ||
           "Failed to delete post",
@@ -158,87 +206,118 @@ const Profile = () => {
     }
   };
 
-  const handleRemoveSavedPost = async (
-    postId,
-  ) => {
-    if (!postId) return false;
+  const handleRemoveSavedPost =
+    async (postId) => {
+      if (!postId) {
+        return false;
+      }
 
-    const isConfirmed = window.confirm(
-      "Remove this post from saved posts?",
-    );
+      const isConfirmed =
+        window.confirm(
+          "Remove this post from saved posts?",
+        );
 
-    if (!isConfirmed) {
-      return false;
-    }
+      if (!isConfirmed) {
+        return false;
+      }
 
-    try {
-      setError("");
+      try {
+        setError("");
 
-      const { data } = await api.post(
-        `/users/saved/${postId}`,
-      );
+        const { data } =
+          await api.post(
+            `/users/saved/${postId}`,
+          );
 
-      if (data.saved === true) {
+        if (data.saved === true) {
+          setError(
+            "The post is still saved. Please try again.",
+          );
+
+          return false;
+        }
+
+        setSavedPosts(
+          (previousPosts) =>
+            previousPosts.filter(
+              (post) =>
+                post?._id !== postId,
+            ),
+        );
+
+        return true;
+      } catch (err) {
+        /*
+         * Пост міг бути видалений
+         * його автором. У такому разі
+         * прибираємо стару картку Saved.
+         */
+        if (err.response?.status === 404) {
+          setSavedPosts(
+            (previousPosts) =>
+              previousPosts.filter(
+                (post) =>
+                  post?._id !==
+                  postId,
+              ),
+          );
+
+          return true;
+        }
+
         setError(
-          "The post is still saved. Please try again.",
+          err.response?.data?.message ||
+            "Failed to remove saved post",
         );
 
         return false;
       }
-
-      setSavedPosts((previousPosts) =>
-        previousPosts.filter(
-          (post) => post._id !== postId,
-        ),
-      );
-
-      return true;
-    } catch (err) {
-      setError(
-        err.response?.data?.message ||
-          "Failed to remove saved post",
-      );
-
-      return false;
-    }
-  };
+    };
 
   const handleSavedChange = (
     changedPost,
     isSaved,
   ) => {
-    if (!changedPost?._id) return;
+    if (!changedPost?._id) {
+      return;
+    }
 
-    setSavedPosts((previousPosts) => {
-      if (!isSaved) {
-        return previousPosts.filter(
-          (post) =>
-            post._id !== changedPost._id,
-        );
-      }
+    setSavedPosts(
+      (previousPosts) => {
+        if (!isSaved) {
+          return previousPosts.filter(
+            (post) =>
+              post?._id !==
+              changedPost._id,
+          );
+        }
 
-      const alreadySaved =
-        previousPosts.some(
-          (post) =>
-            post._id === changedPost._id,
-        );
+        const alreadySaved =
+          previousPosts.some(
+            (post) =>
+              post?._id ===
+              changedPost._id,
+          );
 
-      if (alreadySaved) {
-        return previousPosts.map((post) =>
-          post._id === changedPost._id
-            ? {
-                ...post,
-                ...changedPost,
-              }
-            : post,
-        );
-      }
+        if (alreadySaved) {
+          return previousPosts.map(
+            (post) =>
+              post?._id ===
+              changedPost._id
+                ? {
+                    ...post,
+                    ...changedPost,
+                  }
+                : post,
+          );
+        }
 
-      return [
-        changedPost,
-        ...previousPosts,
-      ];
-    });
+        return [
+          changedPost,
+          ...previousPosts,
+        ];
+      },
+    );
   };
 
   const handleUpdatePost = async (
@@ -269,15 +348,16 @@ const Profile = () => {
         ),
       );
 
-      setSavedPosts((previousPosts) =>
-        previousPosts.map((post) =>
-          post._id === postId
-            ? {
-                ...post,
-                ...updatedPost,
-              }
-            : post,
-        ),
+      setSavedPosts(
+        (previousPosts) =>
+          previousPosts.map((post) =>
+            post?._id === postId
+              ? {
+                  ...post,
+                  ...updatedPost,
+                }
+              : post,
+          ),
       );
 
       return updatedPost;
@@ -324,8 +404,12 @@ const Profile = () => {
       <ProfileHeader
         profile={profile}
         postsCount={posts.length}
-        followersCount={followersCount}
-        followingCount={followingCount}
+        followersCount={
+          followersCount
+        }
+        followingCount={
+          followingCount
+        }
       />
 
       <div className="profile-tabs">
@@ -378,11 +462,13 @@ const Profile = () => {
             🏷️
           </div>
 
-          <h3>No Tagged Posts</h3>
+          <h3>
+            No Tagged Posts
+          </h3>
 
           <p>
-            Photos you are tagged in will
-            appear here.
+            Photos you are tagged in
+            will appear here.
           </p>
         </div>
       ) : (
