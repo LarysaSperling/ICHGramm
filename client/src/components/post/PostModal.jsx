@@ -31,6 +31,16 @@ const getCurrentUserId = () => {
   }
 };
 
+const getFollowingUserId = (followItem) => {
+  const following = followItem?.following;
+
+  if (typeof following === "string") {
+    return following;
+  }
+
+  return following?._id || null;
+};
+
 const PostModal = ({
   post,
   onClose,
@@ -39,13 +49,16 @@ const PostModal = ({
   const [localPost, setLocalPost] = useState(post);
   const [comments, setComments] = useState([]);
   const [commentText, setCommentText] = useState("");
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+
   const [isFollowing, setIsFollowing] = useState(false);
   const [isFollowLoading, setIsFollowLoading] =
     useState(false);
+
   const [isEmojiOpen, setIsEmojiOpen] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
 
@@ -60,27 +73,37 @@ const PostModal = ({
     caption,
     author,
     createdAt,
-  } = localPost;
+  } = localPost || {};
 
   const authorId = author?._id;
+
   const authorLink = authorId
     ? `/users/${authorId}`
     : "#";
 
-  const isOwnPost = authorId === currentUserId;
+  const isOwnPost =
+    Boolean(authorId) &&
+    Boolean(currentUserId) &&
+    authorId === currentUserId;
 
-  const likes = Array.isArray(localPost.likes)
+  const likes = Array.isArray(localPost?.likes)
     ? localPost.likes
     : [];
 
   const isLiked = likes.some((like) => {
     const likeId =
-      typeof like === "string" ? like : like?._id;
+      typeof like === "string"
+        ? like
+        : like?._id;
 
     return likeId === currentUserId;
   });
 
   const likesCount = likes.length;
+
+  useEffect(() => {
+    setLocalPost(post);
+  }, [post]);
 
   useEffect(() => {
     const handleClickOutsideEmoji = (event) => {
@@ -107,33 +130,36 @@ const PostModal = ({
 
   useEffect(() => {
     const loadModalData = async () => {
+      if (!_id) return;
+
       try {
-        const [
-          commentsResponse,
-          profileResponse,
-          savedResponse,
-        ] = await Promise.all([
+        const requests = [
           api.get(`/comments/${_id}`),
-          api.get("/users/profile"),
           api.get("/users/saved"),
-        ]);
+        ];
+
+        if (
+          currentUserId &&
+          authorId &&
+          !isOwnPost
+        ) {
+          requests.push(
+            api.get(
+              `/follows/${currentUserId}/following`,
+            ),
+          );
+        }
+
+        const responses = await Promise.all(requests);
+
+        const commentsResponse = responses[0];
+        const savedResponse = responses[1];
+        const followingResponse = responses[2];
 
         setComments(
           Array.isArray(commentsResponse.data)
             ? commentsResponse.data
             : [],
-        );
-
-        const followingIds = Array.isArray(
-          profileResponse.data.following,
-        )
-          ? profileResponse.data.following.map((id) =>
-              id.toString(),
-            )
-          : [];
-
-        setIsFollowing(
-          followingIds.includes(authorId),
         );
 
         const savedIds = Array.isArray(
@@ -145,6 +171,26 @@ const PostModal = ({
           : [];
 
         setIsSaved(savedIds.includes(_id));
+
+        if (followingResponse) {
+          const followingList = Array.isArray(
+            followingResponse.data,
+          )
+            ? followingResponse.data
+            : [];
+
+          const followsAuthor =
+            followingList.some(
+              (followItem) =>
+                getFollowingUserId(
+                  followItem,
+                ) === authorId,
+            );
+
+          setIsFollowing(followsAuthor);
+        } else {
+          setIsFollowing(false);
+        }
       } catch (err) {
         console.error(
           err.response?.data?.message ||
@@ -154,7 +200,12 @@ const PostModal = ({
     };
 
     loadModalData();
-  }, [_id, authorId]);
+  }, [
+    _id,
+    authorId,
+    currentUserId,
+    isOwnPost,
+  ]);
 
   const handleEmojiClick = (emojiData) => {
     setCommentText(
@@ -170,7 +221,7 @@ const PostModal = ({
   };
 
   const handleToggleLike = async () => {
-    if (isLiking) return;
+    if (isLiking || !_id) return;
 
     try {
       setIsLiking(true);
@@ -179,9 +230,12 @@ const PostModal = ({
         `/posts/${_id}/like`,
       );
 
-      if (data.post) {
-        setLocalPost(data.post);
-        onPostChange?.(data.post);
+      const updatedPost =
+        data.post || data;
+
+      if (updatedPost?._id) {
+        setLocalPost(updatedPost);
+        onPostChange?.(updatedPost);
       }
     } catch (err) {
       console.error(
@@ -194,7 +248,7 @@ const PostModal = ({
   };
 
   const handleToggleSave = async () => {
-    if (isSaving) return;
+    if (isSaving || !_id) return;
 
     try {
       setIsSaving(true);
@@ -203,7 +257,14 @@ const PostModal = ({
         `/users/saved/${_id}`,
       );
 
-      setIsSaved(Boolean(data.saved));
+      const nextSavedState =
+        Boolean(data.saved);
+
+      setIsSaved(nextSavedState);
+
+      onPostChange?.(localPost, {
+        saved: nextSavedState,
+      });
     } catch (err) {
       console.error(
         err.response?.data?.message ||
@@ -223,18 +284,31 @@ const PostModal = ({
       return;
     }
 
+    const nextFollowingStatus =
+      !isFollowing;
+
     try {
       setIsFollowLoading(true);
 
-      const { data } = await api.post(
-        `/users/${authorId}/follow`,
-      );
+      if (nextFollowingStatus) {
+        await api.post(
+          `/follows/${authorId}`,
+        );
+      } else {
+        await api.delete(
+          `/follows/${authorId}`,
+        );
+      }
 
-      setIsFollowing(Boolean(data.isFollowing));
+      setIsFollowing(
+        nextFollowingStatus,
+      );
     } catch (err) {
       console.error(
         err.response?.data?.message ||
-          "Failed to follow user",
+          (nextFollowingStatus
+            ? "Failed to follow user"
+            : "Failed to unfollow user"),
       );
     } finally {
       setIsFollowLoading(false);
@@ -255,7 +329,16 @@ const PostModal = ({
   const handleAddComment = async (event) => {
     event.preventDefault();
 
-    if (!commentText.trim()) return;
+    const normalizedComment =
+      commentText.trim();
+
+    if (
+      !normalizedComment ||
+      isSubmitting ||
+      !_id
+    ) {
+      return;
+    }
 
     try {
       setIsSubmitting(true);
@@ -263,7 +346,7 @@ const PostModal = ({
       const { data } = await api.post(
         `/comments/${_id}`,
         {
-          text: commentText.trim(),
+          text: normalizedComment,
         },
       );
 
@@ -274,6 +357,15 @@ const PostModal = ({
 
       setCommentText("");
       setIsEmojiOpen(false);
+
+      const updatedPost = {
+        ...localPost,
+        commentsCount:
+          comments.length + 1,
+      };
+
+      setLocalPost(updatedPost);
+      onPostChange?.(updatedPost);
     } catch (err) {
       console.error(
         err.response?.data?.message ||
@@ -284,7 +376,9 @@ const PostModal = ({
     }
   };
 
-  if (!post) return null;
+  if (!post || !localPost) {
+    return null;
+  }
 
   return (
     <div
@@ -302,7 +396,9 @@ const PostModal = ({
 
       <div
         className="post-modal"
-        onClick={(event) => event.stopPropagation()}
+        onClick={(event) =>
+          event.stopPropagation()
+        }
       >
         <div className="post-modal-image">
           <img
@@ -328,11 +424,12 @@ const PostModal = ({
               />
 
               <strong>
-                {author?.username || "unknown"}
+                {author?.username ||
+                  "unknown"}
               </strong>
             </Link>
 
-            {!isOwnPost && (
+            {!isOwnPost && authorId && (
               <button
                 type="button"
                 className={
@@ -340,12 +437,18 @@ const PostModal = ({
                     ? "post-modal-follow following"
                     : "post-modal-follow"
                 }
-                onClick={handleToggleFollow}
-                disabled={isFollowLoading}
+                onClick={
+                  handleToggleFollow
+                }
+                disabled={
+                  isFollowLoading
+                }
               >
-                {isFollowing
-                  ? "Following"
-                  : "Follow"}
+                {isFollowLoading
+                  ? "Loading..."
+                  : isFollowing
+                    ? "Following"
+                    : "Follow"}
               </button>
             )}
           </header>
@@ -365,7 +468,8 @@ const PostModal = ({
 
                 <p>
                   <strong>
-                    {author?.username || "unknown"}
+                    {author?.username ||
+                      "unknown"}
                   </strong>{" "}
                   {caption}
                 </p>
@@ -374,29 +478,36 @@ const PostModal = ({
 
             {comments.length > 0 ? (
               <div className="post-modal-comments">
-                {comments.map((comment) => (
-                  <div
-                    key={comment._id}
-                    className="post-modal-comment"
-                  >
-                    <Avatar
-                      src={comment.user?.avatar}
-                      name={
-                        comment.user?.username ||
-                        "Unknown"
-                      }
-                      size={32}
-                    />
+                {comments.map(
+                  (comment) => (
+                    <div
+                      key={comment._id}
+                      className="post-modal-comment"
+                    >
+                      <Avatar
+                        src={
+                          comment.user
+                            ?.avatar
+                        }
+                        name={
+                          comment.user
+                            ?.username ||
+                          "Unknown"
+                        }
+                        size={32}
+                      />
 
-                    <p>
-                      <strong>
-                        {comment.user?.username ||
-                          "unknown"}
-                      </strong>{" "}
-                      {comment.text}
-                    </p>
-                  </div>
-                ))}
+                      <p>
+                        <strong>
+                          {comment.user
+                            ?.username ||
+                            "unknown"}
+                        </strong>{" "}
+                        {comment.text}
+                      </p>
+                    </div>
+                  ),
+                )}
               </div>
             ) : (
               <p className="post-modal-empty">
@@ -409,14 +520,18 @@ const PostModal = ({
             <div>
               <button
                 type="button"
-                onClick={handleToggleLike}
+                onClick={
+                  handleToggleLike
+                }
                 disabled={isLiking}
                 aria-label="Like post"
               >
                 <Heart
                   size={24}
                   fill={
-                    isLiked ? "red" : "none"
+                    isLiked
+                      ? "red"
+                      : "none"
                   }
                   color={
                     isLiked
@@ -428,10 +543,14 @@ const PostModal = ({
 
               <button
                 type="button"
-                onClick={handleCommentIconClick}
+                onClick={
+                  handleCommentIconClick
+                }
                 aria-label="Write a comment"
               >
-                <MessageCircle size={24} />
+                <MessageCircle
+                  size={24}
+                />
               </button>
 
               <button
@@ -447,7 +566,9 @@ const PostModal = ({
 
             <button
               type="button"
-              onClick={handleToggleSave}
+              onClick={
+                handleToggleSave
+              }
               disabled={isSaving}
               aria-label="Save post"
             >
@@ -469,7 +590,9 @@ const PostModal = ({
                 : `${likesCount} likes`}
             </strong>
 
-            <span>{timeAgo(createdAt)}</span>
+            <span>
+              {timeAgo(createdAt)}
+            </span>
           </div>
 
           <form
@@ -497,7 +620,9 @@ const PostModal = ({
               {isEmojiOpen && (
                 <div className="post-modal-emoji-picker">
                   <EmojiPicker
-                    onEmojiClick={handleEmojiClick}
+                    onEmojiClick={
+                      handleEmojiClick
+                    }
                     width="100%"
                     height={360}
                     emojiStyle="native"
@@ -519,7 +644,9 @@ const PostModal = ({
               placeholder="Add a comment..."
               value={commentText}
               onChange={(event) =>
-                setCommentText(event.target.value)
+                setCommentText(
+                  event.target.value,
+                )
               }
               autoComplete="off"
               maxLength={300}
@@ -540,7 +667,9 @@ const PostModal = ({
         <SharePostModal
           post={localPost}
           isOpen={isShareOpen}
-          onClose={() => setIsShareOpen(false)}
+          onClose={() =>
+            setIsShareOpen(false)
+          }
         />
       </div>
     </div>
