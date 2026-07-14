@@ -154,6 +154,8 @@ const SharePostModal = ({ post, isOpen, onClose }) => {
           <Search size={18} />
 
           <input
+            id="share-user-search"
+            name="shareUserSearch"
             type="search"
             placeholder="Search"
             value={searchText}

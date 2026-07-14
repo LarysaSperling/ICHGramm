@@ -228,9 +228,11 @@
 }
 
 .share-post-user > button {
-  min-width: 72px;
+  width: 82px;
+  min-width: 82px;
   height: 34px;
-  padding: 0 14px;
+  flex: 0 0 82px;
+  padding: 0 8px;
 
   border: none;
   border-radius: 8px;
@@ -238,8 +240,17 @@
   background: #0095f6;
   color: #ffffff;
 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  overflow: hidden;
+
   font-size: 13px;
   font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
 
   cursor: pointer;
 }
@@ -250,7 +261,6 @@
 
 .share-post-user > button:disabled {
   opacity: 0.55;
-
   cursor: not-allowed;
 }
 
@@ -264,7 +274,6 @@
 
 .share-post-error {
   flex-shrink: 0;
-
   color: #ed4956;
 }
 
@@ -275,7 +284,6 @@
 @media (max-width: 480px) {
   .share-post-backdrop {
     align-items: flex-end;
-
     padding: 0;
   }
 
@@ -288,5 +296,15 @@
 
   .share-post-list {
     max-height: calc(85dvh - 230px);
+  }
+
+  .share-post-user {
+    gap: 10px;
+  }
+
+  .share-post-user > button {
+    width: 78px;
+    min-width: 78px;
+    flex-basis: 78px;
   }
 }
