@@ -20,24 +20,24 @@ router.post(
   "/register",
   registerValidator,
   validationMiddleware,
-  register
+  register,
 );
 
 router.post(
   "/login",
   loginValidator,
   validationMiddleware,
-  login
+  login,
 );
 
 router.post(
   "/reset-password",
-  requestPasswordReset
+  requestPasswordReset,
 );
 
 router.post(
   "/reset-password/:token",
-  resetPassword
+  resetPassword,
 );
 
 export default router;

@@ -1,5 +1,8 @@
-import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import {
+  Link,
+  useNavigate,
+} from "react-router-dom";
 
 import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
@@ -14,88 +17,169 @@ const Login = () => {
   const { login } = useAuth();
 
   const [formData, setFormData] = useState({
-    email: "",
+    identifier: "",
     password: "",
   });
 
   const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] =
+    useState(false);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
 
-    setFormData((prev) => ({
-      ...prev,
+    setFormData((previousData) => ({
+      ...previousData,
       [name]: value,
     }));
+
+    if (error) {
+      setError("");
+    }
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setError("");
-    setIsLoading(true);
+
+    const normalizedIdentifier =
+      formData.identifier.trim();
+
+    if (
+      !normalizedIdentifier ||
+      !formData.password
+    ) {
+      setError(
+        "Please enter your username or email and password.",
+      );
+
+      return;
+    }
 
     try {
-      const { data } = await api.post("/auth/login", formData);
+      setIsLoading(true);
+      setError("");
+
+      const { data } = await api.post(
+        "/auth/login",
+        {
+          identifier: normalizedIdentifier,
+          password: formData.password,
+        },
+      );
 
       login(data);
-      navigate("/home");
+
+      navigate("/home", {
+        replace: true,
+      });
     } catch (err) {
-      setError(err.response?.data?.message || "Login failed");
+      setError(
+        err.response?.data?.message ||
+          "Login failed",
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <main className="auth-page">
+    <main className="auth-page login-page">
       <section className="auth-wrapper">
-        <div className="auth-phone">
-          <img src={loginPhone} alt="ICHGramm preview" />
+        <div
+          className="auth-phone"
+          aria-hidden="true"
+        >
+          <img
+            src={loginPhone}
+            alt=""
+          />
         </div>
 
         <div className="auth-content">
-          <form className="auth-card" onSubmit={handleSubmit}>
-            <img className="auth-logo" src={logo} alt="ICHGramm" />
-
-            <input
-              type="email"
-              name="email"
-              placeholder="Email"
-              value={formData.email}
-              onChange={handleChange}
-              autoComplete="email"
+          <form
+            className="auth-card"
+            onSubmit={handleSubmit}
+          >
+            <img
+              className="auth-logo"
+              src={logo}
+              alt="ICHGramm"
             />
 
             <input
+              id="login-identifier"
+              type="text"
+              name="identifier"
+              placeholder="Username, or email"
+              value={formData.identifier}
+              onChange={handleChange}
+              autoComplete="username"
+              disabled={isLoading}
+              aria-describedby={
+                error
+                  ? "login-error"
+                  : undefined
+              }
+            />
+
+            <input
+              id="login-password"
               type="password"
               name="password"
               placeholder="Password"
               value={formData.password}
               onChange={handleChange}
               autoComplete="current-password"
+              disabled={isLoading}
+              aria-describedby={
+                error
+                  ? "login-error"
+                  : undefined
+              }
             />
 
-            {error && <p className="auth-error">{error}</p>}
+            {error && (
+              <p
+                id="login-error"
+                className="auth-error"
+                role="alert"
+                aria-live="assertive"
+              >
+                {error}
+              </p>
+            )}
 
-            <button type="submit" disabled={isLoading}>
-              {isLoading ? "Logging in..." : "Log in"}
+            <button
+              type="submit"
+              disabled={isLoading}
+            >
+              {isLoading
+                ? "Logging in..."
+                : "Log in"}
             </button>
 
             <div className="auth-divider">
-              <span></span>
+              <span />
+
               <p>OR</p>
-              <span></span>
+
+              <span />
             </div>
 
-            <Link className="auth-forgot" to="/reset">
+            <Link
+              className="auth-forgot"
+              to="/reset"
+            >
               Forgot password?
             </Link>
           </form>
 
           <div className="auth-switch">
             <p>
-              Don&apos;t have an account? <Link to="/register">Sign up</Link>
+              Don&apos;t have an account?{" "}
+              <Link to="/register">
+                Sign up
+              </Link>
             </p>
           </div>
         </div>
