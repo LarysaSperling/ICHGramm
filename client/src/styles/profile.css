@@ -59,7 +59,6 @@
   cursor: pointer;
   transition: 0.2s ease;
 }
-
 .follow-btn {
   border: none;
   background: #0095f6;
@@ -611,5 +610,154 @@ body.dark .profile-edit-modal-actions button:first-child {
 
   .profile-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 1200px) {
+  .message-btn {
+    width: 190px;
+  }
+}
+
+.profile-bio {
+  width: 100%;
+  max-width: 440px;
+  min-width: 0;
+  margin-top: 12px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.profile-bio-name {
+  display: block;
+  margin: 0;
+
+  color: var(--text-color);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+.profile-bio-content {
+  width: 100%;
+  min-width: 0;
+}
+
+.profile-bio-text {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+
+  color: var(--text-color);
+  font-size: 14px;
+  line-height: 20px;
+
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+.profile-bio-text.expanded {
+  display: block;
+
+  -webkit-line-clamp: unset;
+  line-clamp: unset;
+
+  overflow: visible;
+}
+
+.profile-bio-more {
+  margin: 2px 0 0;
+  padding: 0;
+
+  border: none;
+  background: transparent;
+
+  color: #737373;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+
+  cursor: pointer;
+}
+
+.profile-bio-more:hover {
+  color: #262626;
+}
+
+.profile-bio-more:focus-visible {
+  outline: 1px solid #8e8e8e;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.profile-website {
+  display: block;
+
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 4px;
+
+  color: #00376b;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+
+  text-decoration: none;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-website:hover {
+  text-decoration: underline;
+}
+
+body.dark .profile-bio-name,
+body.dark .profile-bio-text {
+  color: #f5f5f5;
+}
+
+body.dark .profile-bio-more {
+  color: #a8a8a8;
+}
+
+body.dark .profile-bio-more:hover {
+  color: #f5f5f5;
+}
+
+body.dark .profile-website {
+  color: #e0f1ff;
+}
+
+@media (max-width: 1024px) {
+  .profile-bio {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .profile-bio {
+    margin-top: 10px;
+  }
+
+  .profile-bio-name,
+  .profile-bio-text,
+  .profile-bio-more,
+  .profile-website {
+    font-size: 13px;
+    line-height: 18px;
   }
 }

@@ -271,7 +271,7 @@
 
 .message-content {
   min-width: 0;
-  max-width: 340px;
+  max-width: 397px;
 
   display: flex;
   flex-direction: column;
@@ -287,13 +287,13 @@
 
 .message-bubble {
   width: fit-content;
-  max-width: 340px;
+  max-width: 397px;
   min-height: 42px;
   padding: 11px 16px;
 
   border-radius: 14px;
 
-  font-size: 13px;
+  font-size: 12.06px;
   line-height: 1.4;
 
   white-space: pre-wrap;

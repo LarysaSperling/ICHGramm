@@ -13,26 +13,10 @@ import api from "../api/axios";
 import Loader from "../components/ui/Loader";
 import PostList from "../components/post/PostList";
 import PostModal from "../components/post/PostModal";
+import ProfileBio from "../components/profile/ProfileBio";
 import { useAuth } from "../context/AuthContext";
 
 import "../styles/profile.css";
-
-const normalizeWebsiteUrl = (website) => {
-  if (!website) return "";
-
-  const trimmedWebsite = website.trim();
-
-  if (!trimmedWebsite) return "";
-
-  if (
-    trimmedWebsite.startsWith("http://") ||
-    trimmedWebsite.startsWith("https://")
-  ) {
-    return trimmedWebsite;
-  }
-
-  return `https://${trimmedWebsite}`;
-};
 
 const getFollowerUserId = (followItem) => {
   const follower = followItem?.follower;
@@ -49,19 +33,33 @@ const UserProfile = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const [profileUser, setProfileUser] = useState(null);
+  const [profileUser, setProfileUser] =
+    useState(null);
+
   const [posts, setPosts] = useState([]);
-  const [savedPostIds, setSavedPostIds] = useState([]);
+  const [savedPostIds, setSavedPostIds] =
+    useState([]);
 
-  const [followers, setFollowers] = useState([]);
-  const [following, setFollowing] = useState([]);
+  const [followers, setFollowers] =
+    useState([]);
 
-  const [selectedPost, setSelectedPost] = useState(null);
+  const [following, setFollowing] =
+    useState([]);
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [isFollowing, setIsFollowing] = useState(false);
-  const [isFollowLoading, setIsFollowLoading] =
+  const [selectedPost, setSelectedPost] =
+    useState(null);
+
+  const [isLoading, setIsLoading] =
+    useState(true);
+
+  const [isFollowing, setIsFollowing] =
     useState(false);
+
+  const [
+    isFollowLoading,
+    setIsFollowLoading,
+  ] = useState(false);
+
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -72,106 +70,129 @@ const UserProfile = () => {
     }
   }, [id, user?._id, navigate]);
 
-  const loadFollowData = useCallback(async () => {
-    if (!id) return;
-
-    const [
-      followersResponse,
-      followingResponse,
-    ] = await Promise.all([
-      api.get(`/follows/${id}/followers`),
-      api.get(`/follows/${id}/following`),
-    ]);
-
-    const loadedFollowers = Array.isArray(
-      followersResponse.data,
-    )
-      ? followersResponse.data
-      : [];
-
-    const loadedFollowing = Array.isArray(
-      followingResponse.data,
-    )
-      ? followingResponse.data
-      : [];
-
-    setFollowers(loadedFollowers);
-    setFollowing(loadedFollowing);
-
-    setIsFollowing(
-      loadedFollowers.some(
-        (followItem) =>
-          getFollowerUserId(followItem) === user?._id,
-      ),
-    );
-  }, [id, user?._id]);
-
-  const loadUserProfile = useCallback(async () => {
-    if (!id || id === user?._id) return;
-
-    try {
-      setIsLoading(true);
-      setError("");
+  const loadFollowData =
+    useCallback(async () => {
+      if (!id) return;
 
       const [
-        userResponse,
-        savedResponse,
         followersResponse,
         followingResponse,
       ] = await Promise.all([
-        api.get(`/users/${id}`),
-        api.get("/users/saved"),
-        api.get(`/follows/${id}/followers`),
-        api.get(`/follows/${id}/following`),
+        api.get(
+          `/follows/${id}/followers`,
+        ),
+        api.get(
+          `/follows/${id}/following`,
+        ),
       ]);
 
-      const loadedUser =
-        userResponse.data?.user || null;
+      const loadedFollowers =
+        Array.isArray(
+          followersResponse.data,
+        )
+          ? followersResponse.data
+          : [];
 
-      const loadedPosts = Array.isArray(
-        userResponse.data?.posts,
-      )
-        ? userResponse.data.posts
-        : [];
+      const loadedFollowing =
+        Array.isArray(
+          followingResponse.data,
+        )
+          ? followingResponse.data
+          : [];
 
-      const loadedFollowers = Array.isArray(
-        followersResponse.data,
-      )
-        ? followersResponse.data
-        : [];
-
-      const loadedFollowing = Array.isArray(
-        followingResponse.data,
-      )
-        ? followingResponse.data
-        : [];
-
-      setProfileUser(loadedUser);
-      setPosts(loadedPosts);
       setFollowers(loadedFollowers);
       setFollowing(loadedFollowing);
-
-      setSavedPostIds(
-        Array.isArray(savedResponse.data)
-          ? savedResponse.data.map((post) => post._id)
-          : [],
-      );
 
       setIsFollowing(
         loadedFollowers.some(
           (followItem) =>
-            getFollowerUserId(followItem) === user?._id,
+            getFollowerUserId(
+              followItem,
+            ) === user?._id,
         ),
       );
-    } catch (err) {
-      setError(
-        err.response?.data?.message ||
-          "Failed to load profile",
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  }, [id, user?._id]);
+    }, [id, user?._id]);
+
+  const loadUserProfile =
+    useCallback(async () => {
+      if (!id || id === user?._id) {
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        setError("");
+
+        const [
+          userResponse,
+          savedResponse,
+          followersResponse,
+          followingResponse,
+        ] = await Promise.all([
+          api.get(`/users/${id}`),
+          api.get("/users/saved"),
+          api.get(
+            `/follows/${id}/followers`,
+          ),
+          api.get(
+            `/follows/${id}/following`,
+          ),
+        ]);
+
+        const loadedUser =
+          userResponse.data?.user || null;
+
+        const loadedPosts =
+          Array.isArray(
+            userResponse.data?.posts,
+          )
+            ? userResponse.data.posts
+            : [];
+
+        const loadedFollowers =
+          Array.isArray(
+            followersResponse.data,
+          )
+            ? followersResponse.data
+            : [];
+
+        const loadedFollowing =
+          Array.isArray(
+            followingResponse.data,
+          )
+            ? followingResponse.data
+            : [];
+
+        setProfileUser(loadedUser);
+        setPosts(loadedPosts);
+        setFollowers(loadedFollowers);
+        setFollowing(loadedFollowing);
+
+        setSavedPostIds(
+          Array.isArray(savedResponse.data)
+            ? savedResponse.data.map(
+                (post) => post._id,
+              )
+            : [],
+        );
+
+        setIsFollowing(
+          loadedFollowers.some(
+            (followItem) =>
+              getFollowerUserId(
+                followItem,
+              ) === user?._id,
+          ),
+        );
+      } catch (err) {
+        setError(
+          err.response?.data?.message ||
+            "Failed to load profile",
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    }, [id, user?._id]);
 
   useEffect(() => {
     loadUserProfile();
@@ -186,19 +207,26 @@ const UserProfile = () => {
       return;
     }
 
-    const nextFollowingStatus = !isFollowing;
+    const nextFollowingStatus =
+      !isFollowing;
 
     try {
       setIsFollowLoading(true);
       setError("");
 
       if (nextFollowingStatus) {
-        await api.post(`/follows/${profileUser._id}`);
+        await api.post(
+          `/follows/${profileUser._id}`,
+        );
       } else {
-        await api.delete(`/follows/${profileUser._id}`);
+        await api.delete(
+          `/follows/${profileUser._id}`,
+        );
       }
 
-      setIsFollowing(nextFollowingStatus);
+      setIsFollowing(
+        nextFollowingStatus,
+      );
 
       await loadFollowData();
     } catch (err) {
@@ -213,23 +241,30 @@ const UserProfile = () => {
     }
   };
 
-  const handleAuthorFollowChange = async (
-    nextFollowingStatus,
-    authorId,
-  ) => {
-    if (authorId !== profileUser?._id) return;
+  const handleAuthorFollowChange =
+    async (
+      nextFollowingStatus,
+      authorId,
+    ) => {
+      if (
+        authorId !== profileUser?._id
+      ) {
+        return;
+      }
 
-    setIsFollowing(nextFollowingStatus);
-
-    try {
-      await loadFollowData();
-    } catch (err) {
-      setError(
-        err.response?.data?.message ||
-          "Failed to update follow statistics",
+      setIsFollowing(
+        nextFollowingStatus,
       );
-    }
-  };
+
+      try {
+        await loadFollowData();
+      } catch (err) {
+        setError(
+          err.response?.data?.message ||
+            "Failed to update follow statistics",
+        );
+      }
+    };
 
   const handleOpenMessages = () => {
     if (
@@ -239,38 +274,48 @@ const UserProfile = () => {
       return;
     }
 
-    navigate(`/messages?user=${profileUser._id}`);
+    navigate(
+      `/messages?user=${profileUser._id}`,
+    );
   };
 
   const handlePostChange = (
     updatedPost,
     options = {},
   ) => {
-    const deletedPostId = options.deletedPostId;
+    const deletedPostId =
+      options.deletedPostId;
 
     if (deletedPostId) {
       setPosts((previousPosts) =>
         previousPosts.filter(
-          (post) => post._id !== deletedPostId,
+          (post) =>
+            post._id !== deletedPostId,
         ),
       );
 
-      setSavedPostIds((previousIds) =>
-        previousIds.filter(
-          (postId) => postId !== deletedPostId,
-        ),
+      setSavedPostIds(
+        (previousIds) =>
+          previousIds.filter(
+            (postId) =>
+              postId !== deletedPostId,
+          ),
       );
 
-      setSelectedPost((previousPost) =>
-        previousPost?._id === deletedPostId
-          ? null
-          : previousPost,
+      setSelectedPost(
+        (previousPost) =>
+          previousPost?._id ===
+          deletedPostId
+            ? null
+            : previousPost,
       );
 
       return;
     }
 
-    if (!updatedPost?._id) return;
+    if (!updatedPost?._id) {
+      return;
+    }
 
     setPosts((previousPosts) =>
       previousPosts.map((post) =>
@@ -283,27 +328,35 @@ const UserProfile = () => {
       ),
     );
 
-    setSelectedPost((previousPost) =>
-      previousPost?._id === updatedPost._id
-        ? {
-            ...previousPost,
-            ...updatedPost,
-          }
-        : previousPost,
+    setSelectedPost(
+      (previousPost) =>
+        previousPost?._id ===
+        updatedPost._id
+          ? {
+              ...previousPost,
+              ...updatedPost,
+            }
+          : previousPost,
     );
 
-    if (options.saved !== undefined) {
-      setSavedPostIds((previousIds) =>
-        options.saved
-          ? [
-              ...new Set([
-                ...previousIds,
-                updatedPost._id,
-              ]),
-            ]
-          : previousIds.filter(
-              (postId) => postId !== updatedPost._id,
-            ),
+    if (
+      typeof options.saved ===
+      "boolean"
+    ) {
+      setSavedPostIds(
+        (previousIds) =>
+          options.saved
+            ? [
+                ...new Set([
+                  ...previousIds,
+                  updatedPost._id,
+                ]),
+              ]
+            : previousIds.filter(
+                (postId) =>
+                  postId !==
+                  updatedPost._id,
+              ),
       );
     }
   };
@@ -314,7 +367,10 @@ const UserProfile = () => {
 
   if (error) {
     return (
-      <p className="profile-error" role="alert">
+      <p
+        className="profile-error"
+        role="alert"
+      >
         {error}
       </p>
     );
@@ -330,10 +386,6 @@ const UserProfile = () => {
 
   const isOwnProfile =
     profileUser._id === user?._id;
-
-  const websiteUrl = normalizeWebsiteUrl(
-    profileUser.website,
-  );
 
   return (
     <main className="profile-page">
@@ -354,7 +406,9 @@ const UserProfile = () => {
 
         <div className="profile-info">
           <div className="profile-top">
-            <h2>{profileUser.username}</h2>
+            <h2>
+              {profileUser.username}
+            </h2>
 
             {isOwnProfile ? (
               <Link
@@ -373,7 +427,9 @@ const UserProfile = () => {
                       : "follow-btn"
                   }
                   onClick={handleFollow}
-                  disabled={isFollowLoading}
+                  disabled={
+                    isFollowLoading
+                  }
                 >
                   {isFollowLoading
                     ? "Loading..."
@@ -385,7 +441,9 @@ const UserProfile = () => {
                 <button
                   type="button"
                   className="message-btn"
-                  onClick={handleOpenMessages}
+                  onClick={
+                    handleOpenMessages
+                  }
                 >
                   Message
                 </button>
@@ -395,42 +453,36 @@ const UserProfile = () => {
 
           <div className="profile-stats">
             <span>
-              <strong>{posts.length}</strong>{" "}
+              <strong>
+                {posts.length}
+              </strong>{" "}
               posts
             </span>
 
             <span>
-              <strong>{followers.length}</strong>{" "}
+              <strong>
+                {followers.length}
+              </strong>{" "}
               followers
             </span>
 
             <span>
-              <strong>{following.length}</strong>{" "}
+              <strong>
+                {following.length}
+              </strong>{" "}
               following
             </span>
           </div>
 
-          <div className="profile-bio">
-            {profileUser.fullName && (
-              <strong>{profileUser.fullName}</strong>
-            )}
-
-            {profileUser.bio && (
-              <p>{profileUser.bio}</p>
-            )}
-
-            {websiteUrl && (
-              <a
-                className="profile-website"
-                href={websiteUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                title={profileUser.website}
-              >
-                {profileUser.website}
-              </a>
-            )}
-          </div>
+          <ProfileBio
+            fullName={
+              profileUser.fullName
+            }
+            bio={profileUser.bio}
+            website={
+              profileUser.website
+            }
+          />
         </div>
       </section>
 
@@ -439,15 +491,23 @@ const UserProfile = () => {
         savedPostIds={savedPostIds}
         onPostChange={handlePostChange}
         onOpenPost={setSelectedPost}
-        isAuthorFollowing={isFollowing}
-        onAuthorFollowChange={handleAuthorFollowChange}
+        isAuthorFollowing={
+          isFollowing
+        }
+        onAuthorFollowChange={
+          handleAuthorFollowChange
+        }
       />
 
       {selectedPost && (
         <PostModal
           post={selectedPost}
-          onClose={() => setSelectedPost(null)}
-          onPostChange={handlePostChange}
+          onClose={() =>
+            setSelectedPost(null)
+          }
+          onPostChange={
+            handlePostChange
+          }
         />
       )}
     </main>

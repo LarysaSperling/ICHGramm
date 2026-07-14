@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 
 import Avatar from "../ui/Avatar";
 import ProfileStats from "./ProfileStats";
+import ProfileBio from "./ProfileBio";
 
 const ProfileHeader = ({
   profile,
@@ -15,7 +16,8 @@ const ProfileHeader = ({
         <Avatar
           src={profile.avatar}
           name={
-            profile.username || profile.fullName
+            profile.username ||
+            profile.fullName
           }
           size={150}
         />
@@ -39,13 +41,11 @@ const ProfileHeader = ({
           followingCount={followingCount}
         />
 
-        <div className="profile-bio">
-          {profile.fullName && (
-            <strong>{profile.fullName}</strong>
-          )}
-
-          {profile.bio && <p>{profile.bio}</p>}
-        </div>
+        <ProfileBio
+          fullName={profile.fullName}
+          bio={profile.bio}
+          website={profile.website}
+        />
       </div>
     </header>
   );
