@@ -1,9 +1,10 @@
 .feed {
   width: 100%;
   max-width: 832px;
-  height: auto;
-  max-height: none;
   margin: 0 auto;
+
+  display: flex;
+  flex-direction: column;
 
   overflow: visible;
 }
@@ -22,7 +23,6 @@
   margin: 48px 0;
 
   color: var(--muted-color);
-
   font-size: 14px;
   line-height: 20px;
   text-align: center;
@@ -34,8 +34,8 @@
   padding: 24px 0;
 
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
 }
 
 .feed-error {
@@ -43,9 +43,7 @@
   margin: 20px 0;
 
   color: #ed4956;
-
   font-size: 14px;
-  line-height: 20px;
   text-align: center;
 }
 
@@ -57,10 +55,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
 
   color: var(--text-color);
-
   text-align: center;
 }
 
@@ -83,14 +79,10 @@
   margin: 6px 0 0;
 
   color: #8e8e8e;
-
   font-size: 14px;
 }
 
-body.dark .feed-end p {
-  color: #a8a8a8;
-}
-
+body.dark .feed-end p,
 body.dark .post-list-empty {
   color: #a8a8a8;
 }
@@ -114,8 +106,7 @@ body.dark .post-list-empty {
   }
 
   .post-list {
-    grid-template-columns:
-      minmax(280px, 404px);
+    grid-template-columns: minmax(280px, 404px);
     justify-content: center;
 
     gap: 24px;
@@ -128,8 +119,7 @@ body.dark .post-list-empty {
   }
 
   .post-list {
-    grid-template-columns:
-      minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
 
     gap: 20px;
   }
