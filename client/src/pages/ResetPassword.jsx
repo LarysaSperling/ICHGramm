@@ -14,6 +14,18 @@ const ResetPassword = () => {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  const handleIdentifierChange = (event) => {
+    setIdentifier(event.target.value);
+
+    if (error) {
+      setError("");
+    }
+
+    if (message) {
+      setMessage("");
+    }
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -30,20 +42,23 @@ const ResetPassword = () => {
     try {
       setIsLoading(true);
 
-      const { data } = await api.post("/auth/reset-password", {
-        identifier: normalizedIdentifier,
-      });
+      const { data } = await api.post(
+        "/auth/reset-password",
+        {
+          identifier: normalizedIdentifier,
+        },
+      );
 
       setMessage(
         data.message ||
-          "If an account with these details exists, a password reset link has been sent."
+          "If an account with these details exists, a password reset link has been sent.",
       );
 
       setIdentifier("");
     } catch (err) {
       setError(
         err.response?.data?.message ||
-          "Something went wrong. Please try again."
+          "Something went wrong. Please try again.",
       );
     } finally {
       setIsLoading(false);
@@ -53,8 +68,14 @@ const ResetPassword = () => {
   return (
     <main className="reset-page">
       <header className="reset-header">
-        <Link to="/login" aria-label="Go to login page">
-          <img src={logo} alt="ICHGramm" />
+        <Link
+          to="/login"
+          aria-label="Go to login page"
+        >
+          <img
+            src={logo}
+            alt="ICHGramm"
+          />
         </Link>
       </header>
 
@@ -69,12 +90,16 @@ const ResetPassword = () => {
 
           <h1>Trouble logging in?</h1>
 
-          <p>
-            Enter your email, phone, or username and we'll send you a link to
-            get back into your account.
+          <p className="reset-description">
+            Enter your email or username and
+            we&apos;ll send you a link to get
+            back into your account.
           </p>
 
-          <form className="reset-form" onSubmit={handleSubmit}>
+          <form
+            className="reset-form"
+            onSubmit={handleSubmit}
+          >
             <input
               id="reset-identifier"
               type="text"
@@ -82,7 +107,7 @@ const ResetPassword = () => {
               placeholder="Email or Username"
               autoComplete="username"
               value={identifier}
-              onChange={(event) => setIdentifier(event.target.value)}
+              onChange={handleIdentifierChange}
               disabled={isLoading}
               aria-describedby={
                 error
@@ -93,8 +118,16 @@ const ResetPassword = () => {
               }
             />
 
-            <button type="submit" disabled={isLoading}>
-              {isLoading ? "Sending..." : "Reset your password"}
+            <button
+              type="submit"
+              disabled={
+                isLoading ||
+                !identifier.trim()
+              }
+            >
+              {isLoading
+                ? "Sending..."
+                : "Reset your password"}
             </button>
           </form>
 
@@ -122,16 +155,24 @@ const ResetPassword = () => {
 
           <div className="reset-divider">
             <span />
+
             <strong>OR</strong>
+
             <span />
           </div>
 
-          <Link to="/register" className="reset-create-link">
+          <Link
+            to="/register"
+            className="reset-create-link"
+          >
             Create new account
           </Link>
         </div>
 
-        <Link to="/login" className="reset-back-link">
+        <Link
+          to="/login"
+          className="reset-back-link"
+        >
           Back to login
         </Link>
       </section>

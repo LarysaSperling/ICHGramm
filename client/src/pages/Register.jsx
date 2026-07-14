@@ -25,6 +25,8 @@ const Register = () => {
   const handleChange = (event) => {
     const { name, value } = event.target;
 
+    setError("");
+
     setFormData((prev) => ({
       ...prev,
       [name]: value,
@@ -33,16 +35,44 @@ const Register = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+
     setError("");
+
+    if (
+      !formData.email.trim() ||
+      !formData.fullName.trim() ||
+      !formData.username.trim() ||
+      !formData.password.trim()
+    ) {
+      setError("Please fill in all fields.");
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError(
+        "Password must be at least 6 characters."
+      );
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const { data } = await api.post("/auth/register", formData);
+      const { data } = await api.post(
+        "/auth/register",
+        formData
+      );
 
       login(data);
-      navigate("/home");
+
+      navigate("/home", {
+        replace: true,
+      });
     } catch (err) {
-      setError(err.response?.data?.message || "Registration failed");
+      setError(
+        err.response?.data?.message ||
+          "Registration failed"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -51,11 +81,19 @@ const Register = () => {
   return (
     <main className="auth-page">
       <section className="auth-content">
-        <form className="auth-card" onSubmit={handleSubmit}>
-          <img className="auth-logo" src={logo} alt="ICHGramm" />
+        <form
+          className="auth-card"
+          onSubmit={handleSubmit}
+        >
+          <img
+            className="auth-logo"
+            src={logo}
+            alt="ICHGramm"
+          />
 
           <p className="auth-subtitle">
-            Sign up to see photos and videos from your friends.
+            Sign up to see photos and videos from
+            your friends.
           </p>
 
           <input
@@ -65,6 +103,7 @@ const Register = () => {
             value={formData.email}
             onChange={handleChange}
             autoComplete="email"
+            disabled={isLoading}
           />
 
           <input
@@ -74,6 +113,7 @@ const Register = () => {
             value={formData.fullName}
             onChange={handleChange}
             autoComplete="name"
+            disabled={isLoading}
           />
 
           <input
@@ -83,6 +123,7 @@ const Register = () => {
             value={formData.username}
             onChange={handleChange}
             autoComplete="username"
+            disabled={isLoading}
           />
 
           <input
@@ -92,23 +133,52 @@ const Register = () => {
             value={formData.password}
             onChange={handleChange}
             autoComplete="new-password"
+            disabled={isLoading}
           />
 
-          {error && <p className="auth-error">{error}</p>}
+          {error && (
+            <p
+              className="auth-error"
+              role="alert"
+              aria-live="polite"
+            >
+              {error}
+            </p>
+          )}
 
           <p className="auth-info">
-            People who use our service may have uploaded your contact
-            information to ICHGramm.
+            People who use our service may have
+            uploaded your contact information to
+            ICHGramm.{" "}
+            <a href="#">Learn More</a>
           </p>
 
-          <button type="submit" disabled={isLoading}>
-            {isLoading ? "Signing up..." : "Sign up"}
+          <p className="auth-terms">
+            By signing up, you agree to our{" "}
+            <a href="#">Terms</a>,{" "}
+            <a href="#">Privacy Policy</a> and{" "}
+            <a href="#">
+              Cookies Policy
+            </a>
+            .
+          </p>
+
+          <button
+            type="submit"
+            disabled={isLoading}
+          >
+            {isLoading
+              ? "Signing up..."
+              : "Sign up"}
           </button>
         </form>
 
         <div className="auth-switch">
           <p>
-            Have an account? <Link to="/login">Log in</Link>
+            Have an account?{" "}
+            <Link to="/login">
+              Log in
+            </Link>
           </p>
         </div>
       </section>

@@ -279,3 +279,45 @@
     width: 165px;
   }
 }
+
+.auth-info {
+  margin: 12px 0;
+
+  color: #737373;
+
+  font-size: 12px;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.auth-info a {
+  color: #00376b;
+
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.auth-info a:hover {
+  text-decoration: underline;
+}
+
+.auth-terms {
+  margin: 0 0 16px;
+
+  color: #737373;
+
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.auth-terms a {
+  color: #00376b;
+
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.auth-terms a:hover {
+  text-decoration: underline;
+}
