@@ -31,7 +31,10 @@ const updateProfile = asyncHandler(async (req, res) => {
     const normalizedUsername = username.trim();
 
     if (!normalizedUsername) {
-      throw new ApiError(400, "Username cannot be empty");
+      throw new ApiError(
+        400,
+        "Username cannot be empty",
+      );
     }
 
     const usernameExists = await User.findOne({
@@ -45,7 +48,10 @@ const updateProfile = asyncHandler(async (req, res) => {
     });
 
     if (usernameExists) {
-      throw new ApiError(409, "Username is already taken");
+      throw new ApiError(
+        409,
+        "Username is already taken",
+      );
     }
 
     user.username = normalizedUsername;
@@ -55,7 +61,10 @@ const updateProfile = asyncHandler(async (req, res) => {
     const normalizedFullName = fullName.trim();
 
     if (!normalizedFullName) {
-      throw new ApiError(400, "Full name cannot be empty");
+      throw new ApiError(
+        400,
+        "Full name cannot be empty",
+      );
     }
 
     user.fullName = normalizedFullName;
@@ -92,7 +101,10 @@ const searchUsers = asyncHandler(async (req, res) => {
   const keyword = req.query.q;
 
   if (!keyword || keyword.trim() === "") {
-    throw new ApiError(400, "Search keyword is required");
+    throw new ApiError(
+      400,
+      "Search keyword is required",
+    );
   }
 
   const users = await User.find({
@@ -158,56 +170,6 @@ const getUserById = asyncHandler(async (req, res) => {
   });
 });
 
-const toggleFollowUser = asyncHandler(async (req, res) => {
-  const targetUserId = req.params.id;
-  const currentUserId = req.user._id.toString();
-
-  if (targetUserId === currentUserId) {
-    throw new ApiError(400, "You cannot follow yourself");
-  }
-
-  const targetUser = await User.findById(targetUserId);
-  const currentUser = await User.findById(currentUserId);
-
-  if (!targetUser || !currentUser) {
-    throw new ApiError(404, "User not found");
-  }
-
-  const isFollowing = targetUser.followers.some(
-    (followerId) =>
-      followerId.toString() === currentUserId,
-  );
-
-  if (isFollowing) {
-    targetUser.followers =
-      targetUser.followers.filter(
-        (followerId) =>
-          followerId.toString() !== currentUserId,
-      );
-
-    currentUser.following =
-      currentUser.following.filter(
-        (followingId) =>
-          followingId.toString() !== targetUserId,
-      );
-  } else {
-    targetUser.followers.push(currentUserId);
-    currentUser.following.push(targetUserId);
-  }
-
-  await targetUser.save();
-  await currentUser.save();
-
-  res.json({
-    message: isFollowing
-      ? "Unfollowed successfully"
-      : "Followed successfully",
-    isFollowing: !isFollowing,
-    followersCount: targetUser.followers.length,
-    followingCount: currentUser.following.length,
-  });
-});
-
 const toggleSavedPost = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id);
 
@@ -223,7 +185,8 @@ const toggleSavedPost = asyncHandler(async (req, res) => {
 
   const alreadySaved = user.savedPosts.some(
     (savedPostId) =>
-      savedPostId.toString() === post._id.toString(),
+      savedPostId.toString() ===
+      post._id.toString(),
   );
 
   if (alreadySaved) {
@@ -281,7 +244,6 @@ export {
   searchUsers,
   getMyPosts,
   getUserById,
-  toggleFollowUser,
   toggleSavedPost,
   getSavedPosts,
   getShareUsers,

@@ -9,7 +9,6 @@ import {
   searchUsers,
   getMyPosts,
   getUserById,
-  toggleFollowUser,
   toggleSavedPost,
   getSavedPosts,
   getShareUsers,
@@ -17,19 +16,59 @@ import {
 
 const router = express.Router();
 
-router.get("/profile", authMiddleware, getProfile);
-router.put("/profile", authMiddleware, upload.single("avatar"), updateProfile);
+router.get(
+  "/profile",
+  authMiddleware,
+  getProfile,
+);
 
-router.get("/profile/posts", authMiddleware, getMyPosts);
-router.get("/me/posts", authMiddleware, getMyPosts);
+router.put(
+  "/profile",
+  authMiddleware,
+  upload.single("avatar"),
+  updateProfile,
+);
 
-router.get("/search", authMiddleware, searchUsers);
-router.get("/share-list", authMiddleware, getShareUsers);
+router.get(
+  "/profile/posts",
+  authMiddleware,
+  getMyPosts,
+);
 
-router.get("/saved", authMiddleware, getSavedPosts);
-router.post("/saved/:postId", authMiddleware, toggleSavedPost);
+router.get(
+  "/me/posts",
+  authMiddleware,
+  getMyPosts,
+);
 
-router.post("/:id/follow", authMiddleware, toggleFollowUser);
-router.get("/:id", authMiddleware, getUserById);
+router.get(
+  "/search",
+  authMiddleware,
+  searchUsers,
+);
+
+router.get(
+  "/share-list",
+  authMiddleware,
+  getShareUsers,
+);
+
+router.get(
+  "/saved",
+  authMiddleware,
+  getSavedPosts,
+);
+
+router.post(
+  "/saved/:postId",
+  authMiddleware,
+  toggleSavedPost,
+);
+
+router.get(
+  "/:id",
+  authMiddleware,
+  getUserById,
+);
 
 export default router;

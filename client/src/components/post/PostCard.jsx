@@ -27,9 +27,16 @@ const getCurrentUserId = () => {
   if (!token) return null;
 
   try {
-    const payload = JSON.parse(atob(token.split(".")[1]));
+    const payload = JSON.parse(
+      atob(token.split(".")[1]),
+    );
 
-    return payload.id || payload._id || payload.userId || null;
+    return (
+      payload.id ||
+      payload._id ||
+      payload.userId ||
+      null
+    );
   } catch {
     return null;
   }
@@ -46,19 +53,27 @@ const getFollowingUserId = (followItem) => {
 };
 
 const PostComment = ({ comment }) => {
-  const [showFullText, setShowFullText] = useState(false);
+  const [showFullText, setShowFullText] =
+    useState(false);
 
   const commentText = comment.text || "";
-  const isLongComment = commentText.length > COMMENT_LIMIT;
+
+  const isLongComment =
+    commentText.length > COMMENT_LIMIT;
 
   const displayedComment =
     showFullText || !isLongComment
       ? commentText
-      : `${commentText.slice(0, COMMENT_LIMIT)}...`;
+      : `${commentText.slice(
+          0,
+          COMMENT_LIMIT,
+        )}...`;
 
   return (
     <p className="post-comment">
-      <strong>{comment.user?.username || "unknown"}</strong>{" "}
+      <strong>
+        {comment.user?.username || "unknown"}
+      </strong>{" "}
       <span>{displayedComment}</span>
 
       {isLongComment && !showFullText && (
@@ -84,27 +99,56 @@ const PostCard = ({
 }) => {
   const navigate = useNavigate();
 
-  const [localPost, setLocalPost] = useState(post);
-  const [comments, setComments] = useState([]);
-  const [commentText, setCommentText] = useState("");
+  const [localPost, setLocalPost] =
+    useState(post);
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLiking, setIsLiking] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+  const [comments, setComments] =
+    useState([]);
 
-  const [isFollowing, setIsFollowing] = useState(
-    typeof isAuthorFollowing === "boolean"
-      ? isAuthorFollowing
-      : false,
-  );
-  const [isFollowLoading, setIsFollowLoading] = useState(false);
+  const [commentText, setCommentText] =
+    useState("");
 
-  const [showAllComments, setShowAllComments] = useState(false);
-  const [showFullCaption, setShowFullCaption] = useState(false);
+  const [isSubmitting, setIsSubmitting] =
+    useState(false);
 
-  const [isEmojiOpen, setIsEmojiOpen] = useState(false);
-  const [isShareOpen, setIsShareOpen] = useState(false);
-  const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
+  const [isLiking, setIsLiking] =
+    useState(false);
+
+  const [isSaving, setIsSaving] =
+    useState(false);
+
+  const [isFollowing, setIsFollowing] =
+    useState(
+      typeof isAuthorFollowing === "boolean"
+        ? isAuthorFollowing
+        : false,
+    );
+
+  const [
+    isFollowLoading,
+    setIsFollowLoading,
+  ] = useState(false);
+
+  const [
+    showAllComments,
+    setShowAllComments,
+  ] = useState(false);
+
+  const [
+    showFullCaption,
+    setShowFullCaption,
+  ] = useState(false);
+
+  const [isEmojiOpen, setIsEmojiOpen] =
+    useState(false);
+
+  const [isShareOpen, setIsShareOpen] =
+    useState(false);
+
+  const [
+    isActionMenuOpen,
+    setIsActionMenuOpen,
+  ] = useState(false);
 
   const emojiRef = useRef(null);
   const inputRef = useRef(null);
@@ -120,50 +164,73 @@ const PostCard = ({
   } = localPost;
 
   const authorId = author?._id;
-  const authorLink = authorId ? `/users/${authorId}` : "#";
-  const isOwnPost = authorId === currentUserId;
 
-  const postLikes = Array.isArray(localPost.likes)
+  const authorLink = authorId
+    ? `/users/${authorId}`
+    : "#";
+
+  const isOwnPost =
+    authorId === currentUserId;
+
+  const postLikes = Array.isArray(
+    localPost.likes,
+  )
     ? localPost.likes
     : [];
 
   const isLiked = postLikes.some((like) => {
     const likeId =
-      typeof like === "string" ? like : like?._id;
+      typeof like === "string"
+        ? like
+        : like?._id;
 
     return likeId === currentUserId;
   });
 
   const likesCount = postLikes.length;
-  const isSaved = savedPostIds.includes(_id);
+
+  const isSaved =
+    savedPostIds.includes(_id);
 
   const visibleComments = showAllComments
     ? comments
     : comments.slice(0, 2);
 
   const safeCaption = caption || "";
-  const isLongCaption = safeCaption.length > CAPTION_LIMIT;
+
+  const isLongCaption =
+    safeCaption.length > CAPTION_LIMIT;
 
   const displayedCaption =
     showFullCaption || !isLongCaption
       ? safeCaption
-      : `${safeCaption.slice(0, CAPTION_LIMIT)}...`;
+      : `${safeCaption.slice(
+          0,
+          CAPTION_LIMIT,
+        )}...`;
 
   useEffect(() => {
     setLocalPost(post);
   }, [post]);
 
   useEffect(() => {
-    if (typeof isAuthorFollowing === "boolean") {
+    if (
+      typeof isAuthorFollowing ===
+      "boolean"
+    ) {
       setIsFollowing(isAuthorFollowing);
     }
   }, [isAuthorFollowing]);
 
   useEffect(() => {
-    const handleClickOutsideEmoji = (event) => {
+    const handleClickOutsideEmoji = (
+      event,
+    ) => {
       if (
         emojiRef.current &&
-        !emojiRef.current.contains(event.target)
+        !emojiRef.current.contains(
+          event.target,
+        )
       ) {
         setIsEmojiOpen(false);
       }
@@ -185,9 +252,13 @@ const PostCard = ({
   useEffect(() => {
     const getComments = async () => {
       try {
-        const { data } = await api.get(`/comments/${_id}`);
+        const { data } = await api.get(
+          `/comments/${_id}`,
+        );
 
-        setComments(Array.isArray(data) ? data : []);
+        setComments(
+          Array.isArray(data) ? data : [],
+        );
       } catch (err) {
         console.error(
           err.response?.data?.message ||
@@ -200,36 +271,42 @@ const PostCard = ({
   }, [_id]);
 
   useEffect(() => {
-    const getFollowingStatus = async () => {
-      if (
-        !authorId ||
-        !currentUserId ||
-        isOwnPost ||
-        typeof isAuthorFollowing === "boolean"
-      ) {
-        return;
-      }
+    const getFollowingStatus =
+      async () => {
+        if (
+          !authorId ||
+          !currentUserId ||
+          isOwnPost ||
+          typeof isAuthorFollowing ===
+            "boolean"
+        ) {
+          return;
+        }
 
-      try {
-        const { data } = await api.get(
-          `/follows/${currentUserId}/following`,
-        );
+        try {
+          const { data } = await api.get(
+            `/follows/${currentUserId}/following`,
+          );
 
-        const followingList = Array.isArray(data) ? data : [];
+          const followingList =
+            Array.isArray(data) ? data : [];
 
-        const followsAuthor = followingList.some(
-          (followItem) =>
-            getFollowingUserId(followItem) === authorId,
-        );
+          const followsAuthor =
+            followingList.some(
+              (followItem) =>
+                getFollowingUserId(
+                  followItem,
+                ) === authorId,
+            );
 
-        setIsFollowing(followsAuthor);
-      } catch (err) {
-        console.error(
-          err.response?.data?.message ||
-            "Failed to load follow status",
-        );
-      }
-    };
+          setIsFollowing(followsAuthor);
+        } catch (err) {
+          console.error(
+            err.response?.data?.message ||
+              "Failed to load follow status",
+          );
+        }
+      };
 
     getFollowingStatus();
   }, [
@@ -241,7 +318,8 @@ const PostCard = ({
 
   const handleEmojiClick = (emojiData) => {
     setCommentText(
-      (previousText) => `${previousText}${emojiData.emoji}`,
+      (previousText) =>
+        `${previousText}${emojiData.emoji}`,
     );
 
     setIsEmojiOpen(false);
@@ -252,22 +330,33 @@ const PostCard = ({
   };
 
   const handleToggleFollow = async () => {
-    if (!authorId || isOwnPost || isFollowLoading) {
+    if (
+      !authorId ||
+      isOwnPost ||
+      isFollowLoading
+    ) {
       return;
     }
 
-    const nextFollowingStatus = !isFollowing;
+    const nextFollowingStatus =
+      !isFollowing;
 
     try {
       setIsFollowLoading(true);
 
       if (nextFollowingStatus) {
-        await api.post(`/follows/${authorId}`);
+        await api.post(
+          `/follows/${authorId}`,
+        );
       } else {
-        await api.delete(`/follows/${authorId}`);
+        await api.delete(
+          `/follows/${authorId}`,
+        );
       }
 
-      setIsFollowing(nextFollowingStatus);
+      setIsFollowing(
+        nextFollowingStatus,
+      );
 
       onAuthorFollowChange?.(
         nextFollowingStatus,
@@ -343,7 +432,9 @@ const PostCard = ({
     }, 300);
   };
 
-  const handleAddComment = async (event) => {
+  const handleAddComment = async (
+    event,
+  ) => {
     event.preventDefault();
 
     if (!commentText.trim()) return;
@@ -358,17 +449,20 @@ const PostCard = ({
         },
       );
 
-      setComments((previousComments) => [
-        data,
-        ...previousComments,
-      ]);
+      setComments(
+        (previousComments) => [
+          data,
+          ...previousComments,
+        ],
+      );
 
       setCommentText("");
       setIsEmojiOpen(false);
 
       onPostChange?.({
         ...localPost,
-        commentsCount: comments.length + 1,
+        commentsCount:
+          comments.length + 1,
       });
     } catch (err) {
       console.error(
@@ -388,10 +482,13 @@ const PostCard = ({
 
     if (newCaption === null) return;
 
-    const normalizedCaption = newCaption.trim();
+    const normalizedCaption =
+      newCaption.trim();
 
     if (!normalizedCaption) {
-      window.alert("Caption cannot be empty");
+      window.alert(
+        "Caption cannot be empty",
+      );
       return;
     }
 
@@ -403,10 +500,12 @@ const PostCard = ({
         },
       );
 
-      const updatedPost = data.post || data;
+      const updatedPost =
+        data.post || data;
 
       setLocalPost(updatedPost);
       setShowFullCaption(false);
+
       onPostChange?.(updatedPost);
     } catch (err) {
       console.error(
@@ -417,9 +516,10 @@ const PostCard = ({
   };
 
   const handleDeletePost = async () => {
-    const shouldDelete = window.confirm(
-      "Are you sure you want to delete this post?",
-    );
+    const shouldDelete =
+      window.confirm(
+        "Are you sure you want to delete this post?",
+      );
 
     if (!shouldDelete) return;
 
@@ -467,10 +567,13 @@ const PostCard = ({
 
             <div>
               <strong>
-                {author?.username || "unknown"}
+                {author?.username ||
+                  "unknown"}
               </strong>
 
-              <span>{timeAgo(createdAt)}</span>
+              <span>
+                {timeAgo(createdAt)}
+              </span>
             </div>
           </Link>
 
@@ -497,7 +600,9 @@ const PostCard = ({
         <button
           className="post-more"
           type="button"
-          onClick={() => setIsActionMenuOpen(true)}
+          onClick={() =>
+            setIsActionMenuOpen(true)
+          }
           aria-label="Open post menu"
         >
           <MoreHorizontal size={22} />
@@ -523,14 +628,22 @@ const PostCard = ({
           >
             <Heart
               size={24}
-              fill={isLiked ? "red" : "none"}
-              color={isLiked ? "red" : "currentColor"}
+              fill={
+                isLiked ? "red" : "none"
+              }
+              color={
+                isLiked
+                  ? "red"
+                  : "currentColor"
+              }
             />
           </button>
 
           <button
             type="button"
-            onClick={handleCommentIconClick}
+            onClick={
+              handleCommentIconClick
+            }
             aria-label="Write a comment"
           >
             <MessageCircle size={24} />
@@ -538,7 +651,9 @@ const PostCard = ({
 
           <button
             type="button"
-            onClick={() => setIsShareOpen(true)}
+            onClick={() =>
+              setIsShareOpen(true)
+            }
             aria-label="Share post"
           >
             <Send size={24} />
@@ -553,7 +668,11 @@ const PostCard = ({
         >
           <Bookmark
             size={24}
-            fill={isSaved ? "currentColor" : "none"}
+            fill={
+              isSaved
+                ? "currentColor"
+                : "none"
+            }
           />
         </button>
       </div>
@@ -577,25 +696,30 @@ const PostCard = ({
           {displayedCaption}
         </span>
 
-        {isLongCaption && !showFullCaption && (
-          <button
-            type="button"
-            className="post-caption-more"
-            onClick={() => setShowFullCaption(true)}
-          >
-            more
-          </button>
-        )}
+        {isLongCaption &&
+          !showFullCaption && (
+            <button
+              type="button"
+              className="post-caption-more"
+              onClick={() =>
+                setShowFullCaption(true)
+              }
+            >
+              more
+            </button>
+          )}
       </p>
 
       {comments.length > 0 && (
         <div className="post-comments">
-          {visibleComments.map((comment) => (
-            <PostComment
-              key={comment._id}
-              comment={comment}
-            />
-          ))}
+          {visibleComments.map(
+            (comment) => (
+              <PostComment
+                key={comment._id}
+                comment={comment}
+              />
+            ),
+          )}
         </div>
       )}
 
@@ -605,7 +729,8 @@ const PostCard = ({
           className="post-view-comments"
           onClick={() =>
             setShowAllComments(
-              (previousValue) => !previousValue,
+              (previousValue) =>
+                !previousValue,
             )
           }
         >
@@ -628,7 +753,8 @@ const PostCard = ({
             className="post-card-emoji-button"
             onClick={() =>
               setIsEmojiOpen(
-                (previousValue) => !previousValue,
+                (previousValue) =>
+                  !previousValue,
               )
             }
             aria-label="Choose emoji"
@@ -639,7 +765,9 @@ const PostCard = ({
           {isEmojiOpen && (
             <div className="post-card-emoji-picker">
               <EmojiPicker
-                onEmojiClick={handleEmojiClick}
+                onEmojiClick={
+                  handleEmojiClick
+                }
                 width="100%"
                 height={360}
                 emojiStyle="native"
@@ -661,16 +789,19 @@ const PostCard = ({
           placeholder="Add a comment..."
           value={commentText}
           onChange={(event) =>
-            setCommentText(event.target.value)
+            setCommentText(
+              event.target.value,
+            )
           }
           autoComplete="off"
-          maxLength={300}
+          maxLength={500}
         />
 
         <button
           type="submit"
           disabled={
-            isSubmitting || !commentText.trim()
+            isSubmitting ||
+            !commentText.trim()
           }
         >
           Send
@@ -680,12 +811,16 @@ const PostCard = ({
       <SharePostModal
         post={localPost}
         isOpen={isShareOpen}
-        onClose={() => setIsShareOpen(false)}
+        onClose={() =>
+          setIsShareOpen(false)
+        }
       />
 
       <PostActionMenu
         isOpen={isActionMenuOpen}
-        onClose={() => setIsActionMenuOpen(false)}
+        onClose={() =>
+          setIsActionMenuOpen(false)
+        }
         isOwnPost={isOwnPost}
         isFollowing={isFollowing}
         postId={_id}
@@ -693,8 +828,12 @@ const PostCard = ({
         onEdit={handleEditCaption}
         onDelete={handleDeletePost}
         onOpenPost={handleOpenPost}
-        onGoToProfile={handleGoToProfile}
-        onToggleFollow={handleToggleFollow}
+        onGoToProfile={
+          handleGoToProfile
+        }
+        onToggleFollow={
+          handleToggleFollow
+        }
       />
     </article>
   );
