@@ -1,5 +1,12 @@
-import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import {
+  Link,
+  useNavigate,
+} from "react-router-dom";
 import EmojiPicker from "emoji-picker-react";
 import {
   Bookmark,
@@ -20,11 +27,15 @@ import "../../styles/post.css";
 
 const CAPTION_LIMIT = 20;
 const COMMENT_LIMIT = 35;
+const MAX_COMMENT_LENGTH = 500;
 
 const getCurrentUserId = () => {
-  const token = localStorage.getItem("token");
+  const token =
+    localStorage.getItem("token");
 
-  if (!token) return null;
+  if (!token) {
+    return null;
+  }
 
   try {
     const payload = JSON.parse(
@@ -42,8 +53,11 @@ const getCurrentUserId = () => {
   }
 };
 
-const getFollowingUserId = (followItem) => {
-  const following = followItem?.following;
+const getFollowingUserId = (
+  followItem,
+) => {
+  const following =
+    followItem?.following;
 
   if (typeof following === "string") {
     return following;
@@ -53,13 +67,17 @@ const getFollowingUserId = (followItem) => {
 };
 
 const PostComment = ({ comment }) => {
-  const [showFullText, setShowFullText] =
-    useState(false);
+  const [
+    showFullText,
+    setShowFullText,
+  ] = useState(false);
 
-  const commentText = comment.text || "";
+  const commentText =
+    comment.text || "";
 
   const isLongComment =
-    commentText.length > COMMENT_LIMIT;
+    commentText.length >
+    COMMENT_LIMIT;
 
   const displayedComment =
     showFullText || !isLongComment
@@ -72,19 +90,27 @@ const PostComment = ({ comment }) => {
   return (
     <p className="post-comment">
       <strong>
-        {comment.user?.username || "unknown"}
+        {comment.user?.username ||
+          comment.author?.username ||
+          "unknown"}
       </strong>{" "}
-      <span>{displayedComment}</span>
 
-      {isLongComment && !showFullText && (
-        <button
-          type="button"
-          className="post-comment-more"
-          onClick={() => setShowFullText(true)}
-        >
-          more
-        </button>
-      )}
+      <span>
+        {displayedComment}
+      </span>
+
+      {isLongComment &&
+        !showFullText && (
+          <button
+            type="button"
+            className="post-comment-more"
+            onClick={() =>
+              setShowFullText(true)
+            }
+          >
+            more
+          </button>
+        )}
     </p>
   );
 };
@@ -99,30 +125,45 @@ const PostCard = ({
 }) => {
   const navigate = useNavigate();
 
-  const [localPost, setLocalPost] =
-    useState(post);
+  const [
+    localPost,
+    setLocalPost,
+  ] = useState(post);
 
-  const [comments, setComments] =
-    useState([]);
+  const [
+    comments,
+    setComments,
+  ] = useState([]);
 
-  const [commentText, setCommentText] =
-    useState("");
+  const [
+    commentText,
+    setCommentText,
+  ] = useState("");
 
-  const [isSubmitting, setIsSubmitting] =
-    useState(false);
+  const [
+    isSubmitting,
+    setIsSubmitting,
+  ] = useState(false);
 
-  const [isLiking, setIsLiking] =
-    useState(false);
+  const [
+    isLiking,
+    setIsLiking,
+  ] = useState(false);
 
-  const [isSaving, setIsSaving] =
-    useState(false);
+  const [
+    isSaving,
+    setIsSaving,
+  ] = useState(false);
 
-  const [isFollowing, setIsFollowing] =
-    useState(
-      typeof isAuthorFollowing === "boolean"
-        ? isAuthorFollowing
-        : false,
-    );
+  const [
+    isFollowing,
+    setIsFollowing,
+  ] = useState(
+    typeof isAuthorFollowing ===
+      "boolean"
+      ? isAuthorFollowing
+      : false,
+  );
 
   const [
     isFollowLoading,
@@ -139,11 +180,15 @@ const PostCard = ({
     setShowFullCaption,
   ] = useState(false);
 
-  const [isEmojiOpen, setIsEmojiOpen] =
-    useState(false);
+  const [
+    isEmojiOpen,
+    setIsEmojiOpen,
+  ] = useState(false);
 
-  const [isShareOpen, setIsShareOpen] =
-    useState(false);
+  const [
+    isShareOpen,
+    setIsShareOpen,
+  ] = useState(false);
 
   const [
     isActionMenuOpen,
@@ -153,7 +198,8 @@ const PostCard = ({
   const emojiRef = useRef(null);
   const inputRef = useRef(null);
 
-  const currentUserId = getCurrentUserId();
+  const currentUserId =
+    getCurrentUserId();
 
   const {
     _id,
@@ -163,7 +209,8 @@ const PostCard = ({
     createdAt,
   } = localPost;
 
-  const authorId = author?._id;
+  const authorId =
+    author?._id;
 
   const authorLink = authorId
     ? `/users/${authorId}`
@@ -178,31 +225,40 @@ const PostCard = ({
     ? localPost.likes
     : [];
 
-  const isLiked = postLikes.some((like) => {
-    const likeId =
-      typeof like === "string"
-        ? like
-        : like?._id;
+  const isLiked = postLikes.some(
+    (like) => {
+      const likeId =
+        typeof like === "string"
+          ? like
+          : like?._id;
 
-    return likeId === currentUserId;
-  });
+      return (
+        likeId === currentUserId
+      );
+    },
+  );
 
-  const likesCount = postLikes.length;
+  const likesCount =
+    postLikes.length;
 
   const isSaved =
     savedPostIds.includes(_id);
 
-  const visibleComments = showAllComments
-    ? comments
-    : comments.slice(0, 2);
+  const visibleComments =
+    showAllComments
+      ? comments
+      : comments.slice(0, 2);
 
-  const safeCaption = caption || "";
+  const safeCaption =
+    caption || "";
 
   const isLongCaption =
-    safeCaption.length > CAPTION_LIMIT;
+    safeCaption.length >
+    CAPTION_LIMIT;
 
   const displayedCaption =
-    showFullCaption || !isLongCaption
+    showFullCaption ||
+    !isLongCaption
       ? safeCaption
       : `${safeCaption.slice(
           0,
@@ -218,7 +274,9 @@ const PostCard = ({
       typeof isAuthorFollowing ===
       "boolean"
     ) {
-      setIsFollowing(isAuthorFollowing);
+      setIsFollowing(
+        isAuthorFollowing,
+      );
     }
   }, [isAuthorFollowing]);
 
@@ -252,12 +310,15 @@ const PostCard = ({
   useEffect(() => {
     const getComments = async () => {
       try {
-        const { data } = await api.get(
-          `/comments/${_id}`,
-        );
+        const { data } =
+          await api.get(
+            `/comments/${_id}`,
+          );
 
         setComments(
-          Array.isArray(data) ? data : [],
+          Array.isArray(data)
+            ? data
+            : [],
         );
       } catch (err) {
         console.error(
@@ -267,7 +328,9 @@ const PostCard = ({
       }
     };
 
-    getComments();
+    if (_id) {
+      getComments();
+    }
   }, [_id]);
 
   useEffect(() => {
@@ -284,12 +347,15 @@ const PostCard = ({
         }
 
         try {
-          const { data } = await api.get(
-            `/follows/${currentUserId}/following`,
-          );
+          const { data } =
+            await api.get(
+              `/follows/${currentUserId}/following`,
+            );
 
           const followingList =
-            Array.isArray(data) ? data : [];
+            Array.isArray(data)
+              ? data
+              : [];
 
           const followsAuthor =
             followingList.some(
@@ -299,10 +365,13 @@ const PostCard = ({
                 ) === authorId,
             );
 
-          setIsFollowing(followsAuthor);
+          setIsFollowing(
+            followsAuthor,
+          );
         } catch (err) {
           console.error(
-            err.response?.data?.message ||
+            err.response?.data
+              ?.message ||
               "Failed to load follow status",
           );
         }
@@ -316,7 +385,22 @@ const PostCard = ({
     isAuthorFollowing,
   ]);
 
-  const handleEmojiClick = (emojiData) => {
+  const syncCommentsCount = (
+    nextCommentsCount,
+  ) => {
+    const updatedPost = {
+      ...localPost,
+      commentsCount:
+        nextCommentsCount,
+    };
+
+    setLocalPost(updatedPost);
+    onPostChange?.(updatedPost);
+  };
+
+  const handleEmojiClick = (
+    emojiData,
+  ) => {
     setCommentText(
       (previousText) =>
         `${previousText}${emojiData.emoji}`,
@@ -329,218 +413,262 @@ const PostCard = ({
     }, 0);
   };
 
-  const handleToggleFollow = async () => {
-    if (
-      !authorId ||
-      isOwnPost ||
-      isFollowLoading
-    ) {
-      return;
-    }
-
-    const nextFollowingStatus =
-      !isFollowing;
-
-    try {
-      setIsFollowLoading(true);
-
-      if (nextFollowingStatus) {
-        await api.post(
-          `/follows/${authorId}`,
-        );
-      } else {
-        await api.delete(
-          `/follows/${authorId}`,
-        );
+  const handleToggleFollow =
+    async () => {
+      if (
+        !authorId ||
+        isOwnPost ||
+        isFollowLoading
+      ) {
+        return;
       }
 
-      setIsFollowing(
-        nextFollowingStatus,
-      );
+      const nextFollowingStatus =
+        !isFollowing;
 
-      onAuthorFollowChange?.(
-        nextFollowingStatus,
-        authorId,
-      );
-    } catch (err) {
-      console.error(
-        err.response?.data?.message ||
-          (nextFollowingStatus
-            ? "Failed to follow user"
-            : "Failed to unfollow user"),
-      );
-    } finally {
-      setIsFollowLoading(false);
-    }
-  };
+      try {
+        setIsFollowLoading(true);
 
-  const handleToggleLike = async () => {
-    if (isLiking) return;
+        if (nextFollowingStatus) {
+          await api.post(
+            `/follows/${authorId}`,
+          );
+        } else {
+          await api.delete(
+            `/follows/${authorId}`,
+          );
+        }
 
-    try {
-      setIsLiking(true);
+        setIsFollowing(
+          nextFollowingStatus,
+        );
 
-      const { data } = await api.post(
-        `/posts/${_id}/like`,
-      );
-
-      if (data.post) {
-        setLocalPost(data.post);
-        onPostChange?.(data.post);
+        onAuthorFollowChange?.(
+          nextFollowingStatus,
+          authorId,
+        );
+      } catch (err) {
+        console.error(
+          err.response?.data
+            ?.message ||
+            (nextFollowingStatus
+              ? "Failed to follow user"
+              : "Failed to unfollow user"),
+        );
+      } finally {
+        setIsFollowLoading(false);
       }
-    } catch (err) {
-      console.error(
-        err.response?.data?.message ||
-          "Failed to like post",
-      );
-    } finally {
-      setIsLiking(false);
-    }
-  };
+    };
 
-  const handleToggleSave = async () => {
-    if (isSaving) return;
+  const handleToggleLike =
+    async () => {
+      if (isLiking) {
+        return;
+      }
 
-    try {
-      setIsSaving(true);
+      try {
+        setIsLiking(true);
 
-      const { data } = await api.post(
-        `/users/saved/${_id}`,
-      );
+        const { data } =
+          await api.post(
+            `/posts/${_id}/like`,
+          );
 
-      onPostChange?.(localPost, {
-        saved: data.saved,
+        if (data.post) {
+          setLocalPost(data.post);
+          onPostChange?.(
+            data.post,
+          );
+        }
+      } catch (err) {
+        console.error(
+          err.response?.data
+            ?.message ||
+            "Failed to like post",
+        );
+      } finally {
+        setIsLiking(false);
+      }
+    };
+
+  const handleToggleSave =
+    async () => {
+      if (isSaving) {
+        return;
+      }
+
+      try {
+        setIsSaving(true);
+
+        const { data } =
+          await api.post(
+            `/users/saved/${_id}`,
+          );
+
+        onPostChange?.(
+          localPost,
+          {
+            saved: data.saved,
+          },
+        );
+      } catch (err) {
+        console.error(
+          err.response?.data
+            ?.message ||
+            "Failed to save post",
+        );
+      } finally {
+        setIsSaving(false);
+      }
+    };
+
+  const handleCommentIconClick =
+    () => {
+      inputRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
       });
-    } catch (err) {
-      console.error(
-        err.response?.data?.message ||
-          "Failed to save post",
-      );
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
-  const handleCommentIconClick = () => {
-    inputRef.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "center",
-    });
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 300);
+    };
 
-    setTimeout(() => {
-      inputRef.current?.focus();
-    }, 300);
-  };
+  const handleAddComment =
+    async (event) => {
+      event.preventDefault();
 
-  const handleAddComment = async (
-    event,
-  ) => {
-    event.preventDefault();
+      const normalizedText =
+        commentText.trim();
 
-    if (!commentText.trim()) return;
+      if (
+        !normalizedText ||
+        isSubmitting
+      ) {
+        return;
+      }
 
-    try {
-      setIsSubmitting(true);
+      try {
+        setIsSubmitting(true);
 
-      const { data } = await api.post(
-        `/comments/${_id}`,
-        {
-          text: commentText.trim(),
-        },
-      );
+        const { data } =
+          await api.post(
+            `/comments/${_id}`,
+            {
+              text: normalizedText,
+            },
+          );
 
-      setComments(
-        (previousComments) => [
+        const nextComments = [
           data,
-          ...previousComments,
-        ],
-      );
+          ...comments,
+        ];
 
-      setCommentText("");
-      setIsEmojiOpen(false);
+        setComments(nextComments);
+        setCommentText("");
+        setIsEmojiOpen(false);
 
-      onPostChange?.({
-        ...localPost,
-        commentsCount:
-          comments.length + 1,
-      });
-    } catch (err) {
-      console.error(
-        err.response?.data?.message ||
-          "Failed to add comment",
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+        syncCommentsCount(
+          nextComments.length,
+        );
+      } catch (err) {
+        console.error(
+          err.response?.data
+            ?.message ||
+            "Failed to add comment",
+        );
+      } finally {
+        setIsSubmitting(false);
+      }
+    };
 
-  const handleEditCaption = async () => {
-    const newCaption = window.prompt(
-      "Edit caption",
-      safeCaption,
-    );
+  const handleEditCaption =
+    async () => {
+      const newCaption =
+        window.prompt(
+          "Edit caption",
+          safeCaption,
+        );
 
-    if (newCaption === null) return;
+      if (newCaption === null) {
+        return;
+      }
 
-    const normalizedCaption =
-      newCaption.trim();
+      const normalizedCaption =
+        newCaption.trim();
 
-    if (!normalizedCaption) {
-      window.alert(
-        "Caption cannot be empty",
-      );
-      return;
-    }
+      if (!normalizedCaption) {
+        window.alert(
+          "Caption cannot be empty",
+        );
 
-    try {
-      const { data } = await api.put(
-        `/posts/${_id}`,
-        {
-          caption: normalizedCaption,
-        },
-      );
+        return;
+      }
 
-      const updatedPost =
-        data.post || data;
+      try {
+        const { data } =
+          await api.put(
+            `/posts/${_id}`,
+            {
+              caption:
+                normalizedCaption,
+            },
+          );
 
-      setLocalPost(updatedPost);
-      setShowFullCaption(false);
+        const updatedPost =
+          data.post || data;
 
-      onPostChange?.(updatedPost);
-    } catch (err) {
-      console.error(
-        err.response?.data?.message ||
-          "Failed to edit post",
-      );
-    }
-  };
+        setLocalPost(updatedPost);
+        setShowFullCaption(false);
 
-  const handleDeletePost = async () => {
-    const shouldDelete =
-      window.confirm(
-        "Are you sure you want to delete this post?",
-      );
+        onPostChange?.(
+          updatedPost,
+        );
+      } catch (err) {
+        console.error(
+          err.response?.data
+            ?.message ||
+            "Failed to edit post",
+        );
+      }
+    };
 
-    if (!shouldDelete) return;
+  const handleDeletePost =
+    async () => {
+      const shouldDelete =
+        window.confirm(
+          "Are you sure you want to delete this post?",
+        );
 
-    try {
-      await api.delete(`/posts/${_id}`);
+      if (!shouldDelete) {
+        return;
+      }
 
-      onPostChange?.(null, {
-        deletedPostId: _id,
-      });
-    } catch (err) {
-      console.error(
-        err.response?.data?.message ||
-          "Failed to delete post",
-      );
-    }
-  };
+      try {
+        await api.delete(
+          `/posts/${_id}`,
+        );
+
+        onPostChange?.(null, {
+          deletedPostId: _id,
+        });
+      } catch (err) {
+        console.error(
+          err.response?.data
+            ?.message ||
+            "Failed to delete post",
+        );
+      }
+    };
 
   const handleGoToProfile = () => {
-    if (!authorId) return;
+    if (!authorId) {
+      return;
+    }
 
-    navigate(`/users/${authorId}`);
+    navigate(
+      `/users/${authorId}`,
+    );
   };
 
   const handleOpenPost = () => {
@@ -585,8 +713,12 @@ const PostCard = ({
                   ? "post-follow following"
                   : "post-follow"
               }
-              onClick={handleToggleFollow}
-              disabled={isFollowLoading}
+              onClick={
+                handleToggleFollow
+              }
+              disabled={
+                isFollowLoading
+              }
             >
               {isFollowLoading
                 ? "Loading..."
@@ -605,14 +737,18 @@ const PostCard = ({
           }
           aria-label="Open post menu"
         >
-          <MoreHorizontal size={22} />
+          <MoreHorizontal
+            size={22}
+          />
         </button>
       </header>
 
       <img
         className="post-image"
         src={image}
-        alt={safeCaption || "Post"}
+        alt={
+          safeCaption || "Post"
+        }
         loading="lazy"
         decoding="async"
         onClick={handleOpenPost}
@@ -622,14 +758,18 @@ const PostCard = ({
         <div>
           <button
             type="button"
-            onClick={handleToggleLike}
+            onClick={
+              handleToggleLike
+            }
             disabled={isLiking}
             aria-label="Like post"
           >
             <Heart
               size={24}
               fill={
-                isLiked ? "red" : "none"
+                isLiked
+                  ? "red"
+                  : "none"
               }
               color={
                 isLiked
@@ -646,7 +786,9 @@ const PostCard = ({
             }
             aria-label="Write a comment"
           >
-            <MessageCircle size={24} />
+            <MessageCircle
+              size={24}
+            />
           </button>
 
           <button
@@ -662,7 +804,9 @@ const PostCard = ({
 
         <button
           type="button"
-          onClick={handleToggleSave}
+          onClick={
+            handleToggleSave
+          }
           disabled={isSaving}
           aria-label="Save post"
         >
@@ -689,9 +833,11 @@ const PostCard = ({
           className="post-author-link"
         >
           <strong>
-            {author?.username || "unknown"}
+            {author?.username ||
+              "unknown"}
           </strong>
         </Link>{" "}
+
         <span className="post-caption-text">
           {displayedCaption}
         </span>
@@ -794,7 +940,9 @@ const PostCard = ({
             )
           }
           autoComplete="off"
-          maxLength={500}
+          maxLength={
+            MAX_COMMENT_LENGTH
+          }
         />
 
         <button
@@ -825,9 +973,15 @@ const PostCard = ({
         isFollowing={isFollowing}
         postId={_id}
         authorId={authorId}
-        onEdit={handleEditCaption}
-        onDelete={handleDeletePost}
-        onOpenPost={handleOpenPost}
+        onEdit={
+          handleEditCaption
+        }
+        onDelete={
+          handleDeletePost
+        }
+        onOpenPost={
+          handleOpenPost
+        }
         onGoToProfile={
           handleGoToProfile
         }
