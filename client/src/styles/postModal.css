@@ -1,7 +1,7 @@
 .post-modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 2000;
+  z-index: 7000;
 
   padding: 24px;
 
@@ -474,6 +474,11 @@ body.dark .post-modal-emoji-picker .EmojiPickerReact {
   .post-modal-emoji-picker .EmojiPickerReact {
     height: 350px !important;
   }
+
+  body:has(.post-modal-backdrop) .mobile-menu-button {
+  display: none !important;
+}
+
 }
 
 @media (max-width: 480px) {

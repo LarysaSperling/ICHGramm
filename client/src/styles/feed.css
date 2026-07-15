@@ -14,7 +14,7 @@
   grid-template-columns: repeat(2, 404px);
   justify-content: center;
 
-  column-gap: 38px;
+  column-gap: 24px;
   row-gap: 42px;
 }
 

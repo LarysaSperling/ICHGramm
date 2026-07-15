@@ -343,7 +343,7 @@ body.dark .create-post-emoji-picker .EmojiPickerReact {
     right: 0;
     bottom: 0;
     left: 0;
-
+    z-index: 7000;
     padding: 14px;
 
     align-items: center;
@@ -469,10 +469,6 @@ body:has(.create-post-overlay) .mobile-menu-button {
   .create-post-emoji-picker .EmojiPickerReact {
     height: 350px !important;
   }
-
-  body:has(.create-post-overlay) .mobile-menu-button {
-  display: none !important;
-}
 
 }
 
