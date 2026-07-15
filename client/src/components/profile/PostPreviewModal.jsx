@@ -28,16 +28,9 @@ const getCurrentUserId = () => {
   }
 
   try {
-    const payload = JSON.parse(
-      atob(token.split(".")[1]),
-    );
+    const payload = JSON.parse(atob(token.split(".")[1]));
 
-    return (
-      payload.id ||
-      payload._id ||
-      payload.userId ||
-      null
-    );
+    return payload.id || payload._id || payload.userId || null;
   } catch {
     return null;
   }
@@ -54,43 +47,29 @@ const PostPreviewModal = ({
   const commentInputRef = useRef(null);
   const emojiRef = useRef(null);
 
-  const [localPost, setLocalPost] =
-    useState(post);
+  const [localPost, setLocalPost] = useState(post);
 
-  const [commentText, setCommentText] =
-    useState("");
+  const [commentText, setCommentText] = useState("");
 
-  const [comments, setComments] =
-    useState([]);
+  const [comments, setComments] = useState([]);
 
-  const [
-    showAllComments,
-    setShowAllComments,
-  ] = useState(false);
+  const [showAllComments, setShowAllComments] = useState(false);
 
-  const [isSaved, setIsSaved] =
-    useState(false);
+  const [isSaved, setIsSaved] = useState(false);
 
-  const [isSaving, setIsSaving] =
-    useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const [isMenuOpen, setIsMenuOpen] =
-    useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const [isLiking, setIsLiking] =
-    useState(false);
+  const [isLiking, setIsLiking] = useState(false);
 
-  const [isCommenting, setIsCommenting] =
-    useState(false);
+  const [isCommenting, setIsCommenting] = useState(false);
 
-  const [isEmojiOpen, setIsEmojiOpen] =
-    useState(false);
+  const [isEmojiOpen, setIsEmojiOpen] = useState(false);
 
-  const [isShareOpen, setIsShareOpen] =
-    useState(false);
+  const [isShareOpen, setIsShareOpen] = useState(false);
 
-  const currentUserId =
-    getCurrentUserId();
+  const currentUserId = getCurrentUserId();
 
   useEffect(() => {
     setLocalPost(post);
@@ -107,73 +86,42 @@ const PostPreviewModal = ({
       }
     };
 
-    document.addEventListener(
-      "keydown",
-      handleEscape,
-    );
+    document.addEventListener("keydown", handleEscape);
 
     return () => {
-      document.removeEventListener(
-        "keydown",
-        handleEscape,
-      );
+      document.removeEventListener("keydown", handleEscape);
     };
   }, [isOpen, onClose]);
 
   useEffect(() => {
-    const handleClickOutsideEmoji = (
-      event,
-    ) => {
-      if (
-        emojiRef.current &&
-        !emojiRef.current.contains(
-          event.target,
-        )
-      ) {
+    const handleClickOutsideEmoji = (event) => {
+      if (emojiRef.current && !emojiRef.current.contains(event.target)) {
         setIsEmojiOpen(false);
       }
     };
 
-    document.addEventListener(
-      "mousedown",
-      handleClickOutsideEmoji,
-    );
+    document.addEventListener("mousedown", handleClickOutsideEmoji);
 
     return () => {
-      document.removeEventListener(
-        "mousedown",
-        handleClickOutsideEmoji,
-      );
+      document.removeEventListener("mousedown", handleClickOutsideEmoji);
     };
   }, []);
 
   useEffect(() => {
     const fetchComments = async () => {
-      if (
-        !isOpen ||
-        !localPost?._id
-      ) {
+      if (!isOpen || !localPost?._id) {
         return;
       }
 
       try {
-        const { data } = await api.get(
-          `/comments/${localPost._id}`,
-        );
+        const { data } = await api.get(`/comments/${localPost._id}`);
 
-        setComments(
-          Array.isArray(data)
-            ? data
-            : [],
-        );
+        setComments(Array.isArray(data) ? data : []);
 
         setShowAllComments(false);
         setCommentText("");
       } catch (error) {
-        console.error(
-          error.response?.data?.message ||
-            "Fetch comments failed",
-        );
+        console.error(error.response?.data?.message || "Fetch comments failed");
       }
     };
 
@@ -182,31 +130,21 @@ const PostPreviewModal = ({
 
   useEffect(() => {
     const fetchSavedPosts = async () => {
-      if (
-        !isOpen ||
-        !localPost?._id
-      ) {
+      if (!isOpen || !localPost?._id) {
         return;
       }
 
       try {
-        const { data } = await api.get(
-          "/users/saved",
-        );
+        const { data } = await api.get("/users/saved");
 
         const saved = Array.isArray(data)
-          ? data.some(
-              (savedPost) =>
-                savedPost?._id ===
-                localPost._id,
-            )
+          ? data.some((savedPost) => savedPost?._id === localPost._id)
           : false;
 
         setIsSaved(saved);
       } catch (error) {
         console.error(
-          error.response?.data?.message ||
-            "Fetch saved posts failed",
+          error.response?.data?.message || "Fetch saved posts failed",
         );
       }
     };
@@ -218,44 +156,23 @@ const PostPreviewModal = ({
     return null;
   }
 
-  const username =
-    localPost.author?.username ||
-    "user";
+  const username = localPost.author?.username || "user";
 
-  const fullName =
-    localPost.author?.fullName ||
-    username;
+  const avatar = localPost.author?.avatar;
 
-  const avatar =
-    localPost.author?.avatar;
+  const postLikes = Array.isArray(localPost.likes) ? localPost.likes : [];
 
-  const postLikes = Array.isArray(
-    localPost.likes,
-  )
-    ? localPost.likes
-    : [];
+  const isLiked = postLikes.some((like) => {
+    const likeId = typeof like === "string" ? like : like?._id;
 
-  const isLiked = postLikes.some(
-    (like) => {
-      const likeId =
-        typeof like === "string"
-          ? like
-          : like?._id;
-
-      return likeId === currentUserId;
-    },
-  );
+    return likeId === currentUserId;
+  });
 
   const likesCount = postLikes.length;
 
-  const visibleComments =
-    showAllComments
-      ? comments
-      : comments.slice(0, 2);
+  const visibleComments = showAllComments ? comments : comments.slice(0, 2);
 
-  const syncCommentsCount = (
-    nextCommentsCount,
-  ) => {
+  const syncCommentsCount = (nextCommentsCount) => {
     const updatedPost = {
       ...localPost,
       commentsCount: nextCommentsCount,
@@ -273,22 +190,16 @@ const PostPreviewModal = ({
     try {
       setIsLiking(true);
 
-      const { data } = await api.post(
-        `/posts/${localPost._id}/like`,
-      );
+      const { data } = await api.post(`/posts/${localPost._id}/like`);
 
-      const updatedPost =
-        data.post || data;
+      const updatedPost = data.post || data;
 
       if (updatedPost?._id) {
         setLocalPost(updatedPost);
         onPostChange?.(updatedPost);
       }
     } catch (error) {
-      console.error(
-        error.response?.data?.message ||
-          "Like post failed",
-      );
+      console.error(error.response?.data?.message || "Like post failed");
     } finally {
       setIsLiking(false);
     }
@@ -302,12 +213,9 @@ const PostPreviewModal = ({
     try {
       setIsSaving(true);
 
-      const { data } = await api.post(
-        `/users/saved/${localPost._id}`,
-      );
+      const { data } = await api.post(`/users/saved/${localPost._id}`);
 
-      const nextSavedState =
-        Boolean(data.saved);
+      const nextSavedState = Boolean(data.saved);
 
       setIsSaved(nextSavedState);
 
@@ -315,22 +223,14 @@ const PostPreviewModal = ({
         saved: nextSavedState,
       });
     } catch (error) {
-      console.error(
-        error.response?.data?.message ||
-          "Save post failed",
-      );
+      console.error(error.response?.data?.message || "Save post failed");
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleEmojiClick = (
-    emojiData,
-  ) => {
-    setCommentText(
-      (previousText) =>
-        `${previousText}${emojiData.emoji}`,
-    );
+  const handleEmojiClick = (emojiData) => {
+    setCommentText((previousText) => `${previousText}${emojiData.emoji}`);
 
     setIsEmojiOpen(false);
 
@@ -339,48 +239,31 @@ const PostPreviewModal = ({
     }, 0);
   };
 
-  const handleAddComment = async (
-    event,
-  ) => {
+  const handleAddComment = async (event) => {
     event.preventDefault();
 
-    const normalizedComment =
-      commentText.trim();
+    const normalizedComment = commentText.trim();
 
-    if (
-      !normalizedComment ||
-      isCommenting
-    ) {
+    if (!normalizedComment || isCommenting) {
       return;
     }
 
     try {
       setIsCommenting(true);
 
-      const { data } = await api.post(
-        `/comments/${localPost._id}`,
-        {
-          text: normalizedComment,
-        },
-      );
+      const { data } = await api.post(`/comments/${localPost._id}`, {
+        text: normalizedComment,
+      });
 
-      const nextComments = [
-        data,
-        ...comments,
-      ];
+      const nextComments = [data, ...comments];
 
       setComments(nextComments);
       setCommentText("");
       setIsEmojiOpen(false);
 
-      syncCommentsCount(
-        nextComments.length,
-      );
+      syncCommentsCount(nextComments.length);
     } catch (error) {
-      console.error(
-        error.response?.data?.message ||
-          "Add comment failed",
-      );
+      console.error(error.response?.data?.message || "Add comment failed");
     } finally {
       setIsCommenting(false);
     }
@@ -401,18 +284,13 @@ const PostPreviewModal = ({
   };
 
   return (
-    <div
-      className="post-preview-modal"
-      onClick={onClose}
-    >
+    <div className="post-preview-modal" onClick={onClose}>
       <div
         className="post-preview-dialog"
         role="dialog"
         aria-modal="true"
         aria-label="Post preview"
-        onClick={(event) =>
-          event.stopPropagation()
-        }
+        onClick={(event) => event.stopPropagation()}
       >
         <button
           className="post-preview-close"
@@ -420,47 +298,26 @@ const PostPreviewModal = ({
           onClick={onClose}
           aria-label="Close post preview"
         >
-          <X
-            size={28}
-            strokeWidth={2.5}
-            aria-hidden="true"
-          />
+          <X size={28} strokeWidth={2.5} aria-hidden="true" />
         </button>
 
         <div className="post-preview-media">
-          <img
-            src={localPost.image}
-            alt={
-              localPost.caption ||
-              "Post"
-            }
-          />
+          <img src={localPost.image} alt={localPost.caption || "Post"} />
         </div>
 
         <aside className="post-preview-panel">
           <header className="post-preview-header">
             <div className="post-preview-author">
-              <Avatar
-                src={avatar}
-                name={username}
-                size={34}
-              />
-
+              <Avatar src={avatar} name={username} size={34} />
               <div className="post-preview-author-text">
-                <strong>
-                  {username}
-                </strong>
-
-                <span>{fullName}</span>
+                <strong>{username}</strong>
               </div>
             </div>
 
             <button
               className="post-preview-menu"
               type="button"
-              onClick={() =>
-                setIsMenuOpen(true)
-              }
+              onClick={() => setIsMenuOpen(true)}
               aria-label="Open post menu"
             >
               <MoreHorizontal size={22} />
@@ -470,26 +327,15 @@ const PostPreviewModal = ({
           <section className="post-preview-comments">
             {localPost.caption && (
               <article className="post-preview-comment post-preview-caption">
-                <Avatar
-                  src={avatar}
-                  name={username}
-                  size={34}
-                />
+                <Avatar src={avatar} name={username} size={34} />
 
                 <div className="post-preview-comment-main">
                   <p>
-                    <strong>
-                      {username}
-                    </strong>{" "}
-                    {localPost.caption}
+                    <strong>{username}</strong> {localPost.caption}
                   </p>
 
                   <div className="post-preview-comment-meta">
-                    <span>
-                      {timeAgo(
-                        localPost.createdAt,
-                      )}
-                    </span>
+                    <span>{timeAgo(localPost.createdAt)}</span>
                   </div>
                 </div>
               </article>
@@ -500,10 +346,7 @@ const PostPreviewModal = ({
                 className="post-preview-view-comments"
                 type="button"
                 onClick={() =>
-                  setShowAllComments(
-                    (previousValue) =>
-                      !previousValue,
-                  )
+                  setShowAllComments((previousValue) => !previousValue)
                 }
               >
                 {showAllComments
@@ -514,53 +357,37 @@ const PostPreviewModal = ({
 
             {comments.length === 0 && (
               <p className="post-preview-empty-comments">
-                No comments yet. Start the
-                conversation.
+                No comments yet. Start the conversation.
               </p>
             )}
 
-            {visibleComments.map(
-              (comment) => {
-                const commentUsername =
-                  comment.user?.username ||
-                  comment.author?.username ||
-                  "user";
+            {visibleComments.map((comment) => {
+              const commentUsername =
+                comment.user?.username || comment.author?.username || "user";
 
-                const commentAvatar =
-                  comment.user?.avatar ||
-                  comment.author?.avatar;
+              const commentAvatar =
+                comment.user?.avatar || comment.author?.avatar;
 
-                return (
-                  <article
-                    className="post-preview-comment"
-                    key={comment._id}
-                  >
-                    <Avatar
-                      src={commentAvatar}
-                      name={commentUsername}
-                      size={34}
-                    />
+              return (
+                <article className="post-preview-comment" key={comment._id}>
+                  <Avatar
+                    src={commentAvatar}
+                    name={commentUsername}
+                    size={34}
+                  />
 
-                    <div className="post-preview-comment-main">
-                      <p>
-                        <strong>
-                          {commentUsername}
-                        </strong>{" "}
-                        {comment.text}
-                      </p>
+                  <div className="post-preview-comment-main">
+                    <p>
+                      <strong>{commentUsername}</strong> {comment.text}
+                    </p>
 
-                      <div className="post-preview-comment-meta">
-                        <span>
-                          {timeAgo(
-                            comment.createdAt,
-                          )}
-                        </span>
-                      </div>
+                    <div className="post-preview-comment-meta">
+                      <span>{timeAgo(comment.createdAt)}</span>
                     </div>
-                  </article>
-                );
-              },
-            )}
+                  </div>
+                </article>
+              );
+            })}
           </section>
 
           <footer className="post-preview-footer">
@@ -568,45 +395,26 @@ const PostPreviewModal = ({
               <div className="post-preview-left-actions">
                 <button
                   type="button"
-                  className={
-                    isLiked
-                      ? "active-like"
-                      : ""
-                  }
-                  onClick={
-                    handleToggleLike
-                  }
+                  className={isLiked ? "active-like" : ""}
+                  onClick={handleToggleLike}
                   disabled={isLiking}
                   aria-label="Like post"
                 >
-                  <Heart
-                    size={25}
-                    fill={
-                      isLiked
-                        ? "currentColor"
-                        : "none"
-                    }
-                  />
+                  <Heart size={25} fill={isLiked ? "currentColor" : "none"} />
                 </button>
 
                 <button
                   type="button"
                   aria-label="Comment"
-                  onClick={
-                    handleCommentIconClick
-                  }
+                  onClick={handleCommentIconClick}
                 >
-                  <MessageCircle
-                    size={25}
-                  />
+                  <MessageCircle size={25} />
                 </button>
 
                 <button
                   type="button"
                   aria-label="Send post"
-                  onClick={() =>
-                    setIsShareOpen(true)
-                  }
+                  onClick={() => setIsShareOpen(true)}
                 >
                   <Send size={25} />
                 </button>
@@ -614,60 +422,31 @@ const PostPreviewModal = ({
 
               <button
                 type="button"
-                className={
-                  isSaved
-                    ? "active-save"
-                    : ""
-                }
-                onClick={
-                  handleToggleSave
-                }
+                className={isSaved ? "active-save" : ""}
+                onClick={handleToggleSave}
                 disabled={isSaving}
-                aria-label={
-                  isSaved
-                    ? "Remove from saved posts"
-                    : "Save post"
-                }
+                aria-label={isSaved ? "Remove from saved posts" : "Save post"}
               >
-                <Bookmark
-                  size={25}
-                  fill={
-                    isSaved
-                      ? "currentColor"
-                      : "none"
-                  }
-                />
+                <Bookmark size={25} fill={isSaved ? "currentColor" : "none"} />
               </button>
             </div>
 
             <p className="post-preview-likes">
-              {likesCount === 1
-                ? "1 like"
-                : `${likesCount} likes`}
+              {likesCount === 1 ? "1 like" : `${likesCount} likes`}
             </p>
 
-            <p className="post-preview-date">
-              {timeAgo(
-                localPost.createdAt,
-              )}
-            </p>
+            <p className="post-preview-date">{timeAgo(localPost.createdAt)}</p>
 
             <form
               className="post-preview-add-comment"
               onSubmit={handleAddComment}
             >
-              <div
-                className="post-preview-emoji"
-                ref={emojiRef}
-              >
+              <div className="post-preview-emoji" ref={emojiRef}>
                 <button
                   type="button"
                   className="post-preview-emoji-button"
                   onClick={() =>
-                    setIsEmojiOpen(
-                      (previousValue) =>
-                        !previousValue,
-                    )
+                    setIsEmojiOpen((previousValue) => !previousValue)
                   }
                   aria-label="Choose emoji"
                 >
@@ -677,9 +456,7 @@ const PostPreviewModal = ({
                 {isEmojiOpen && (
                   <div className="post-preview-emoji-picker">
                     <EmojiPicker
-                      onEmojiClick={
-                        handleEmojiClick
-                      }
+                      onEmojiClick={handleEmojiClick}
                       width="100%"
                       height={360}
                       emojiStyle="native"
@@ -699,24 +476,15 @@ const PostPreviewModal = ({
                 type="text"
                 ref={commentInputRef}
                 value={commentText}
-                onChange={(event) =>
-                  setCommentText(
-                    event.target.value,
-                  )
-                }
+                onChange={(event) => setCommentText(event.target.value)}
                 placeholder="Add a comment..."
                 autoComplete="off"
-                maxLength={
-                  MAX_COMMENT_LENGTH
-                }
+                maxLength={MAX_COMMENT_LENGTH}
               />
 
               <button
                 type="submit"
-                disabled={
-                  !commentText.trim() ||
-                  isCommenting
-                }
+                disabled={!commentText.trim() || isCommenting}
               >
                 Send
               </button>
@@ -728,21 +496,15 @@ const PostPreviewModal = ({
       <SharePostModal
         post={localPost}
         isOpen={isShareOpen}
-        onClose={() =>
-          setIsShareOpen(false)
-        }
+        onClose={() => setIsShareOpen(false)}
       />
 
       <PostActionMenu
         isOpen={isMenuOpen}
-        onClose={() =>
-          setIsMenuOpen(false)
-        }
+        onClose={() => setIsMenuOpen(false)}
         isOwnPost
         postId={localPost._id}
-        authorId={
-          localPost.author?._id
-        }
+        authorId={localPost.author?._id}
         onEdit={handleEdit}
         onDelete={handleDelete}
       />

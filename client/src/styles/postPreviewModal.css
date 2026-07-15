@@ -140,11 +140,16 @@
   flex-direction: column;
 }
 
-.post-preview-author-text strong,
-.post-preview-author-text span {
+.post-preview-author-text strong {
   max-width: 260px;
 
   overflow: hidden;
+
+  color: #262626;
+
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 18px;
 
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -156,14 +161,6 @@
   font-size: 14px;
   font-weight: 600;
   line-height: 18px;
-}
-
-.post-preview-author-text span {
-  color: #737373;
-
-  font-size: 12px;
-  font-weight: 400;
-  line-height: 16px;
 }
 
 .post-preview-menu {
@@ -495,7 +492,6 @@ body.dark
   color: #f5f5f5;
 }
 
-body.dark .post-preview-author-text span,
 body.dark .post-preview-comment-meta span,
 body.dark .post-preview-view-comments,
 body.dark .post-preview-empty-comments,
@@ -581,7 +577,6 @@ body.dark
     padding-right: 62px;
   }
 }
-
 @media (max-width: 520px) {
   .post-preview-modal {
     padding: 0;
@@ -610,9 +605,23 @@ body.dark
     padding-right: 58px;
   }
 
-  .post-preview-author-text strong,
-  .post-preview-author-text span {
+  .post-preview-author-text strong {
     max-width: 180px;
+  }
+
+  .post-preview-likes,
+  .post-preview-date {
+    width: 100%;
+    align-self: flex-start;
+    text-align: left;
+  }
+
+  .post-preview-likes {
+    padding: 0 16px;
+  }
+
+  .post-preview-date {
+    padding: 0 16px 12px;
   }
 
   .post-preview-add-comment {
@@ -630,8 +639,7 @@ body.dark
     max-width: calc(100vw - 24px);
   }
 
-  .post-preview-emoji-picker
-    .EmojiPickerReact {
+  .post-preview-emoji-picker .EmojiPickerReact {
     height: 350px !important;
   }
 }
@@ -649,8 +657,7 @@ body.dark
     padding-right: 52px;
   }
 
-  .post-preview-author-text strong,
-  .post-preview-author-text span {
+  .post-preview-author-text strong {
     max-width: 145px;
   }
 
@@ -671,8 +678,7 @@ body.dark
     height: 36px;
   }
 
-  .post-preview-author-text strong,
-  .post-preview-author-text span {
+  .post-preview-author-text strong {
     max-width: 125px;
   }
 
