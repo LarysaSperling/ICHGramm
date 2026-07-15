@@ -1,4 +1,9 @@
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import {
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+} from "react-router-dom";
 
 import AppLayout from "../components/layout/AppLayout";
 import ProtectedRoute from "../components/layout/ProtectedRoute";
@@ -20,17 +25,47 @@ import Explore from "../pages/Explore";
 
 const AppRoutes = () => {
   const location = useLocation();
-  const backgroundLocation = location.state?.backgroundLocation;
+
+  const backgroundLocation =
+    location.state?.backgroundLocation;
 
   return (
     <>
-      <Routes location={backgroundLocation || location}>
-        <Route path="/" element={<Navigate to="/login" replace />} />
+      <Routes
+        location={
+          backgroundLocation || location
+        }
+      >
+        <Route
+          path="/"
+          element={
+            <Navigate
+              to="/login"
+              replace
+            />
+          }
+        />
 
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/reset" element={<ResetPassword />} />
-        <Route path="/new-password" element={<NewPassword />} />
+        <Route
+          path="/login"
+          element={<Login />}
+        />
+
+        <Route
+          path="/register"
+          element={<Register />}
+        />
+
+        <Route
+          path="/reset"
+          element={<ResetPassword />}
+        />
+
+        <Route
+          path="/new-password"
+          element={<NewPassword />}
+        />
+
         <Route
           element={
             <ProtectedRoute>
@@ -38,19 +73,51 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         >
-          <Route path="/home" element={<Home />} />
-          <Route path="/search" element={<Search />} />
-          <Route path="/explore" element={<Explore />} />
-          <Route path="/messages" element={<Messages />} />
-          <Route path="/notifications" element={<Notifications />} />
+          <Route
+            path="/home"
+            element={<Home />}
+          />
 
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/profile/edit" element={<EditProfile />} />
+          <Route
+            path="/search"
+            element={<Search />}
+          />
 
-          <Route path="/users/:id" element={<UserProfile />} />
+          <Route
+            path="/explore"
+            element={<Explore />}
+          />
+
+          <Route
+            path="/messages"
+            element={<Messages />}
+          />
+
+          <Route
+            path="/notifications"
+            element={<Notifications />}
+          />
+
+          <Route
+            path="/profile"
+            element={<Profile />}
+          />
+
+          <Route
+            path="/profile/edit"
+            element={<EditProfile />}
+          />
+
+          <Route
+            path="/users/:id"
+            element={<UserProfile />}
+          />
+
+          <Route
+            path="*"
+            element={<NotFound />}
+          />
         </Route>
-
-        <Route path="*" element={<NotFound />} />
       </Routes>
 
       {backgroundLocation && (
@@ -62,7 +129,10 @@ const AppRoutes = () => {
               </ProtectedRoute>
             }
           >
-            <Route path="/create" element={<CreatePost />} />
+            <Route
+              path="/create"
+              element={<CreatePost />}
+            />
           </Route>
         </Routes>
       )}
