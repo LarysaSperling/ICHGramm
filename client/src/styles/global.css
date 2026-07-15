@@ -70,7 +70,6 @@ body:has(.notifications-overlay) .footer {
   display: none;
 }
 
-/* Emoji Picker — restore visible category navigation icons */
 .EmojiPickerReact {
   --epr-text-color: #737373;
   --epr-category-icon-active-color: #0095f6;
