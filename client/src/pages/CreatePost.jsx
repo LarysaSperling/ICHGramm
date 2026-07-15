@@ -11,6 +11,8 @@ import "../styles/createPost.css";
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024;
 
+const MAX_CAPTION_LENGTH = 2200;
+
 const ALLOWED_FILE_TYPES = [
   "image/jpeg",
   "image/jpg",
@@ -23,15 +25,32 @@ const CreatePost = () => {
   const { user } = useAuth();
 
   const [caption, setCaption] = useState("");
+
   const [image, setImage] = useState(null);
+
   const [preview, setPreview] = useState("");
-  const [position, setPosition] = useState({ x: 50, y: 50 });
+
+  const [position, setPosition] = useState({
+    x: 50,
+    y: 50,
+  });
+
   const [error, setError] = useState("");
+
   const [isLoading, setIsLoading] = useState(false);
+
   const [isEmojiOpen, setIsEmojiOpen] = useState(false);
 
   const emojiRef = useRef(null);
   const captionRef = useRef(null);
+
+  const handleClose = () => {
+    if (isLoading) {
+      return;
+    }
+
+    navigate(-1);
+  };
 
   useEffect(() => {
     const handleClickOutsideEmoji = (event) => {
@@ -47,8 +66,32 @@ const CreatePost = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const handleEscape = (event) => {
+      if (event.key === "Escape" && !isLoading) {
+        navigate(-1);
+      }
+    };
+
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [isLoading, navigate]);
+
+  useEffect(() => {
+    return () => {
+      if (preview) {
+        URL.revokeObjectURL(preview);
+      }
+    };
+  }, [preview]);
+
   const validateFile = (file) => {
-    if (!file) return "Image is required";
+    if (!file) {
+      return "Image is required";
+    }
 
     if (!ALLOWED_FILE_TYPES.includes(file.type)) {
       return "Only JPG, JPEG, PNG and WEBP images are allowed";
@@ -62,26 +105,43 @@ const CreatePost = () => {
   };
 
   const handleImageChange = (event) => {
-    const file = event.target.files[0];
+    const file = event.target.files?.[0];
+
     const validationError = validateFile(file);
 
     if (validationError) {
+      if (preview) {
+        URL.revokeObjectURL(preview);
+      }
+
       setImage(null);
       setPreview("");
       setError(validationError);
+
+      event.target.value = "";
+
       return;
+    }
+
+    if (preview) {
+      URL.revokeObjectURL(preview);
     }
 
     setError("");
     setImage(file);
     setPreview(URL.createObjectURL(file));
-    setPosition({ x: 50, y: 50 });
+
+    setPosition({
+      x: 50,
+      y: 50,
+    });
   };
 
   const handleImagePosition = (event) => {
     const rect = event.currentTarget.getBoundingClientRect();
 
     const x = ((event.clientX - rect.left) / rect.width) * 100;
+
     const y = ((event.clientY - rect.top) / rect.height) * 100;
 
     setPosition({
@@ -91,7 +151,12 @@ const CreatePost = () => {
   };
 
   const handleEmojiClick = (emojiData) => {
-    setCaption((prev) => `${prev}${emojiData.emoji}`);
+    setCaption((previousCaption) => {
+      const nextCaption = `${previousCaption}${emojiData.emoji}`;
+
+      return nextCaption.slice(0, MAX_CAPTION_LENGTH);
+    });
+
     setIsEmojiOpen(false);
 
     setTimeout(() => {
@@ -102,8 +167,11 @@ const CreatePost = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (!caption.trim()) {
+    const normalizedCaption = caption.trim();
+
+    if (!normalizedCaption) {
       setError("Caption is required");
+
       return;
     }
 
@@ -111,16 +179,20 @@ const CreatePost = () => {
 
     if (validationError) {
       setError(validationError);
+
       return;
     }
 
     const formData = new FormData();
-    formData.append("caption", caption.trim());
+
+    formData.append("caption", normalizedCaption);
+
     formData.append("image", image);
 
     try {
       setIsLoading(true);
       setError("");
+      setIsEmojiOpen(false);
 
       await api.post("/posts", formData, {
         headers: {
@@ -128,7 +200,9 @@ const CreatePost = () => {
         },
       });
 
-      navigate("/home");
+      navigate("/home", {
+        replace: true,
+      });
     } catch (err) {
       setError(err.response?.data?.message || "Failed to create post");
     } finally {
@@ -137,24 +211,32 @@ const CreatePost = () => {
   };
 
   return (
-    <div className="create-post-overlay" onClick={() => navigate(-1)}>
-      <button
-        className="create-post-close"
-        type="button"
-        onClick={() => navigate(-1)}
-      >
-        <X size={28} />
-      </button>
-
+    <div className="create-post-overlay" onClick={handleClose}>
       <form
         className="create-post-modal"
         onSubmit={handleSubmit}
         onClick={(event) => event.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="create-post-title"
       >
-        <header className="create-post-header">
-          <h2>Create new post</h2>
+        <button
+          className="create-post-close"
+          type="button"
+          onClick={() => navigate(-1)}
+          aria-label="Close create post"
+        >
+          <X size={28} />
+        </button>
 
-          <button type="submit" disabled={isLoading}>
+        <header className="create-post-header">
+          <h2 id="create-post-title">Create new post</h2>
+
+          <button
+            className="create-post-share"
+            type="submit"
+            disabled={isLoading}
+          >
             {isLoading ? "Sharing..." : "Share"}
           </button>
         </header>
@@ -165,7 +247,7 @@ const CreatePost = () => {
               <>
                 <img
                   src={preview}
-                  alt="Preview"
+                  alt="Selected post preview"
                   onClick={handleImagePosition}
                   style={{
                     objectPosition: `${position.x}% ${position.y}%`,
@@ -179,20 +261,23 @@ const CreatePost = () => {
                     name="image"
                     accept="image/jpeg,image/jpg,image/png,image/webp"
                     onChange={handleImageChange}
+                    disabled={isLoading}
                   />
                 </label>
               </>
             ) : (
               <label className="create-upload-placeholder">
-                <CloudUpload size={64} strokeWidth={1.5} color="#8e8e8e" />
+                <CloudUpload size={64} strokeWidth={1.5} aria-hidden="true" />
+
                 <span>Click to upload image</span>
 
                 <input
-                  id="image"
+                  id="create-post-image"
                   type="file"
                   name="image"
                   accept="image/jpeg,image/jpg,image/png,image/webp"
                   onChange={handleImageChange}
+                  disabled={isLoading}
                 />
               </label>
             )}
@@ -205,17 +290,19 @@ const CreatePost = () => {
                 name={user?.username || user?.fullName}
                 size={32}
               />
+
               <strong>{user?.username || "user"}</strong>
             </div>
 
             <textarea
               ref={captionRef}
-              id="caption"
+              id="create-post-caption"
               name="caption"
               placeholder="Write a caption..."
               value={caption}
               onChange={(event) => setCaption(event.target.value)}
-              maxLength={2200}
+              maxLength={MAX_CAPTION_LENGTH}
+              disabled={isLoading}
             />
 
             <div className="create-caption-footer">
@@ -223,19 +310,25 @@ const CreatePost = () => {
                 <button
                   type="button"
                   className="create-post-emoji-button"
-                  onClick={() => setIsEmojiOpen((prev) => !prev)}
+                  onClick={() =>
+                    setIsEmojiOpen((previousValue) => !previousValue)
+                  }
+                  disabled={isLoading}
+                  aria-label="Choose emoji"
                 >
-                  <Smile size={20} />
+                  <Smile size={20} aria-hidden="true" />
                 </button>
 
                 {isEmojiOpen && (
                   <div className="create-post-emoji-picker">
                     <EmojiPicker
                       onEmojiClick={handleEmojiClick}
-                      width={280}
-                      height={260}
+                      width="100%"
+                      height={360}
                       emojiStyle="native"
-                      previewConfig={{ showPreview: false }}
+                      previewConfig={{
+                        showPreview: false,
+                      }}
                       searchDisabled={false}
                       skinTonesDisabled
                     />
@@ -243,11 +336,17 @@ const CreatePost = () => {
                 )}
               </div>
 
-              <span className="caption-counter">{caption.length}/2 200</span>
+              <span className="caption-counter">
+                {caption.length}/{MAX_CAPTION_LENGTH}
+              </span>
             </div>
 
             <div className="create-bottom-space">
-              {error && <p className="create-post-error">{error}</p>}
+              {error && (
+                <p className="create-post-error" role="alert">
+                  {error}
+                </p>
+              )}
             </div>
           </aside>
         </div>

@@ -27,7 +27,16 @@
   background: transparent;
   color: #ffffff;
 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
   cursor: pointer;
+}
+
+.create-post-close svg {
+  color: #ffffff;
+  stroke: #ffffff;
 }
 
 .create-post-modal {
@@ -58,6 +67,8 @@
 }
 
 .create-post-header h2 {
+  margin: 0;
+
   font-size: 16px;
   font-weight: 700;
 }
@@ -368,10 +379,33 @@ body.dark .create-post-emoji-picker .EmojiPickerReact {
     grid-template-rows: 52px 90px 40px 1fr;
   }
 
-  .create-post-close {
-    top: 18px;
-    right: 18px;
-  }
+.create-post-close {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 9999;
+
+  width: 42px;
+  height: 42px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 50%;
+
+  background: rgba(0, 0, 0, 0.75);
+  color: #ffffff;
+}
+
+.create-post-close svg {
+  stroke: #ffffff;
+}
+
+body:has(.create-post-overlay) .mobile-menu-button {
+  display: none !important;
+}
 
   .create-post-emoji-picker {
     width: 280px;
@@ -419,6 +453,14 @@ body.dark .create-post-emoji-picker .EmojiPickerReact {
     padding: 0 12px;
   }
 
+  .create-post-close {
+    top: 12px;
+    right: 12px;
+
+    width: 40px;
+    height: 40px;
+  }
+
   .create-post-emoji-picker {
     width: 280px;
     max-width: calc(100vw - 24px);
@@ -427,9 +469,22 @@ body.dark .create-post-emoji-picker .EmojiPickerReact {
   .create-post-emoji-picker .EmojiPickerReact {
     height: 350px !important;
   }
+
+  body:has(.create-post-overlay) .mobile-menu-button {
+  display: none !important;
+}
+
 }
 
 @media (max-width: 360px) {
+  .create-post-close {
+    top: 10px;
+    right: 10px;
+
+    width: 38px;
+    height: 38px;
+  }
+
   .create-post-emoji-picker {
     width: 250px;
     max-width: calc(100vw - 24px);
@@ -441,6 +496,11 @@ body.dark .create-post-emoji-picker .EmojiPickerReact {
 }
 
 @media (max-width: 330px) {
+  .create-post-close {
+    width: 36px;
+    height: 36px;
+  }
+
   .create-post-emoji-picker {
     width: 250px;
     max-width: calc(100vw - 24px);

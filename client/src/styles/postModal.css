@@ -2,37 +2,75 @@
   position: fixed;
   inset: 0;
   z-index: 2000;
+
   padding: 24px;
+
   background: rgba(0, 0, 0, 0.68);
+
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.post-modal-close {
-  position: fixed;
-  top: 20px;
-  right: 24px;
-  z-index: 2010;
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: #ffffff;
-  cursor: pointer;
-}
-
 .post-modal {
+  position: relative;
+
   width: min(1100px, 92vw);
   height: min(720px, 88vh);
+
   overflow: hidden;
+
   background: #ffffff;
+
   display: grid;
   grid-template-columns: minmax(0, 1.45fr) 423px;
 }
 
+.post-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 100;
+
+  width: 42px;
+  height: 42px;
+  padding: 0;
+
+  border: none;
+  border-radius: 50%;
+
+  background: rgba(0, 0, 0, 0.68);
+  color: #ffffff;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.post-modal-close:hover {
+  background: rgba(0, 0, 0, 0.85);
+}
+
+.post-modal-close:active {
+  transform: scale(0.94);
+}
+
+.post-modal-close:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}
+
 .post-modal-image {
   min-height: 0;
+
   background: #000000;
+
   display: flex;
   align-items: center;
   justify-content: center;
@@ -41,21 +79,32 @@
 .post-modal-image img {
   width: 100%;
   height: 100%;
+
   object-fit: contain;
 }
 
 .post-modal-content {
   min-height: 0;
+
   border-left: 1px solid #dbdbdb;
+
   background: #ffffff;
   color: #262626;
+
   display: grid;
-  grid-template-rows: 60px minmax(0, 1fr) auto auto 52px;
+  grid-template-rows:
+    60px
+    minmax(0, 1fr)
+    auto
+    auto
+    52px;
 }
 
 .post-modal-header {
-  padding: 14px 16px;
+  padding: 14px 64px 14px 16px;
+
   border-bottom: 1px solid #efefef;
+
   display: flex;
   align-items: center;
   gap: 8px;
@@ -63,24 +112,35 @@
 
 .post-modal-user {
   min-width: 0;
+
+  color: inherit;
+  text-decoration: none;
+
   display: flex;
   align-items: center;
   gap: 12px;
-  color: inherit;
-  text-decoration: none;
 }
 
 .post-modal-user strong {
+  overflow: hidden;
+
   font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .post-modal-follow {
+  flex-shrink: 0;
+
   padding: 0;
+
   border: none;
   background: transparent;
   color: #0095f6;
+
   font-size: 12px;
   font-weight: 700;
+
   cursor: pointer;
 }
 
@@ -88,15 +148,36 @@
   color: #8e8e8e;
 }
 
+.post-modal-follow:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .post-modal-scroll {
   min-height: 0;
   padding: 18px 16px;
+
+  overflow-x: hidden;
   overflow-y: auto;
+}
+
+.post-modal-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.post-modal-scroll::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: #d5d5d5;
+}
+
+.post-modal-scroll::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .post-modal-caption,
 .post-modal-comment {
   margin-bottom: 18px;
+
   display: flex;
   align-items: flex-start;
   gap: 12px;
@@ -104,22 +185,34 @@
 
 .post-modal-caption p,
 .post-modal-comment p {
+  min-width: 0;
   margin: 0;
+
   font-size: 14px;
   line-height: 1.4;
+
   word-break: break-word;
   overflow-wrap: anywhere;
 }
 
+.post-modal-comments {
+  display: flex;
+  flex-direction: column;
+}
+
 .post-modal-empty {
   margin: 0;
+
   color: #8e8e8e;
+
   font-size: 14px;
 }
 
 .post-modal-actions {
   padding: 12px 16px 8px;
+
   border-top: 1px solid #efefef;
+
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -127,19 +220,34 @@
 
 .post-modal-actions div {
   display: flex;
+  align-items: center;
   gap: 14px;
 }
 
 .post-modal-actions button {
+  width: 32px;
+  height: 32px;
   padding: 0;
+
   border: none;
   background: transparent;
   color: inherit;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
   cursor: pointer;
+}
+
+.post-modal-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .post-modal-meta {
   padding: 0 16px 12px;
+
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -151,12 +259,15 @@
 
 .post-modal-meta span {
   color: #8e8e8e;
+
   font-size: 12px;
 }
 
 .post-modal-form {
   padding: 0 16px;
+
   border-top: 1px solid #efefef;
+
   display: flex;
   align-items: center;
   gap: 12px;
@@ -165,10 +276,13 @@
 .post-modal-form input {
   flex: 1;
   min-width: 0;
+
   border: none;
   outline: none;
+
   background: transparent;
   color: #262626;
+
   font-size: 14px;
 }
 
@@ -178,11 +292,15 @@
 
 .post-modal-form > button {
   flex-shrink: 0;
+
   padding: 0;
+
   border: none;
   background: transparent;
   color: #0095f6;
+
   font-weight: 600;
+
   cursor: pointer;
 }
 
@@ -193,19 +311,26 @@
 
 .post-modal-emoji {
   position: relative;
+
   flex-shrink: 0;
+
   display: flex;
   align-items: center;
 }
 
 .post-modal-emoji-button {
+  width: 32px;
+  height: 32px;
   padding: 0;
+
   border: none;
   background: transparent;
   color: inherit;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
   cursor: pointer;
 }
 
@@ -213,7 +338,8 @@
   position: absolute;
   left: 0;
   bottom: 36px;
-  z-index: 20;
+  z-index: 200;
+
   width: 300px;
   max-width: calc(100vw - 32px);
 }
@@ -258,42 +384,81 @@ body.dark .post-modal-emoji-picker .EmojiPickerReact {
 }
 
 @media (max-width: 900px) {
+  .post-modal-backdrop {
+    padding: 12px;
+  }
+
   .post-modal {
-    width: 94vw;
-    height: 90vh;
+    width: 96vw;
+    height: 92vh;
+
     grid-template-columns: 1fr;
-    grid-template-rows: 55% 45%;
+    grid-template-rows: minmax(280px, 1fr) minmax(300px, auto);
   }
 
   .post-modal-content {
+    min-height: 0;
+
     border-top: 1px solid #dbdbdb;
     border-left: none;
-    grid-template-rows: 52px minmax(0, 1fr) auto auto 52px;
+
+    grid-template-rows:
+      52px
+      minmax(0, 1fr)
+      auto
+      auto
+      52px;
+  }
+
+  .post-modal-close {
+    top: 10px;
+    right: 10px;
+
+    width: 40px;
+    height: 40px;
+  }
+
+  .post-modal-header {
+    padding-right: 58px;
+  }
+
+  body.dark .post-modal-content {
+    border-top-color: #262626;
   }
 }
 
 @media (max-width: 768px) {
   .post-modal-backdrop {
-    padding: 14px;
+    padding: 10px;
   }
 
   .post-modal {
-    width: min(100%, 430px);
-    height: 88dvh;
-    grid-template-columns: 1fr;
-    grid-template-rows: 48% 52%;
-  }
+    width: min(100%, 460px);
+    height: calc(100dvh - 20px);
 
-  .post-modal-content {
-    border-top: 1px solid #dbdbdb;
-    border-left: none;
-    grid-template-rows: 56px minmax(0, 1fr) auto auto 52px;
+    grid-template-rows: 46% 54%;
   }
 
   .post-modal-close {
-    top: 14px;
-    right: 16px;
-    z-index: 3000;
+    top: 10px;
+    right: 10px;
+    z-index: 300;
+
+    width: 40px;
+    height: 40px;
+  }
+
+  .post-modal-content {
+    grid-template-rows:
+      54px
+      minmax(0, 1fr)
+      auto
+      auto
+      52px;
+  }
+
+  .post-modal-header {
+    padding: 10px 58px 10px 14px;
   }
 
   .post-modal-form {
@@ -312,41 +477,56 @@ body.dark .post-modal-emoji-picker .EmojiPickerReact {
 }
 
 @media (max-width: 480px) {
-  .post-modal-close {
-    position: fixed;
-    top: 18px;
-    right: 18px;
-    z-index: 5000;
-    width: 42px;
-    height: 42px;
-    border-radius: 12px;
-    background: rgba(0, 0, 0, 0.55);
-    color: #ffffff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
   body:has(.post-modal-backdrop) .mobile-menu-button {
     display: none;
   }
 
   .post-modal-backdrop {
-    padding: 10px;
+    padding: 0;
   }
 
   .post-modal {
-    width: min(100%, 360px);
-    height: 86dvh;
-    grid-template-rows: 44% 56%;
+    width: 100vw;
+    height: 100dvh;
+
+    border-radius: 0;
+
+    grid-template-rows: 43% 57%;
   }
 
-  .post-modal-image img {
-    object-fit: contain;
+  .post-modal-close {
+    top: 8px;
+    right: 8px;
+
+    width: 40px;
+    height: 40px;
+
+    background: rgba(0, 0, 0, 0.76);
+  }
+
+  .post-modal-content {
+    grid-template-rows:
+      52px
+      minmax(0, 1fr)
+      auto
+      auto
+      50px;
+  }
+
+  .post-modal-header {
+    padding: 8px 56px 8px 12px;
   }
 
   .post-modal-scroll {
     padding: 12px;
+  }
+
+  .post-modal-actions {
+    padding: 8px 12px 6px;
+  }
+
+  .post-modal-meta {
+    padding: 0 12px 8px;
   }
 
   .post-modal-form {
@@ -369,9 +549,29 @@ body.dark .post-modal-emoji-picker .EmojiPickerReact {
 }
 
 @media (max-width: 360px) {
+  .post-modal-close {
+    top: 6px;
+    right: 6px;
+
+    width: 38px;
+    height: 38px;
+  }
+
+  .post-modal-header {
+    padding-right: 50px;
+  }
+
+  .post-modal-user {
+    gap: 8px;
+  }
+
+  .post-modal-follow {
+    font-size: 11px;
+  }
+
   .post-modal-emoji-picker {
     width: 250px;
-    max-width: calc(100vw - 24px);
+    max-width: calc(100vw - 20px);
   }
 
   .post-modal-emoji-picker .EmojiPickerReact {
@@ -380,9 +580,18 @@ body.dark .post-modal-emoji-picker .EmojiPickerReact {
 }
 
 @media (max-width: 330px) {
+  .post-modal-close {
+    width: 36px;
+    height: 36px;
+  }
+
+  .post-modal-header {
+    padding-right: 46px;
+  }
+
   .post-modal-emoji-picker {
     width: 250px;
-    max-width: calc(100vw - 24px);
+    max-width: calc(100vw - 16px);
   }
 
   .post-modal-emoji-picker .EmojiPickerReact {

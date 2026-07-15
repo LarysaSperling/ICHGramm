@@ -17,15 +17,24 @@ import SharePostModal from "./SharePostModal";
 
 import "../../styles/postModal.css";
 
+const MAX_COMMENT_LENGTH = 500;
+
 const getCurrentUserId = () => {
   const token = localStorage.getItem("token");
 
   if (!token) return null;
 
   try {
-    const payload = JSON.parse(atob(token.split(".")[1]));
+    const payload = JSON.parse(
+      atob(token.split(".")[1]),
+    );
 
-    return payload.id || payload._id || payload.userId || null;
+    return (
+      payload.id ||
+      payload._id ||
+      payload.userId ||
+      null
+    );
   } catch {
     return null;
   }
@@ -46,26 +55,46 @@ const PostModal = ({
   onClose,
   onPostChange,
 }) => {
-  const [localPost, setLocalPost] = useState(post);
-  const [comments, setComments] = useState([]);
-  const [commentText, setCommentText] = useState("");
+  const [localPost, setLocalPost] =
+    useState(post);
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLiking, setIsLiking] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isSaved, setIsSaved] = useState(false);
+  const [comments, setComments] =
+    useState([]);
 
-  const [isFollowing, setIsFollowing] = useState(false);
-  const [isFollowLoading, setIsFollowLoading] =
+  const [commentText, setCommentText] =
+    useState("");
+
+  const [isSubmitting, setIsSubmitting] =
     useState(false);
 
-  const [isEmojiOpen, setIsEmojiOpen] = useState(false);
-  const [isShareOpen, setIsShareOpen] = useState(false);
+  const [isLiking, setIsLiking] =
+    useState(false);
+
+  const [isSaving, setIsSaving] =
+    useState(false);
+
+  const [isSaved, setIsSaved] =
+    useState(false);
+
+  const [isFollowing, setIsFollowing] =
+    useState(false);
+
+  const [
+    isFollowLoading,
+    setIsFollowLoading,
+  ] = useState(false);
+
+  const [isEmojiOpen, setIsEmojiOpen] =
+    useState(false);
+
+  const [isShareOpen, setIsShareOpen] =
+    useState(false);
 
   const emojiRef = useRef(null);
   const inputRef = useRef(null);
 
-  const currentUserId = getCurrentUserId();
+  const currentUserId =
+    getCurrentUserId();
 
   const {
     _id,
@@ -86,7 +115,9 @@ const PostModal = ({
     Boolean(currentUserId) &&
     authorId === currentUserId;
 
-  const likes = Array.isArray(localPost?.likes)
+  const likes = Array.isArray(
+    localPost?.likes,
+  )
     ? localPost.likes
     : [];
 
@@ -106,10 +137,14 @@ const PostModal = ({
   }, [post]);
 
   useEffect(() => {
-    const handleClickOutsideEmoji = (event) => {
+    const handleClickOutsideEmoji = (
+      event,
+    ) => {
       if (
         emojiRef.current &&
-        !emojiRef.current.contains(event.target)
+        !emojiRef.current.contains(
+          event.target,
+        )
       ) {
         setIsEmojiOpen(false);
       }
@@ -127,6 +162,26 @@ const PostModal = ({
       );
     };
   }, []);
+
+  useEffect(() => {
+    const handleEscape = (event) => {
+      if (event.key === "Escape") {
+        onClose?.();
+      }
+    };
+
+    document.addEventListener(
+      "keydown",
+      handleEscape,
+    );
+
+    return () => {
+      document.removeEventListener(
+        "keydown",
+        handleEscape,
+      );
+    };
+  }, [onClose]);
 
   useEffect(() => {
     const loadModalData = async () => {
@@ -150,14 +205,22 @@ const PostModal = ({
           );
         }
 
-        const responses = await Promise.all(requests);
+        const responses =
+          await Promise.all(requests);
 
-        const commentsResponse = responses[0];
-        const savedResponse = responses[1];
-        const followingResponse = responses[2];
+        const commentsResponse =
+          responses[0];
+
+        const savedResponse =
+          responses[1];
+
+        const followingResponse =
+          responses[2];
 
         setComments(
-          Array.isArray(commentsResponse.data)
+          Array.isArray(
+            commentsResponse.data,
+          )
             ? commentsResponse.data
             : [],
         );
@@ -165,19 +228,25 @@ const PostModal = ({
         const savedIds = Array.isArray(
           savedResponse.data,
         )
-          ? savedResponse.data.map(
-              (savedPost) => savedPost._id,
-            )
+          ? savedResponse.data
+              .map(
+                (savedPost) =>
+                  savedPost?._id,
+              )
+              .filter(Boolean)
           : [];
 
-        setIsSaved(savedIds.includes(_id));
+        setIsSaved(
+          savedIds.includes(_id),
+        );
 
         if (followingResponse) {
-          const followingList = Array.isArray(
-            followingResponse.data,
-          )
-            ? followingResponse.data
-            : [];
+          const followingList =
+            Array.isArray(
+              followingResponse.data,
+            )
+              ? followingResponse.data
+              : [];
 
           const followsAuthor =
             followingList.some(
@@ -187,7 +256,9 @@ const PostModal = ({
                 ) === authorId,
             );
 
-          setIsFollowing(followsAuthor);
+          setIsFollowing(
+            followsAuthor,
+          );
         } else {
           setIsFollowing(false);
         }
@@ -207,7 +278,9 @@ const PostModal = ({
     isOwnPost,
   ]);
 
-  const handleEmojiClick = (emojiData) => {
+  const handleEmojiClick = (
+    emojiData,
+  ) => {
     setCommentText(
       (previousText) =>
         `${previousText}${emojiData.emoji}`,
@@ -326,7 +399,9 @@ const PostModal = ({
     }, 300);
   };
 
-  const handleAddComment = async (event) => {
+  const handleAddComment = async (
+    event,
+  ) => {
     event.preventDefault();
 
     const normalizedComment =
@@ -350,18 +425,19 @@ const PostModal = ({
         },
       );
 
-      setComments((previousComments) => [
+      const nextComments = [
         data,
-        ...previousComments,
-      ]);
+        ...comments,
+      ];
 
+      setComments(nextComments);
       setCommentText("");
       setIsEmojiOpen(false);
 
       const updatedPost = {
         ...localPost,
         commentsCount:
-          comments.length + 1,
+          nextComments.length,
       };
 
       setLocalPost(updatedPost);
@@ -385,21 +461,24 @@ const PostModal = ({
       className="post-modal-backdrop"
       onClick={onClose}
     >
-      <button
-        className="post-modal-close"
-        type="button"
-        onClick={onClose}
-        aria-label="Close post"
-      >
-        <X size={28} />
-      </button>
-
       <div
         className="post-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Post preview"
         onClick={(event) =>
           event.stopPropagation()
         }
       >
+        <button
+          className="post-modal-close"
+          type="button"
+          onClick={onClose}
+          aria-label="Close post"
+        >
+          <X size={26} />
+        </button>
+
         <div className="post-modal-image">
           <img
             src={image}
@@ -570,7 +649,11 @@ const PostModal = ({
                 handleToggleSave
               }
               disabled={isSaving}
-              aria-label="Save post"
+              aria-label={
+                isSaved
+                  ? "Remove from saved posts"
+                  : "Save post"
+              }
             >
               <Bookmark
                 size={24}
@@ -649,7 +732,9 @@ const PostModal = ({
                 )
               }
               autoComplete="off"
-              maxLength={300}
+              maxLength={
+                MAX_COMMENT_LENGTH
+              }
             />
 
             <button

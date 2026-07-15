@@ -1,8 +1,4 @@
-import {
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Bookmark,
   Heart,
@@ -25,8 +21,7 @@ import "../../styles/postPreviewModal.css";
 const MAX_COMMENT_LENGTH = 500;
 
 const getCurrentUserId = () => {
-  const token =
-    localStorage.getItem("token");
+  const token = localStorage.getItem("token");
 
   if (!token) {
     return null;
@@ -56,65 +51,43 @@ const PostPreviewModal = ({
   onDeletePost,
   onPostChange,
 }) => {
-  const commentInputRef =
-    useRef(null);
-
+  const commentInputRef = useRef(null);
   const emojiRef = useRef(null);
 
-  const [
-    localPost,
-    setLocalPost,
-  ] = useState(post);
+  const [localPost, setLocalPost] =
+    useState(post);
 
-  const [
-    commentText,
-    setCommentText,
-  ] = useState("");
+  const [commentText, setCommentText] =
+    useState("");
 
-  const [
-    comments,
-    setComments,
-  ] = useState([]);
+  const [comments, setComments] =
+    useState([]);
 
   const [
     showAllComments,
     setShowAllComments,
   ] = useState(false);
 
-  const [
-    isSaved,
-    setIsSaved,
-  ] = useState(false);
+  const [isSaved, setIsSaved] =
+    useState(false);
 
-  const [
-    isSaving,
-    setIsSaving,
-  ] = useState(false);
+  const [isSaving, setIsSaving] =
+    useState(false);
 
-  const [
-    isMenuOpen,
-    setIsMenuOpen,
-  ] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] =
+    useState(false);
 
-  const [
-    isLiking,
-    setIsLiking,
-  ] = useState(false);
+  const [isLiking, setIsLiking] =
+    useState(false);
 
-  const [
-    isCommenting,
-    setIsCommenting,
-  ] = useState(false);
+  const [isCommenting, setIsCommenting] =
+    useState(false);
 
-  const [
-    isEmojiOpen,
-    setIsEmojiOpen,
-  ] = useState(false);
+  const [isEmojiOpen, setIsEmojiOpen] =
+    useState(false);
 
-  const [
-    isShareOpen,
-    setIsShareOpen,
-  ] = useState(false);
+  const [isShareOpen, setIsShareOpen] =
+    useState(false);
 
   const currentUserId =
     getCurrentUserId();
@@ -122,6 +95,30 @@ const PostPreviewModal = ({
   useEffect(() => {
     setLocalPost(post);
   }, [post]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return undefined;
+    }
+
+    const handleEscape = (event) => {
+      if (event.key === "Escape") {
+        onClose?.();
+      }
+    };
+
+    document.addEventListener(
+      "keydown",
+      handleEscape,
+    );
+
+    return () => {
+      document.removeEventListener(
+        "keydown",
+        handleEscape,
+      );
+    };
+  }, [isOpen, onClose]);
 
   useEffect(() => {
     const handleClickOutsideEmoji = (
@@ -151,84 +148,71 @@ const PostPreviewModal = ({
   }, []);
 
   useEffect(() => {
-    const fetchComments =
-      async () => {
-        if (
-          !isOpen ||
-          !localPost?._id
-        ) {
-          return;
-        }
+    const fetchComments = async () => {
+      if (
+        !isOpen ||
+        !localPost?._id
+      ) {
+        return;
+      }
 
-        try {
-          const { data } =
-            await api.get(
-              `/comments/${localPost._id}`,
-            );
+      try {
+        const { data } = await api.get(
+          `/comments/${localPost._id}`,
+        );
 
-          setComments(
-            Array.isArray(data)
-              ? data
-              : [],
-          );
+        setComments(
+          Array.isArray(data)
+            ? data
+            : [],
+        );
 
-          setShowAllComments(false);
-          setCommentText("");
-        } catch (error) {
-          console.error(
-            error.response?.data
-              ?.message ||
-              "Fetch comments failed",
-          );
-        }
-      };
+        setShowAllComments(false);
+        setCommentText("");
+      } catch (error) {
+        console.error(
+          error.response?.data?.message ||
+            "Fetch comments failed",
+        );
+      }
+    };
 
     fetchComments();
-  }, [
-    isOpen,
-    localPost?._id,
-  ]);
+  }, [isOpen, localPost?._id]);
 
   useEffect(() => {
-    const fetchSavedPosts =
-      async () => {
-        if (
-          !isOpen ||
-          !localPost?._id
-        ) {
-          return;
-        }
+    const fetchSavedPosts = async () => {
+      if (
+        !isOpen ||
+        !localPost?._id
+      ) {
+        return;
+      }
 
-        try {
-          const { data } =
-            await api.get(
-              "/users/saved",
-            );
+      try {
+        const { data } = await api.get(
+          "/users/saved",
+        );
 
-          const saved =
-            Array.isArray(data)
-              ? data.some(
-                  (savedPost) =>
-                    savedPost?._id ===
-                    localPost._id,
-                )
-              : false;
+        const saved = Array.isArray(data)
+          ? data.some(
+              (savedPost) =>
+                savedPost?._id ===
+                localPost._id,
+            )
+          : false;
 
-          setIsSaved(saved);
-        } catch (error) {
-          console.error(
-            error.response?.data
-              ?.message ||
-              "Fetch saved posts failed",
-          );
-        }
-      };
+        setIsSaved(saved);
+      } catch (error) {
+        console.error(
+          error.response?.data?.message ||
+            "Fetch saved posts failed",
+        );
+      }
+    };
 
     fetchSavedPosts();
-  }, [
-    isOpen,
-    localPost?._id,
-  ]);
+  }, [isOpen, localPost?._id]);
 
   if (!isOpen || !localPost) {
     return null;
@@ -258,14 +242,11 @@ const PostPreviewModal = ({
           ? like
           : like?._id;
 
-      return (
-        likeId === currentUserId
-      );
+      return likeId === currentUserId;
     },
   );
 
-  const likesCount =
-    postLikes.length;
+  const likesCount = postLikes.length;
 
   const visibleComments =
     showAllComments
@@ -277,89 +258,71 @@ const PostPreviewModal = ({
   ) => {
     const updatedPost = {
       ...localPost,
-      commentsCount:
-        nextCommentsCount,
+      commentsCount: nextCommentsCount,
     };
 
     setLocalPost(updatedPost);
     onPostChange?.(updatedPost);
   };
 
-  const handleToggleLike =
-    async () => {
-      if (isLiking) {
-        return;
+  const handleToggleLike = async () => {
+    if (isLiking) {
+      return;
+    }
+
+    try {
+      setIsLiking(true);
+
+      const { data } = await api.post(
+        `/posts/${localPost._id}/like`,
+      );
+
+      const updatedPost =
+        data.post || data;
+
+      if (updatedPost?._id) {
+        setLocalPost(updatedPost);
+        onPostChange?.(updatedPost);
       }
+    } catch (error) {
+      console.error(
+        error.response?.data?.message ||
+          "Like post failed",
+      );
+    } finally {
+      setIsLiking(false);
+    }
+  };
 
-      try {
-        setIsLiking(true);
+  const handleToggleSave = async () => {
+    if (isSaving) {
+      return;
+    }
 
-        const { data } =
-          await api.post(
-            `/posts/${localPost._id}/like`,
-          );
+    try {
+      setIsSaving(true);
 
-        const updatedPost =
-          data.post || data;
+      const { data } = await api.post(
+        `/users/saved/${localPost._id}`,
+      );
 
-        if (updatedPost?._id) {
-          setLocalPost(
-            updatedPost,
-          );
+      const nextSavedState =
+        Boolean(data.saved);
 
-          onPostChange?.(
-            updatedPost,
-          );
-        }
-      } catch (error) {
-        console.error(
-          error.response?.data
-            ?.message ||
-            "Like post failed",
-        );
-      } finally {
-        setIsLiking(false);
-      }
-    };
+      setIsSaved(nextSavedState);
 
-  const handleToggleSave =
-    async () => {
-      if (isSaving) {
-        return;
-      }
-
-      try {
-        setIsSaving(true);
-
-        const { data } =
-          await api.post(
-            `/users/saved/${localPost._id}`,
-          );
-
-        const nextSavedState =
-          Boolean(data.saved);
-
-        setIsSaved(
-          nextSavedState,
-        );
-
-        onPostChange?.(
-          localPost,
-          {
-            saved:
-              nextSavedState,
-          },
-        );
-      } catch (error) {
-        console.error(
-          error.response?.data
-            ?.message ||
-            "Save post failed",
-        );
-      } finally {
-        setIsSaving(false);
-      }
-    };
+      onPostChange?.(localPost, {
+        saved: nextSavedState,
+      });
+    } catch (error) {
+      console.error(
+        error.response?.data?.message ||
+          "Save post failed",
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handleEmojiClick = (
     emojiData,
@@ -376,59 +339,56 @@ const PostPreviewModal = ({
     }, 0);
   };
 
-  const handleAddComment =
-    async (event) => {
-      event.preventDefault();
+  const handleAddComment = async (
+    event,
+  ) => {
+    event.preventDefault();
 
-      const normalizedComment =
-        commentText.trim();
+    const normalizedComment =
+      commentText.trim();
 
-      if (
-        !normalizedComment ||
-        isCommenting
-      ) {
-        return;
-      }
+    if (
+      !normalizedComment ||
+      isCommenting
+    ) {
+      return;
+    }
 
-      try {
-        setIsCommenting(true);
+    try {
+      setIsCommenting(true);
 
-        const { data } =
-          await api.post(
-            `/comments/${localPost._id}`,
-            {
-              text:
-                normalizedComment,
-            },
-          );
+      const { data } = await api.post(
+        `/comments/${localPost._id}`,
+        {
+          text: normalizedComment,
+        },
+      );
 
-        const nextComments = [
-          data,
-          ...comments,
-        ];
+      const nextComments = [
+        data,
+        ...comments,
+      ];
 
-        setComments(nextComments);
-        setCommentText("");
-        setIsEmojiOpen(false);
+      setComments(nextComments);
+      setCommentText("");
+      setIsEmojiOpen(false);
 
-        syncCommentsCount(
-          nextComments.length,
-        );
-      } catch (error) {
-        console.error(
-          error.response?.data
-            ?.message ||
-            "Add comment failed",
-        );
-      } finally {
-        setIsCommenting(false);
-      }
-    };
+      syncCommentsCount(
+        nextComments.length,
+      );
+    } catch (error) {
+      console.error(
+        error.response?.data?.message ||
+          "Add comment failed",
+      );
+    } finally {
+      setIsCommenting(false);
+    }
+  };
 
-  const handleCommentIconClick =
-    () => {
-      commentInputRef.current?.focus();
-    };
+  const handleCommentIconClick = () => {
+    commentInputRef.current?.focus();
+  };
 
   const handleEdit = () => {
     setIsMenuOpen(false);
@@ -445,21 +405,28 @@ const PostPreviewModal = ({
       className="post-preview-modal"
       onClick={onClose}
     >
-      <button
-        className="post-preview-close"
-        type="button"
-        onClick={onClose}
-        aria-label="Close post preview"
-      >
-        <X size={30} />
-      </button>
-
       <div
         className="post-preview-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Post preview"
         onClick={(event) =>
           event.stopPropagation()
         }
       >
+        <button
+          className="post-preview-close"
+          type="button"
+          onClick={onClose}
+          aria-label="Close post preview"
+        >
+          <X
+            size={28}
+            strokeWidth={2.5}
+            aria-hidden="true"
+          />
+        </button>
+
         <div className="post-preview-media">
           <img
             src={localPost.image}
@@ -484,9 +451,7 @@ const PostPreviewModal = ({
                   {username}
                 </strong>
 
-                <span>
-                  {fullName}
-                </span>
+                <span>{fullName}</span>
               </div>
             </div>
 
@@ -498,9 +463,7 @@ const PostPreviewModal = ({
               }
               aria-label="Open post menu"
             >
-              <MoreHorizontal
-                size={22}
-              />
+              <MoreHorizontal size={22} />
             </button>
           </header>
 
@@ -518,9 +481,7 @@ const PostPreviewModal = ({
                     <strong>
                       {username}
                     </strong>{" "}
-                    {
-                      localPost.caption
-                    }
+                    {localPost.caption}
                   </p>
 
                   <div className="post-preview-comment-meta">
@@ -553,25 +514,21 @@ const PostPreviewModal = ({
 
             {comments.length === 0 && (
               <p className="post-preview-empty-comments">
-                No comments yet. Start
-                the conversation.
+                No comments yet. Start the
+                conversation.
               </p>
             )}
 
             {visibleComments.map(
               (comment) => {
                 const commentUsername =
-                  comment.user
-                    ?.username ||
-                  comment.author
-                    ?.username ||
+                  comment.user?.username ||
+                  comment.author?.username ||
                   "user";
 
                 const commentAvatar =
-                  comment.user
-                    ?.avatar ||
-                  comment.author
-                    ?.avatar;
+                  comment.user?.avatar ||
+                  comment.author?.avatar;
 
                 return (
                   <article
@@ -579,21 +536,15 @@ const PostPreviewModal = ({
                     key={comment._id}
                   >
                     <Avatar
-                      src={
-                        commentAvatar
-                      }
-                      name={
-                        commentUsername
-                      }
+                      src={commentAvatar}
+                      name={commentUsername}
                       size={34}
                     />
 
                     <div className="post-preview-comment-main">
                       <p>
                         <strong>
-                          {
-                            commentUsername
-                          }
+                          {commentUsername}
                         </strong>{" "}
                         {comment.text}
                       </p>
@@ -703,9 +654,7 @@ const PostPreviewModal = ({
 
             <form
               className="post-preview-add-comment"
-              onSubmit={
-                handleAddComment
-              }
+              onSubmit={handleAddComment}
             >
               <div
                 className="post-preview-emoji"
@@ -735,12 +684,9 @@ const PostPreviewModal = ({
                       height={360}
                       emojiStyle="native"
                       previewConfig={{
-                        showPreview:
-                          false,
+                        showPreview: false,
                       }}
-                      searchDisabled={
-                        false
-                      }
+                      searchDisabled={false}
                       skinTonesDisabled
                     />
                   </div>
@@ -751,14 +697,11 @@ const PostPreviewModal = ({
                 id={`preview-comment-${localPost._id}`}
                 name="preview-comment"
                 type="text"
-                ref={
-                  commentInputRef
-                }
+                ref={commentInputRef}
                 value={commentText}
                 onChange={(event) =>
                   setCommentText(
-                    event.target
-                      .value,
+                    event.target.value,
                   )
                 }
                 placeholder="Add a comment..."
