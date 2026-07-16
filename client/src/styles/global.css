@@ -65,11 +65,6 @@ body:has(.edit-post-overlay) .footer {
   display: none;
 }
 
-body:has(.search-panel) .footer,
-body:has(.notifications-overlay) .footer {
-  display: none;
-}
-
 .EmojiPickerReact {
   --epr-text-color: #737373;
   --epr-category-icon-active-color: #0095f6;
