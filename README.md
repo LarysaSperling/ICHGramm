@@ -8,6 +8,22 @@ The project was built using modern web technologies with a focus on responsive d
 
 ---
 
+# 🌐 Live Demo
+
+## Frontend (Vercel)
+
+🔗 https://ich-gramm-seven.vercel.app
+
+## Backend API (Render)
+
+🔗 https://ichgramm-nqw0.onrender.com
+
+## API Health Check
+
+🔗 https://ichgramm-nqw0.onrender.com/api/health
+
+---
+
 # ✨ Features
 
 ## Authentication
@@ -151,7 +167,7 @@ ICHGramm
 Clone the repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/ICHGramm.git
+git clone https://github.com/LarysaSperling/ICHGramm.git
 ```
 
 Go to the project directory
