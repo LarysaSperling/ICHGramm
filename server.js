@@ -22,10 +22,35 @@ dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
-const io = initializeSocket(server);
 
-app.use(cors());
+const allowedOrigins = [
+  "http://localhost:5173",
+  process.env.CLIENT_URL,
+].filter(Boolean);
+
+const corsOptions = {
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+      return;
+    }
+
+    callback(
+      new Error(
+        "CORS blocked request from this origin",
+      ),
+    );
+  },
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
+
+const io = initializeSocket(
+  server,
+  allowedOrigins,
+);
 
 app.use((req, res, next) => {
   req.io = io;
@@ -38,13 +63,22 @@ app.use("/api/posts", postRoutes);
 app.use("/api/likes", likeRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/follows", followRoutes);
-app.use("/api/notifications", notificationRoutes);
+app.use(
+  "/api/notifications",
+  notificationRoutes,
+);
 app.use("/api/messages", messageRoutes);
 app.use("/api/stories", storyRoutes);
 
 app.get("/", (req, res) => {
-  res.json({
+  res.status(200).json({
     message: "ICHGramm API is running",
+  });
+});
+
+app.get("/api/health", (req, res) => {
+  res.status(200).json({
+    status: "ok",
   });
 });
 
@@ -56,11 +90,17 @@ const startServer = async () => {
   try {
     await connectDB();
 
-    server.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
+    server.listen(PORT, "0.0.0.0", () => {
+      console.log(
+        `Server running on port ${PORT}`,
+      );
     });
   } catch (error) {
-    console.error("Failed to start server:", error.message);
+    console.error(
+      "Failed to start server:",
+      error.message,
+    );
+
     process.exit(1);
   }
 };
