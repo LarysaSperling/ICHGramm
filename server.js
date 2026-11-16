@@ -1,6 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
+import helmet from "helmet";
 import http from "http";
 
 import connectDB from "./src/config/db.js";
@@ -43,6 +44,20 @@ const corsOptions = {
   },
   credentials: true,
 };
+
+// Render runs the app behind one reverse proxy. Without this, every
+// request would appear to come from the proxy IP and all users would
+// share a single rate limit.
+app.set("trust proxy", 1);
+
+app.use(
+  helmet({
+    // The API is called from the frontend on another domain (Vercel).
+    crossOriginResourcePolicy: {
+      policy: "cross-origin",
+    },
+  }),
+);
 
 app.use(cors(corsOptions));
 app.use(express.json());
