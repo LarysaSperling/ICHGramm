@@ -1,6 +1,70 @@
+import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 import { Server } from "socket.io";
 
+import User from "../models/User.js";
+
 const onlineUsers = new Map();
+
+const socketAuthMiddleware = async (socket, next) => {
+  try {
+    const token = socket.handshake.auth?.token;
+
+    if (!token || typeof token !== "string") {
+      next(new Error("Not authorized"));
+      return;
+    }
+
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET,
+    );
+
+    const user = await User.findById(decoded.userId)
+      .select("_id username")
+      .lean();
+
+    if (!user) {
+      next(new Error("Not authorized"));
+      return;
+    }
+
+    socket.data.userId = user._id.toString();
+    socket.data.username = user.username;
+
+    next();
+  } catch {
+    next(new Error("Not authorized"));
+  }
+};
+
+// A chat room is "<userIdA>_<userIdB>" with ids sorted.
+// Only one of the two participants may join it.
+const isChatParticipant = (chatRoom, userId) => {
+  if (typeof chatRoom !== "string") {
+    return false;
+  }
+
+  const participants = chatRoom.split("_");
+
+  if (
+    participants.length !== 2 ||
+    !participants.every((id) =>
+      mongoose.isValidObjectId(id),
+    )
+  ) {
+    return false;
+  }
+
+  const expectedRoom = [...participants]
+    .sort()
+    .join("_");
+
+  return (
+    chatRoom === expectedRoom &&
+    participants.includes(userId)
+  );
+};
 
 const initializeSocket = (
   server,
@@ -33,77 +97,55 @@ const initializeSocket = (
     },
   });
 
+  io.use(socketAuthMiddleware);
+
   io.on("connection", (socket) => {
+    const { userId, username } = socket.data;
+
     console.log(
       "User connected:",
       socket.id,
     );
 
-    socket.on("joinUserRoom", (userId) => {
-      if (!userId) {
-        return;
-      }
+    onlineUsers.set(userId, socket.id);
 
-      onlineUsers.set(userId, socket.id);
+    socket.join(userId);
 
-      socket.join(userId);
-
-      io.emit(
-        "onlineUsers",
-        [...onlineUsers.keys()],
-      );
-
-      console.log(
-        `User joined room: ${userId}`,
-      );
-    });
+    io.emit(
+      "onlineUsers",
+      [...onlineUsers.keys()],
+    );
 
     socket.on("joinChat", (chatRoom) => {
-      if (!chatRoom) {
+      if (!isChatParticipant(chatRoom, userId)) {
         return;
       }
 
       socket.join(chatRoom);
-
-      console.log(
-        `Joined chat: ${chatRoom}`,
-      );
     });
 
-    socket.on(
-      "typing",
-      ({ chatRoom, user }) => {
-        if (!chatRoom || !user) {
-          return;
-        }
+    socket.on("typing", ({ chatRoom } = {}) => {
+      if (!socket.rooms.has(chatRoom)) {
+        return;
+      }
 
-        socket
-          .to(chatRoom)
-          .emit("typing", user);
-      },
-    );
+      socket.to(chatRoom).emit("typing", {
+        _id: userId,
+        username,
+      });
+    });
 
-    socket.on(
-      "stopTyping",
-      (chatRoom) => {
-        if (!chatRoom) {
-          return;
-        }
+    socket.on("stopTyping", (chatRoom) => {
+      if (!socket.rooms.has(chatRoom)) {
+        return;
+      }
 
-        socket
-          .to(chatRoom)
-          .emit("stopTyping");
-      },
-    );
+      socket.to(chatRoom).emit("stopTyping");
+    });
 
     socket.on("disconnect", () => {
-      for (const [
-        userId,
-        socketId,
-      ] of onlineUsers.entries()) {
-        if (socketId === socket.id) {
-          onlineUsers.delete(userId);
-        }
+      if (onlineUsers.get(userId) === socket.id) {
+        onlineUsers.delete(userId);
       }
 
       io.emit(
