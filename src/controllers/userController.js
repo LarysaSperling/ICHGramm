@@ -2,6 +2,17 @@ import User from "../models/User.js";
 import Post from "../models/Post.js";
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import escapeRegExp from "../utils/escapeRegExp.js";
+
+const MAX_SEARCH_LENGTH = 50;
+
+// Whitelists of fields that are safe to show to other users.
+// Email, saved posts and follow lists stay private.
+const PUBLIC_USER_FIELDS =
+  "_id username fullName avatar bio website";
+
+const USER_PREVIEW_FIELDS =
+  "_id username fullName avatar";
 
 const getProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id)
@@ -39,7 +50,7 @@ const updateProfile = asyncHandler(async (req, res) => {
 
     const usernameExists = await User.findOne({
       username: {
-        $regex: `^${normalizedUsername}$`,
+        $regex: `^${escapeRegExp(normalizedUsername)}$`,
         $options: "i",
       },
       _id: {
@@ -98,32 +109,44 @@ const updateProfile = asyncHandler(async (req, res) => {
 });
 
 const searchUsers = asyncHandler(async (req, res) => {
-  const keyword = req.query.q;
+  const keyword =
+    typeof req.query.q === "string"
+      ? req.query.q.trim()
+      : "";
 
-  if (!keyword || keyword.trim() === "") {
+  if (!keyword) {
     throw new ApiError(
       400,
       "Search keyword is required",
     );
   }
 
+  if (keyword.length > MAX_SEARCH_LENGTH) {
+    throw new ApiError(
+      400,
+      `Search keyword must be at most ${MAX_SEARCH_LENGTH} characters`,
+    );
+  }
+
+  const safeKeyword = escapeRegExp(keyword);
+
   const users = await User.find({
     $or: [
       {
         username: {
-          $regex: keyword.trim(),
+          $regex: safeKeyword,
           $options: "i",
         },
       },
       {
         fullName: {
-          $regex: keyword.trim(),
+          $regex: safeKeyword,
           $options: "i",
         },
       },
     ],
   })
-    .select("-password")
+    .select(USER_PREVIEW_FIELDS)
     .lean();
 
   res.json(users);
@@ -147,7 +170,7 @@ const getUserById = asyncHandler(async (req, res) => {
   const user = await User.findById(
     req.params.id,
   )
-    .select("-password")
+    .select(PUBLIC_USER_FIELDS)
     .lean();
 
   if (!user) {
