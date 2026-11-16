@@ -44,10 +44,12 @@ const corsOptions = {
   credentials: true,
 };
 
-// Render runs the app behind one reverse proxy. Without this, every
-// request would appear to come from the proxy IP and all users would
-// share a single rate limit.
-app.set("trust proxy", 1);
+// On Render the request passes two proxies: Cloudflare -> Render load
+// balancer -> app. Trusting exactly two hops makes req.ip the real
+// client IP (added by Cloudflare). With a lower value every user would
+// get a Cloudflare IP and share rate limits; with a higher value a
+// client could fake its IP via the X-Forwarded-For header.
+app.set("trust proxy", 2);
 
 app.use(
   helmet({
