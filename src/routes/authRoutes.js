@@ -13,11 +13,16 @@ import {
 } from "../validators/authValidator.js";
 
 import validationMiddleware from "../middlewares/validationMiddleware.js";
+import {
+  authLimiter,
+  passwordResetRequestLimiter,
+} from "../middlewares/rateLimitMiddleware.js";
 
 const router = express.Router();
 
 router.post(
   "/register",
+  authLimiter,
   registerValidator,
   validationMiddleware,
   register,
@@ -25,6 +30,7 @@ router.post(
 
 router.post(
   "/login",
+  authLimiter,
   loginValidator,
   validationMiddleware,
   login,
@@ -32,11 +38,13 @@ router.post(
 
 router.post(
   "/reset-password",
+  passwordResetRequestLimiter,
   requestPasswordReset,
 );
 
 router.post(
   "/reset-password/:token",
+  authLimiter,
   resetPassword,
 );
 

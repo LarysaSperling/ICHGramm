@@ -110,17 +110,6 @@ export const MessagesProvider = ({
       return undefined;
     }
 
-    const joinUserRoom = () => {
-      socket.emit(
-        "joinUserRoom",
-        userId,
-      );
-    };
-
-    const handleConnect = () => {
-      joinUserRoom();
-    };
-
     const handleConnectError = (
       error,
     ) => {
@@ -178,14 +167,14 @@ export const MessagesProvider = ({
       );
     };
 
-    socket.auth = {
-      userId,
+    // The server reads the user from the JWT and joins
+    // the personal room itself. A function is used so the
+    // current token is sent again on every reconnect.
+    socket.auth = (callback) => {
+      callback({
+        token: localStorage.getItem("token"),
+      });
     };
-
-    socket.on(
-      "connect",
-      handleConnect,
-    );
 
     socket.on(
       "connect_error",
@@ -202,18 +191,11 @@ export const MessagesProvider = ({
       handleNewNotification,
     );
 
-    if (socket.connected) {
-      joinUserRoom();
-    } else {
+    if (!socket.connected) {
       socket.connect();
     }
 
     return () => {
-      socket.off(
-        "connect",
-        handleConnect,
-      );
-
       socket.off(
         "connect_error",
         handleConnectError,

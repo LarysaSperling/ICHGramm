@@ -7,9 +7,7 @@ import generateToken from "../config/jwt.js";
 import { sendEmail } from "../config/email.js";
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
-
-const escapeRegExp = (value) =>
-  value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+import escapeRegExp from "../utils/escapeRegExp.js";
 
 const register = asyncHandler(async (req, res) => {
   const {
