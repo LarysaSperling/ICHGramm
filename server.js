@@ -97,6 +97,29 @@ app.get("/api/health", (req, res) => {
   });
 });
 
+// TEMPORARY: diagnose the proxy chain on Render (REVIEW M-21).
+// Returns only the caller's own IP data. Remove after use.
+app.get("/api/debug/ip", (req, res) => {
+  res.status(200).json({
+    ip: req.ip,
+    ips: req.ips,
+    remoteAddress: req.socket.remoteAddress,
+    xForwardedFor:
+      req.headers["x-forwarded-for"] || null,
+    cfConnectingIp:
+      req.headers["cf-connecting-ip"] || null,
+    trueClientIp:
+      req.headers["true-client-ip"] || null,
+    xRealIp: req.headers["x-real-ip"] || null,
+    // Rate limits live in process memory: a restart or a second
+    // instance would also split the counters.
+    instanceId:
+      process.env.RENDER_INSTANCE_ID || null,
+    pid: process.pid,
+    uptimeSeconds: Math.round(process.uptime()),
+  });
+});
+
 app.use(errorMiddleware);
 
 const PORT = process.env.PORT || 5000;
