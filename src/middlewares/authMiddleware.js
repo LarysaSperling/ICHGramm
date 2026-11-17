@@ -17,7 +17,20 @@ const authMiddleware = asyncHandler(async (req, res, next) => {
     throw new ApiError(401, "Not authorized");
   }
 
-  const decoded = jwt.verify(token, process.env.JWT_SECRET);
+  // jwt.verify throws errors without statusCode (TokenExpiredError,
+  // JsonWebTokenError), which errorMiddleware would turn into 500.
+  let decoded;
+
+  try {
+    decoded = jwt.verify(token, process.env.JWT_SECRET);
+  } catch (error) {
+    throw new ApiError(
+      401,
+      error.name === "TokenExpiredError"
+        ? "Session expired"
+        : "Not authorized",
+    );
+  }
 
   const user = await User.findById(decoded.userId).select("-password");
 
