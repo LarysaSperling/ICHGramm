@@ -5,10 +5,6 @@ const getStatusCode = (err) => {
     return 400;
   }
 
-  if (err.message === "Only JPG, PNG and WEBP images are allowed") {
-    return 400;
-  }
-
   return err.statusCode || 500;
 };
 
