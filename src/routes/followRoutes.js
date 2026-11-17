@@ -1,6 +1,7 @@
 import express from "express";
 
 import authMiddleware from "../middlewares/authMiddleware.js";
+import validateObjectId from "../middlewares/validateObjectId.js";
 
 import {
   followUser,
@@ -10,6 +11,8 @@ import {
 } from "../controllers/followController.js";
 
 const router = express.Router();
+
+router.param("userId", validateObjectId);
 
 router.post("/:userId", authMiddleware, followUser);
 router.delete("/:userId", authMiddleware, unfollowUser);
