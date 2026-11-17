@@ -44,11 +44,11 @@ const corsOptions = {
   credentials: true,
 };
 
-// On Render the request passes two proxies: Cloudflare -> Render load
-// balancer -> app. Trusting exactly two hops makes req.ip the real
-// client IP (added by Cloudflare). With a lower value every user would
-// get a Cloudflare IP and share rate limits; with a higher value a
-// client could fake its IP via the X-Forwarded-For header.
+// On Render a request passes Cloudflare -> Render load balancer ->
+// local proxy (127.0.0.1) -> app (measured 17.11.2026, REVIEW M-21e).
+// With this setting req.ip is a Cloudflare edge IP, which changes from
+// request to request. Rate limits therefore do NOT use req.ip: they key
+// on the CF-Connecting-IP header (see rateLimitMiddleware.js).
 app.set("trust proxy", 2);
 
 app.use(
@@ -94,29 +94,6 @@ app.get("/", (req, res) => {
 app.get("/api/health", (req, res) => {
   res.status(200).json({
     status: "ok",
-  });
-});
-
-// TEMPORARY: diagnose the proxy chain on Render (REVIEW M-21).
-// Returns only the caller's own IP data. Remove after use.
-app.get("/api/debug/ip", (req, res) => {
-  res.status(200).json({
-    ip: req.ip,
-    ips: req.ips,
-    remoteAddress: req.socket.remoteAddress,
-    xForwardedFor:
-      req.headers["x-forwarded-for"] || null,
-    cfConnectingIp:
-      req.headers["cf-connecting-ip"] || null,
-    trueClientIp:
-      req.headers["true-client-ip"] || null,
-    xRealIp: req.headers["x-real-ip"] || null,
-    // Rate limits live in process memory: a restart or a second
-    // instance would also split the counters.
-    instanceId:
-      process.env.RENDER_INSTANCE_ID || null,
-    pid: process.pid,
-    uptimeSeconds: Math.round(process.uptime()),
   });
 });
 
