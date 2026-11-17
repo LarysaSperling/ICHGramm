@@ -17,6 +17,7 @@ import messageRoutes from "./src/routes/messageRoutes.js";
 import storyRoutes from "./src/routes/storyRoutes.js";
 
 import errorMiddleware from "./src/middlewares/errorMiddleware.js";
+import ApiError from "./src/utils/ApiError.js";
 
 dotenv.config();
 
@@ -35,8 +36,11 @@ const corsOptions = {
       return;
     }
 
+    // 403 (not 500) and no stack trace in the logs; the cors package
+    // passes this error on to errorMiddleware, also for preflight OPTIONS.
     callback(
-      new Error(
+      new ApiError(
+        403,
         "CORS blocked request from this origin",
       ),
     );
