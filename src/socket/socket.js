@@ -6,6 +6,8 @@ import User from "../models/User.js";
 
 const onlineUsers = new Map();
 
+const MAX_TIMEOUT_MS = 2 ** 31 - 1;
+
 const socketAuthMiddleware = async (socket, next) => {
   try {
     const token = socket.handshake.auth?.token;
@@ -15,10 +17,25 @@ const socketAuthMiddleware = async (socket, next) => {
       return;
     }
 
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET,
-    );
+    let decoded;
+
+    try {
+      decoded = jwt.verify(
+        token,
+        process.env.JWT_SECRET,
+      );
+    } catch (error) {
+      // The client logs out on both messages; "Session expired"
+      // only makes the reason clearer.
+      next(
+        new Error(
+          error.name === "TokenExpiredError"
+            ? "Session expired"
+            : "Not authorized",
+        ),
+      );
+      return;
+    }
 
     const user = await User.findById(decoded.userId)
       .select("_id username")
@@ -31,6 +48,7 @@ const socketAuthMiddleware = async (socket, next) => {
 
     socket.data.userId = user._id.toString();
     socket.data.username = user.username;
+    socket.data.tokenExpiresAt = decoded.exp * 1000;
 
     next();
   } catch {
@@ -111,6 +129,20 @@ const initializeSocket = (
 
     socket.join(userId);
 
+    // The JWT is checked only on connect. Close the connection when the
+    // token expires, so an open tab cannot keep receiving events with an
+    // expired session. setTimeout cannot wait longer than ~24.8 days
+    // (2^31-1 ms): such a long-lived connection is simply not timed.
+    const msUntilExpiry =
+      socket.data.tokenExpiresAt - Date.now();
+    const expiryTimer =
+      msUntilExpiry <= MAX_TIMEOUT_MS
+        ? setTimeout(() => {
+            socket.emit("sessionExpired");
+            socket.disconnect(true);
+          }, Math.max(msUntilExpiry, 0))
+        : null;
+
     io.emit(
       "onlineUsers",
       [...onlineUsers.keys()],
@@ -144,6 +176,8 @@ const initializeSocket = (
     });
 
     socket.on("disconnect", () => {
+      clearTimeout(expiryTimer);
+
       if (onlineUsers.get(userId) === socket.id) {
         onlineUsers.delete(userId);
       }

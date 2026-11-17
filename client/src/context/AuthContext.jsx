@@ -2,11 +2,21 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from "react";
+import { useNavigate } from "react-router-dom";
 
+import { setUnauthorizedHandler } from "../api/axios";
 import socket from "../socket";
+
+// Messages the server uses when the socket JWT is missing,
+// invalid or expired (src/socket/socket.js).
+const SOCKET_AUTH_ERRORS = [
+  "Not authorized",
+  "Session expired",
+];
 
 const AuthContext = createContext(null);
 
@@ -90,6 +100,37 @@ export const AuthProvider = ({ children }) => {
 
     setUser(null);
   }, []);
+
+  const navigate = useNavigate();
+
+  // Expired or invalid token: from any API request (401) or from
+  // Socket.io (rejected handshake or "sessionExpired" event).
+  useEffect(() => {
+    const endSession = () => {
+      if (!localStorage.getItem("token")) {
+        return;
+      }
+
+      logout();
+      navigate("/login", { replace: true });
+    };
+
+    const handleConnectError = (error) => {
+      if (SOCKET_AUTH_ERRORS.includes(error?.message)) {
+        endSession();
+      }
+    };
+
+    setUnauthorizedHandler(endSession);
+    socket.on("connect_error", handleConnectError);
+    socket.on("sessionExpired", endSession);
+
+    return () => {
+      setUnauthorizedHandler(null);
+      socket.off("connect_error", handleConnectError);
+      socket.off("sessionExpired", endSession);
+    };
+  }, [logout, navigate]);
 
   const value = useMemo(
     () => ({

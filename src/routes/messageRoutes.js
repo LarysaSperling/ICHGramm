@@ -1,6 +1,7 @@
 import express from "express";
 
 import authMiddleware from "../middlewares/authMiddleware.js";
+import validateObjectId from "../middlewares/validateObjectId.js";
 
 import {
   sendMessage,
@@ -16,6 +17,9 @@ import { messageValidator } from "../validators/messageValidator.js";
 import validationMiddleware from "../middlewares/validationMiddleware.js";
 
 const router = express.Router();
+
+router.param("messageId", validateObjectId);
+router.param("userId", validateObjectId);
 
 router.post(
   "/",
