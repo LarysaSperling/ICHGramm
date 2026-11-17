@@ -1,6 +1,7 @@
 import express from "express";
 
 import authMiddleware from "../middlewares/authMiddleware.js";
+import validateObjectId from "../middlewares/validateObjectId.js";
 import upload from "../middlewares/uploadMiddleware.js";
 
 import {
@@ -15,6 +16,9 @@ import {
 } from "../controllers/userController.js";
 
 const router = express.Router();
+
+router.param("postId", validateObjectId);
+router.param("id", validateObjectId);
 
 router.get(
   "/profile",
