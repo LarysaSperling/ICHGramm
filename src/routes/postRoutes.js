@@ -1,6 +1,7 @@
 import express from "express";
 
 import authMiddleware from "../middlewares/authMiddleware.js";
+import validateObjectId from "../middlewares/validateObjectId.js";
 import upload from "../middlewares/uploadMiddleware.js";
 
 import {
@@ -20,6 +21,8 @@ import {
 import validationMiddleware from "../middlewares/validationMiddleware.js";
 
 const router = express.Router();
+
+router.param("id", validateObjectId);
 
 router.get("/explore", getExplorePosts);
 

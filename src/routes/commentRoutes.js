@@ -1,6 +1,7 @@
 import express from "express";
 
 import authMiddleware from "../middlewares/authMiddleware.js";
+import validateObjectId from "../middlewares/validateObjectId.js";
 import validationMiddleware from "../middlewares/validationMiddleware.js";
 
 import {
@@ -13,6 +14,9 @@ import {
 import { commentValidator } from "../validators/commentValidator.js";
 
 const router = express.Router();
+
+router.param("commentId", validateObjectId);
+router.param("postId", validateObjectId);
 
 router.put(
   "/comment/:commentId",
