@@ -7,6 +7,11 @@ import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import atomicToggle from "../utils/atomicToggle.js";
 import { createNotification } from "../services/notificationService.js";
+import {
+  uploadImage,
+  deleteImage,
+  deleteImageInBackground,
+} from "../services/imageStorage.js";
 
 const createPost = asyncHandler(async (req, res) => {
   const { caption } = req.body;
@@ -19,15 +24,22 @@ const createPost = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Image is required");
   }
 
-  const image = `data:${req.file.mimetype};base64,${req.file.buffer.toString(
-    "base64",
-  )}`;
+  const { url, publicId } = await uploadImage(req.file.buffer, "posts");
 
-  const post = await Post.create({
-    caption: caption.trim(),
-    image,
-    author: req.user._id,
-  });
+  let post;
+
+  try {
+    post = await Post.create({
+      caption: caption.trim(),
+      image: url,
+      imagePublicId: publicId,
+      author: req.user._id,
+    });
+  } catch (error) {
+    // The post was not saved: do not leave the file behind.
+    await deleteImage(publicId);
+    throw error;
+  }
 
   const populatedPost = await Post.findById(post._id)
     .populate("author", "username fullName avatar")
@@ -90,6 +102,8 @@ const updatePost = asyncHandler(async (req, res) => {
     throw new ApiError(403, "Not authorized");
   }
 
+  const changes = {};
+
   if (req.body.caption !== undefined) {
     const normalizedCaption = req.body.caption.trim();
 
@@ -97,16 +111,40 @@ const updatePost = asyncHandler(async (req, res) => {
       throw new ApiError(400, "Caption cannot be empty");
     }
 
-    post.caption = normalizedCaption;
+    changes.caption = normalizedCaption;
   }
 
   if (req.file) {
-    post.image = `data:${req.file.mimetype};base64,${req.file.buffer.toString(
-      "base64",
-    )}`;
-  }
+    const oldPublicId = post.imagePublicId;
+    const { url, publicId } = await uploadImage(req.file.buffer, "posts");
 
-  await post.save();
+    let replaced;
+
+    try {
+      // Only if the image is still the one we loaded: with two parallel
+      // updates the loser must not delete the winner's file or leave its
+      // own behind.
+      replaced = await Post.updateOne(
+        { _id: post._id, image: post.image },
+        { $set: { ...changes, image: url, imagePublicId: publicId } },
+      );
+    } catch (error) {
+      await deleteImage(publicId);
+      throw error;
+    }
+
+    if (replaced.matchedCount === 0) {
+      await deleteImage(publicId);
+      throw new ApiError(
+        409,
+        "The post was changed at the same time, please try again",
+      );
+    }
+
+    deleteImageInBackground(oldPublicId);
+  } else if (Object.keys(changes).length > 0) {
+    await Post.updateOne({ _id: post._id }, { $set: changes });
+  }
 
   const updatedPost = await Post.findById(post._id)
     .populate("author", "username fullName avatar")
@@ -148,6 +186,10 @@ const deletePost = asyncHandler(async (req, res) => {
   ]);
 
   await post.deleteOne();
+
+  // After the database: if Cloudinary fails, an orphaned file is left,
+  // not a broken post.
+  deleteImageInBackground(post.imagePublicId);
 
   res.json({
     message: "Post deleted successfully",
