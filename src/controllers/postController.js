@@ -5,6 +5,7 @@ import User from "../models/User.js";
 
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import atomicToggle from "../utils/atomicToggle.js";
 import { createNotification } from "../services/notificationService.js";
 
 const createPost = asyncHandler(async (req, res) => {
@@ -171,48 +172,45 @@ const getExplorePosts = asyncHandler(async (req, res) => {
 });
 
 const toggleLikePost = asyncHandler(async (req, res) => {
-  const post = await Post.findById(req.params.id);
+  const result = await atomicToggle(
+    Post,
+    req.params.id,
+    "likes",
+    req.user._id,
+    {
+      populate: {
+        path: "author",
+        select: "username fullName avatar",
+      },
+      lean: true,
+    },
+  );
 
-  if (!post) {
+  if (!result) {
     throw new ApiError(404, "Post not found");
   }
 
-  const userId = req.user._id.toString();
+  const { doc: updatedPost, added: liked } = result;
 
-  const alreadyLiked = post.likes.some(
-    (like) => like.toString() === userId,
-  );
-
-  if (alreadyLiked) {
-    post.likes = post.likes.filter(
-      (like) => like.toString() !== userId,
-    );
-  } else {
-    post.likes.push(req.user._id);
-  }
-
-  await post.save();
+  // author is null if the author's account was deleted
+  const authorId = updatedPost.author?._id;
 
   const isOwnPost =
-    post.author.toString() === req.user._id.toString();
+    authorId?.toString() === req.user._id.toString();
 
-  if (!alreadyLiked && !isOwnPost) {
+  if (liked && authorId && !isOwnPost) {
     await createNotification({
-      recipient: post.author,
+      recipient: authorId,
       sender: req.user._id,
       type: "like",
-      post: post._id,
+      post: updatedPost._id,
       io: req.io,
     });
   }
 
-  const updatedPost = await Post.findById(post._id)
-    .populate("author", "username fullName avatar")
-    .lean();
-
   res.json({
     post: updatedPost,
-    liked: !alreadyLiked,
+    liked,
     likesCount: updatedPost.likes.length,
   });
 });

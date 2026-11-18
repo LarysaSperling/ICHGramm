@@ -2,6 +2,7 @@ import User from "../models/User.js";
 import Post from "../models/Post.js";
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import atomicToggle from "../utils/atomicToggle.js";
 import escapeRegExp from "../utils/escapeRegExp.js";
 
 const MAX_SEARCH_LENGTH = 50;
@@ -194,39 +195,29 @@ const getUserById = asyncHandler(async (req, res) => {
 });
 
 const toggleSavedPost = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user._id);
+  const postExists = await Post.exists({
+    _id: req.params.postId,
+  });
 
-  if (!user) {
-    throw new ApiError(404, "User not found");
-  }
-
-  const post = await Post.findById(req.params.postId);
-
-  if (!post) {
+  if (!postExists) {
     throw new ApiError(404, "Post not found");
   }
 
-  const alreadySaved = user.savedPosts.some(
-    (savedPostId) =>
-      savedPostId.toString() ===
-      post._id.toString(),
+  const result = await atomicToggle(
+    User,
+    req.user._id,
+    "savedPosts",
+    postExists._id,
+    { projection: { savedPosts: 1 }, lean: true },
   );
 
-  if (alreadySaved) {
-    user.savedPosts = user.savedPosts.filter(
-      (savedPostId) =>
-        savedPostId.toString() !==
-        post._id.toString(),
-    );
-  } else {
-    user.savedPosts.push(post._id);
+  if (!result) {
+    throw new ApiError(404, "User not found");
   }
 
-  await user.save();
-
   res.json({
-    saved: !alreadySaved,
-    savedPosts: user.savedPosts,
+    saved: result.added,
+    savedPosts: result.doc.savedPosts,
   });
 });
 
