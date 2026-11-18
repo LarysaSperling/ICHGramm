@@ -230,6 +230,16 @@ EMAIL_PORT=
 EMAIL_USER=
 
 EMAIL_PASS=
+
+# Images (posts, stories, avatars) are stored in Cloudinary
+CLOUDINARY_CLOUD_NAME=
+
+CLOUDINARY_API_KEY=
+
+CLOUDINARY_API_SECRET=
+
+# "ichgramm" in production, "ichgramm-test" locally
+CLOUDINARY_FOLDER=
 ```
 
 ### Frontend (.env)
