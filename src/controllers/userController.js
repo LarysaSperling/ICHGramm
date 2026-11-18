@@ -1,4 +1,4 @@
-import User from "../models/User.js";
+import User, { LEGACY_FOLLOW_FIELDS } from "../models/User.js";
 import Post from "../models/Post.js";
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
@@ -17,7 +17,7 @@ const USER_PREVIEW_FIELDS =
 
 const getProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id)
-    .select("-password")
+    .select(`-password ${LEGACY_FOLLOW_FIELDS}`)
     .lean();
 
   if (!user) {

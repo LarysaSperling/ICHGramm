@@ -6,6 +6,15 @@ import asyncHandler from "../utils/asyncHandler.js";
 
 import { createNotification } from "../services/notificationService.js";
 
+// The Follow collection is the only source of truth for follows (REVIEW H-7).
+// User.followers / User.following are no longer written or read.
+//
+// Follow and unfollow are idempotent: "follow" when already following, or
+// "unfollow" when not following, answer 200 with the resulting state instead
+// of an error. A stale button in a second tab therefore just catches up.
+
+const DUPLICATE_KEY = 11000;
+
 const followUser = asyncHandler(async (req, res) => {
   const targetUserId = req.params.userId;
   const currentUserId = req.user._id;
@@ -14,39 +23,36 @@ const followUser = asyncHandler(async (req, res) => {
     throw new ApiError(400, "You cannot follow yourself");
   }
 
-  const targetUser = await User.findById(targetUserId);
+  const targetExists = await User.exists({ _id: targetUserId });
 
-  if (!targetUser) {
+  if (!targetExists) {
     throw new ApiError(404, "User not found");
   }
 
-  const existingFollow = await Follow.findOne({
+  const pair = {
     follower: currentUserId,
     following: targetUserId,
-  });
+  };
 
-  if (existingFollow) {
-    throw new ApiError(400, "Already following this user");
+  let follow;
+
+  try {
+    // No "already following?" pre-check: the unique index on
+    // { follower, following } decides atomically, even for
+    // concurrent requests (double click, two tabs).
+    follow = await Follow.create(pair);
+  } catch (error) {
+    if (error.code !== DUPLICATE_KEY) {
+      throw error;
+    }
+
+    // Already following -> nothing to do, no second notification.
+    return res.json({
+      message: "Already following this user",
+      isFollowing: true,
+      follow: await Follow.findOne(pair).lean(),
+    });
   }
-
-  const follow = await Follow.create({
-    follower: currentUserId,
-    following: targetUserId,
-  });
-
-  await Promise.all([
-    User.findByIdAndUpdate(currentUserId, {
-      $addToSet: {
-        following: targetUserId,
-      },
-    }),
-
-    User.findByIdAndUpdate(targetUserId, {
-      $addToSet: {
-        followers: currentUserId,
-      },
-    }),
-  ]);
 
   await createNotification({
     recipient: targetUserId,
@@ -70,33 +76,17 @@ const unfollowUser = asyncHandler(async (req, res) => {
     throw new ApiError(400, "You cannot unfollow yourself");
   }
 
-  const follow = await Follow.findOne({
+  // One atomic operation: concurrent unfollows cannot both "find" the
+  // same document and then fail on delete.
+  const deleted = await Follow.findOneAndDelete({
     follower: currentUserId,
     following: targetUserId,
   });
 
-  if (!follow) {
-    throw new ApiError(404, "Follow relationship not found");
-  }
-
-  await follow.deleteOne();
-
-  await Promise.all([
-    User.findByIdAndUpdate(currentUserId, {
-      $pull: {
-        following: targetUserId,
-      },
-    }),
-
-    User.findByIdAndUpdate(targetUserId, {
-      $pull: {
-        followers: currentUserId,
-      },
-    }),
-  ]);
-
   res.json({
-    message: "User unfollowed successfully",
+    message: deleted
+      ? "User unfollowed successfully"
+      : "Not following this user",
     isFollowing: false,
   });
 });
