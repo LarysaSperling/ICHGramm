@@ -56,11 +56,17 @@ const socketAuthMiddleware = async (socket, next) => {
   }
 };
 
-// A chat room is "<userIdA>_<userIdB>" with ids sorted.
-// Only one of the two participants may join it.
-const isChatParticipant = (chatRoom, userId) => {
+// A chat room is "<userIdA>_<userIdB>" with ids sorted (see
+// utils/chatRoom.js). It is only a name for the chat: sockets do not join
+// it. All chat events go to the personal rooms of the participants
+// (REVIEW H-10), so there is no room membership that could leak from one
+// chat to another or get lost on reconnect.
+//
+// Returns the other participant's id, or null if `userId` is not one of
+// the two participants (or the name is malformed / a chat with oneself).
+const getChatPartner = (chatRoom, userId) => {
   if (typeof chatRoom !== "string") {
-    return false;
+    return null;
   }
 
   const participants = chatRoom.split("_");
@@ -68,21 +74,35 @@ const isChatParticipant = (chatRoom, userId) => {
   if (
     participants.length !== 2 ||
     !participants.every((id) =>
-      mongoose.isValidObjectId(id),
+      mongoose.isObjectIdOrHexString(id),
     )
   ) {
-    return false;
+    return null;
   }
 
   const expectedRoom = [...participants]
     .sort()
     .join("_");
 
-  return (
-    chatRoom === expectedRoom &&
-    participants.includes(userId)
+  if (
+    chatRoom !== expectedRoom ||
+    !participants.includes(userId)
+  ) {
+    return null;
+  }
+
+  const partner = participants.find(
+    (id) => id !== userId,
   );
+
+  return partner || null;
 };
+
+// stopTyping used to be sent as a plain string; accept both forms.
+const readChatRoom = (payload) =>
+  typeof payload === "string"
+    ? payload
+    : payload?.chatRoom;
 
 const initializeSocket = (
   server,
@@ -148,31 +168,39 @@ const initializeSocket = (
       [...onlineUsers.keys()],
     );
 
-    socket.on("joinChat", (chatRoom) => {
-      if (!isChatParticipant(chatRoom, userId)) {
+    // "joinChat" from older clients is simply ignored: nothing needs
+    // to be joined any more.
+
+    // Typing goes only to the other participant (all of their tabs),
+    // tagged with the chat it belongs to, so the client can show it in
+    // the right chat only.
+    socket.on("typing", (payload) => {
+      const chatRoom = readChatRoom(payload);
+      const partner = getChatPartner(chatRoom, userId);
+
+      if (!partner) {
         return;
       }
 
-      socket.join(chatRoom);
-    });
-
-    socket.on("typing", ({ chatRoom } = {}) => {
-      if (!socket.rooms.has(chatRoom)) {
-        return;
-      }
-
-      socket.to(chatRoom).emit("typing", {
+      socket.to(partner).emit("typing", {
         _id: userId,
         username,
+        chatRoom,
       });
     });
 
-    socket.on("stopTyping", (chatRoom) => {
-      if (!socket.rooms.has(chatRoom)) {
+    socket.on("stopTyping", (payload) => {
+      const chatRoom = readChatRoom(payload);
+      const partner = getChatPartner(chatRoom, userId);
+
+      if (!partner) {
         return;
       }
 
-      socket.to(chatRoom).emit("stopTyping");
+      socket.to(partner).emit("stopTyping", {
+        _id: userId,
+        chatRoom,
+      });
     });
 
     socket.on("disconnect", () => {
