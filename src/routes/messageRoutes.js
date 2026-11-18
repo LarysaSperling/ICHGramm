@@ -13,7 +13,10 @@ import {
   deleteChat,
 } from "../controllers/messageController.js";
 
-import { messageValidator } from "../validators/messageValidator.js";
+import {
+  messageValidator,
+  editMessageValidator,
+} from "../validators/messageValidator.js";
 import validationMiddleware from "../middlewares/validationMiddleware.js";
 
 const router = express.Router();
@@ -36,8 +39,11 @@ router.get(
 
 router.put(
   "/message/:messageId",
-   authMiddleware, 
-   editMessage);
+  authMiddleware,
+  editMessageValidator,
+  validationMiddleware,
+  editMessage,
+);
 
 router.delete(
   "/message/:messageId",
