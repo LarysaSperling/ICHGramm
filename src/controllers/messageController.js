@@ -1,4 +1,7 @@
 import Message from "../models/Message.js";
+import Post from "../models/Post.js";
+import User from "../models/User.js";
+import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import {
   getChatRoom,
@@ -32,14 +35,31 @@ const messagePopulate = [
 ];
 
 const sendMessage = asyncHandler(async (req, res) => {
-  const {
-    receiver,
-    text = "",
-    messageType = "text",
-    sharedPost = null,
-  } = req.body;
+  // Shape and types are checked by messageValidator (REVIEW H-12).
+  const { receiver, messageType = "text" } = req.body;
 
-  const normalizedText = text.trim();
+  const isPostMessage = messageType === "post";
+  const normalizedText = req.body.text?.trim() ?? "";
+  const sharedPost = isPostMessage ? req.body.sharedPost : null;
+
+  if (receiver === req.user._id.toString()) {
+    throw new ApiError(400, "You cannot send a message to yourself");
+  }
+
+  // A message to a user that does not exist used to be saved and then
+  // broke the sender's chat list (GET /messages -> 500).
+  const [receiverExists, postExists] = await Promise.all([
+    User.exists({ _id: receiver }),
+    isPostMessage ? Post.exists({ _id: sharedPost }) : true,
+  ]);
+
+  if (!receiverExists) {
+    throw new ApiError(404, "User not found");
+  }
+
+  if (!postExists) {
+    throw new ApiError(404, "Post not found");
+  }
 
   const message = await Message.create({
     sender: req.user._id,
@@ -131,11 +151,23 @@ const getChats = asyncHandler(async (req, res) => {
 
   for (const message of messages) {
     const otherUser =
-      message.sender._id.toString() === req.user._id.toString()
+      message.sender?._id?.toString() === req.user._id.toString()
         ? message.receiver
         : message.sender;
 
+    // populate gives null for a user that no longer exists (old data from
+    // before H-12, or a deleted account). Skip such messages instead of
+    // failing the whole chat list with 500.
+    if (!otherUser?._id) {
+      continue;
+    }
+
     const otherUserId = otherUser._id.toString();
+
+    // old messages to oneself (no longer possible)
+    if (otherUserId === req.user._id.toString()) {
+      continue;
+    }
 
     if (!chatsMap.has(otherUserId)) {
       const unreadCount = await Message.countDocuments({
