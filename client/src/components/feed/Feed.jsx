@@ -4,6 +4,10 @@ import {
   useRef,
   useState,
 } from "react";
+import {
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 
 import api from "../../api/axios";
 import { useAuth } from "../../context/AuthContext";
@@ -49,6 +53,10 @@ const mergeUniquePosts = (
 const Feed = () => {
   const { user } = useAuth();
   const currentUserId = user?._id || null;
+
+  const location = useLocation();
+  const navigate = useNavigate();
+  const createdPost = location.state?.createdPost;
 
   const [posts, setPosts] = useState([]);
   const [savedPostIds, setSavedPostIds] =
@@ -215,6 +223,38 @@ const Feed = () => {
     loadPosts,
     loadSavedPosts,
     loadFollowingUsers,
+  ]);
+
+  // A post just created in CreatePost (passed in the navigation state).
+  // If Home was already mounted under the create modal, nothing reloads
+  // the feed, so the post is added on top here. If Home is mounted
+  // fresh, the first page loads it anyway (mergeUniquePosts drops the
+  // duplicate). The state is then cleared, so a page reload or
+  // back/forward does not add the post again.
+  useEffect(() => {
+    if (!createdPost?._id) {
+      return;
+    }
+
+    setPosts((previousPosts) =>
+      mergeUniquePosts(
+        [createdPost],
+        previousPosts,
+      ),
+    );
+
+    navigate(
+      `${location.pathname}${location.search}`,
+      {
+        replace: true,
+        state: null,
+      },
+    );
+  }, [
+    createdPost,
+    location.pathname,
+    location.search,
+    navigate,
   ]);
 
   useEffect(() => {
