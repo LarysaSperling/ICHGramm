@@ -5,6 +5,9 @@ import helmet from "helmet";
 import http from "http";
 
 import connectDB from "./src/config/db.js";
+import { configureCloudinary } from "./src/config/cloudinary.js";
+import { ensureStoryIndexes } from "./src/models/Story.js";
+import { startExpiredStoriesCleanup } from "./src/jobs/cleanupExpiredStories.js";
 import initializeSocket from "./src/socket/socket.js";
 
 import authRoutes from "./src/routes/authRoutes.js";
@@ -107,12 +110,20 @@ const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
   try {
+    // Fails fast if a Cloudinary variable is missing (REVIEW H-1).
+    configureCloudinary();
+
     await connectDB();
+
+    const storyIndexes = await ensureStoryIndexes();
+    console.log(`Story indexes: ${storyIndexes}`);
 
     server.listen(PORT, "0.0.0.0", () => {
       console.log(
         `Server running on port ${PORT}`,
       );
+
+      startExpiredStoriesCleanup();
     });
   } catch (error) {
     console.error(

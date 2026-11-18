@@ -38,9 +38,17 @@ const userSchema = new mongoose.Schema(
       default: "",
     },
 
+    // Cloudinary URL ("" = no avatar). Old accounts may still hold a
+    // base64 data URL until the migration (REVIEW H-1) has run.
     avatar: {
       type: String,
       default: "",
+    },
+
+    // Cloudinary public_id of the avatar, needed to delete it.
+    avatarPublicId: {
+      type: String,
+      default: null,
     },
 
     resetPasswordToken: {

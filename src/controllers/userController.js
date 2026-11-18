@@ -4,6 +4,11 @@ import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import atomicToggle from "../utils/atomicToggle.js";
 import escapeRegExp from "../utils/escapeRegExp.js";
+import {
+  uploadImage,
+  deleteImage,
+  deleteImageInBackground,
+} from "../services/imageStorage.js";
 
 const MAX_SEARCH_LENGTH = 50;
 
@@ -90,13 +95,35 @@ const updateProfile = asyncHandler(async (req, res) => {
     user.website = website.trim();
   }
 
+  // Uploaded last, after all checks, so a rejected request leaves no
+  // file in Cloudinary.
+  const oldAvatarPublicId = user.avatarPublicId;
+  let newAvatarPublicId = null;
+
   if (req.file) {
-    user.avatar = `data:${
-      req.file.mimetype
-    };base64,${req.file.buffer.toString("base64")}`;
+    const { url, publicId } = await uploadImage(
+      req.file.buffer,
+      "avatars",
+    );
+
+    user.avatar = url;
+    user.avatarPublicId = publicId;
+    newAvatarPublicId = publicId;
   }
 
-  const updatedUser = await user.save();
+  let updatedUser;
+
+  try {
+    updatedUser = await user.save();
+  } catch (error) {
+    // e.g. 409 when someone took the username a moment ago
+    await deleteImage(newAvatarPublicId);
+    throw error;
+  }
+
+  if (newAvatarPublicId) {
+    deleteImageInBackground(oldAvatarPublicId);
+  }
 
   res.json({
     _id: updatedUser._id,
