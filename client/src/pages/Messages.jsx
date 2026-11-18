@@ -55,6 +55,7 @@ const Messages = () => {
   const [searchParams] = useSearchParams();
 
   const typingTimeoutRef = useRef(null);
+  const typingExpiryRef = useRef(new Map());
   const messagesEndRef = useRef(null);
   const loadedChatRef = useRef(null);
   const emojiRef = useRef(null);
@@ -68,7 +69,9 @@ const Messages = () => {
   const [openMessageMenuId, setOpenMessageMenuId] = useState(null);
   const [isEmojiOpen, setIsEmojiOpen] = useState(false);
   const [onlineUsers, setOnlineUsers] = useState([]);
-  const [typingUser, setTypingUser] = useState(null);
+  // { [userId]: true } for every chat partner who is typing right now
+  // (REVIEW H-10: typing in one chat must not show up in another).
+  const [typingUsers, setTypingUsers] = useState({});
   const [isLoadingChats, setIsLoadingChats] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [error, setError] = useState("");
@@ -77,6 +80,9 @@ const Messages = () => {
 
   const userIdFromUrl = searchParams.get("user");
   const activeUserId = activeChat?.user?._id;
+  const isActiveUserTyping = Boolean(
+    activeUserId && typingUsers[activeUserId],
+  );
 
   const [currentTime] = useState(() => new Date().getTime());
 
@@ -216,16 +222,14 @@ const Messages = () => {
 
       try {
         setIsLoadingMessages(true);
-        setTypingUser(null);
         setError("");
 
         const { data } = await api.get(`/messages/${activeUserId}`);
 
         setMessages(Array.isArray(data) ? data : []);
 
-        const chatRoom = [currentUserId, activeUserId].sort().join("_");
-
-        socket.emit("joinChat", chatRoom);
+        // No "joinChat": the server sends chat events to our personal
+        // room, which it joins on every (re)connect (REVIEW H-10).
 
         await api.put(`/messages/${activeUserId}/seen`);
 
@@ -263,6 +267,20 @@ const Messages = () => {
       const isMessageForActiveChat =
         (senderId === activeUserId && receiverId === currentUserId) ||
         (senderId === currentUserId && receiverId === activeUserId);
+
+      // A message from someone ends their "typing..." right away.
+      if (senderId !== currentUserId) {
+        clearTimeout(typingExpiryRef.current.get(senderId));
+        typingExpiryRef.current.delete(senderId);
+
+        setTypingUsers((previous) => {
+          if (!previous[senderId]) return previous;
+
+          const rest = { ...previous };
+          delete rest[senderId];
+          return rest;
+        });
+      }
 
       if (isMessageForActiveChat) {
         setMessages((previousMessages) => {
@@ -329,26 +347,38 @@ const Messages = () => {
       });
     };
 
-    const handleMessagesSeen = ({ seenBy }) => {
-      setMessages((previousMessages) =>
-        previousMessages.map((message) => {
-          const senderId = getMessageUserId(message.sender);
+    const handleMessagesSeen = ({ seenBy } = {}) => {
+      const seenById = seenBy?.toString();
 
-          if (senderId === currentUserId) {
-            return {
-              ...message,
-              isSeen: true,
-              seenAt: new Date().toISOString(),
-            };
-          }
+      // We also receive the event for our own "seen" request
+      // (it goes to both participants): nothing to update then.
+      if (!seenById || seenById === currentUserId) {
+        return;
+      }
 
-          return message;
-        }),
-      );
+      // Only the open chat's partner can mark the messages on screen
+      // as seen; a "seen" from another chat must not touch them.
+      if (seenById === activeUserId) {
+        setMessages((previousMessages) =>
+          previousMessages.map((message) => {
+            const senderId = getMessageUserId(message.sender);
+
+            if (senderId === currentUserId && !message.isSeen) {
+              return {
+                ...message,
+                isSeen: true,
+                seenAt: new Date().toISOString(),
+              };
+            }
+
+            return message;
+          }),
+        );
+      }
 
       setChats((previousChats) =>
         previousChats.map((chat) =>
-          chat.user?._id === seenBy
+          chat.user?._id === seenById
             ? {
                 ...chat,
                 lastMessageSeen: true,
@@ -358,24 +388,212 @@ const Messages = () => {
       );
     };
 
+    // REVIEW H-9: edits and deletions arrive in real time.
+    const getOtherUserId = (senderId, receiverId) =>
+      senderId === currentUserId ? receiverId : senderId;
+
+    const handleMessageUpdated = (updatedMessage) => {
+      if (!updatedMessage?._id) return;
+
+      setMessages((previousMessages) =>
+        previousMessages.map((message) =>
+          message._id === updatedMessage._id ? updatedMessage : message,
+        ),
+      );
+
+      const otherUserId = getOtherUserId(
+        getMessageUserId(updatedMessage.sender),
+        getMessageUserId(updatedMessage.receiver),
+      );
+
+      // Update the chat list preview only if the edited message
+      // is the last one of that chat.
+      setChats((previousChats) =>
+        previousChats.map((chat) =>
+          chat.user?._id === otherUserId &&
+          chat.lastMessageDate &&
+          new Date(chat.lastMessageDate).getTime() ===
+            new Date(updatedMessage.createdAt).getTime()
+            ? {
+                ...chat,
+                lastMessage: getChatLastMessageText(updatedMessage),
+              }
+            : chat,
+        ),
+      );
+    };
+
+    const handleMessageDeleted = ({
+      messageId,
+      sender,
+      receiver,
+      wasSeen,
+      lastMessage,
+    } = {}) => {
+      if (!messageId) return;
+
+      setMessages((previousMessages) =>
+        previousMessages.filter((message) => message._id !== messageId),
+      );
+
+      const senderId = getMessageUserId(sender)?.toString();
+      const receiverId = getMessageUserId(receiver)?.toString();
+      const otherUserId = getOtherUserId(senderId, receiverId);
+
+      setChats((previousChats) => {
+        if (!lastMessage) {
+          // no messages left in this chat
+          return previousChats.filter(
+            (chat) => chat.user?._id !== otherUserId,
+          );
+        }
+
+        return previousChats.map((chat) => {
+          if (chat.user?._id !== otherUserId) return chat;
+
+          const lostUnread =
+            receiverId === currentUserId && !wasSeen ? 1 : 0;
+
+          return {
+            ...chat,
+            lastMessage: getChatLastMessageText({
+              ...lastMessage,
+              sharedPost: lastMessage.hasSharedPost || null,
+            }),
+            lastMessageDate: lastMessage.createdAt,
+            lastMessageSeen: lastMessage.isSeen,
+            lastMessageSender: lastMessage.sender,
+            lastMessageType: lastMessage.messageType,
+            lastSharedPost: lastMessage.hasSharedPost || null,
+            unreadCount: Math.max((chat.unreadCount || 0) - lostUnread, 0),
+          };
+        });
+      });
+    };
+
     socket.on("newMessage", handleNewMessage);
 
     socket.on("messagesSeen", handleMessagesSeen);
+
+    socket.on("messageUpdated", handleMessageUpdated);
+
+    socket.on("messageDeleted", handleMessageDeleted);
 
     return () => {
       socket.off("newMessage", handleNewMessage);
 
       socket.off("messagesSeen", handleMessagesSeen);
+
+      socket.off("messageUpdated", handleMessageUpdated);
+
+      socket.off("messageDeleted", handleMessageDeleted);
+    };
+  }, [currentUserId, activeUserId]);
+
+  // After a reconnect, load what was missed while the socket was offline
+  // (REVIEW H-11: e.g. the phone switched from Wi-Fi to mobile data).
+  // Events are not replayed, so new messages, edits and deletions from that
+  // gap would otherwise show up only after a page reload.
+  // "connect" fires on every (re)connect of the socket, after the server
+  // has put it into the personal room again, so nothing sent after this
+  // request can be missed. If the page opens with the socket already
+  // connected, it does not fire: the normal load above covers that.
+  useEffect(() => {
+    if (!currentUserId) return undefined;
+
+    // Ignore a slow response if the user has switched chats meanwhile.
+    let isCurrent = true;
+
+    const reloadAfterReconnect = async () => {
+      // A "typing..." from before the gap may never get its stopTyping.
+      setTypingUsers({});
+
+      try {
+        const [chatsResponse, messagesResponse] = await Promise.all([
+          api.get("/messages"),
+          activeUserId ? api.get(`/messages/${activeUserId}`) : null,
+        ]);
+
+        if (!isCurrent) return;
+
+        if (messagesResponse) {
+          setMessages(
+            Array.isArray(messagesResponse.data) ? messagesResponse.data : [],
+          );
+        }
+
+        setChats(
+          (Array.isArray(chatsResponse.data) ? chatsResponse.data : []).map(
+            (chat) =>
+              chat.user?._id === activeUserId
+                ? { ...chat, unreadCount: 0 }
+                : chat,
+          ),
+        );
+
+        // The missed messages of the open chat are on screen now.
+        if (activeUserId) {
+          await api.put(`/messages/${activeUserId}/seen`);
+        }
+      } catch {
+        // Not critical: the next reconnect or a page reload loads it again.
+      }
+    };
+
+    socket.on("connect", reloadAfterReconnect);
+
+    return () => {
+      isCurrent = false;
+
+      socket.off("connect", reloadAfterReconnect);
     };
   }, [currentUserId, activeUserId]);
 
   useEffect(() => {
-    const handleTyping = (typingUserData) => {
-      setTypingUser(typingUserData);
+    const typingExpiry = typingExpiryRef.current;
+
+    const removeTypingUser = (typingUserId) => {
+      clearTimeout(typingExpiry.get(typingUserId));
+      typingExpiry.delete(typingUserId);
+
+      setTypingUsers((previous) => {
+        if (!previous[typingUserId]) return previous;
+
+        const rest = { ...previous };
+        delete rest[typingUserId];
+        return rest;
+      });
     };
 
-    const handleStopTyping = () => {
-      setTypingUser(null);
+    const handleTyping = ({ _id: typingUserId, chatRoom } = {}) => {
+      // The event must belong to our chat with this user.
+      if (
+        !typingUserId ||
+        !currentUserId ||
+        chatRoom !== [currentUserId, typingUserId].sort().join("_")
+      ) {
+        return;
+      }
+
+      setTypingUsers((previous) =>
+        previous[typingUserId]
+          ? previous
+          : { ...previous, [typingUserId]: true },
+      );
+
+      // If "stopTyping" never comes (closed tab, lost connection),
+      // hide the indicator anyway.
+      clearTimeout(typingExpiry.get(typingUserId));
+      typingExpiry.set(
+        typingUserId,
+        setTimeout(() => removeTypingUser(typingUserId), 4000),
+      );
+    };
+
+    const handleStopTyping = ({ _id: typingUserId } = {}) => {
+      if (typingUserId) {
+        removeTypingUser(typingUserId);
+      }
     };
 
     socket.on("typing", handleTyping);
@@ -386,8 +604,12 @@ const Messages = () => {
       socket.off("typing", handleTyping);
 
       socket.off("stopTyping", handleStopTyping);
+
+      typingExpiry.forEach((timeoutId) => clearTimeout(timeoutId));
+      typingExpiry.clear();
+      setTypingUsers({});
     };
-  }, []);
+  }, [currentUserId]);
 
   useEffect(() => {
     const handleOnlineUsers = (users) => {
@@ -426,7 +648,7 @@ const Messages = () => {
     messagesEndRef.current?.scrollIntoView({
       behavior: "smooth",
     });
-  }, [messages, typingUser]);
+  }, [messages, isActiveUserTyping]);
 
   useEffect(() => {
     return () => {
@@ -474,20 +696,15 @@ const Messages = () => {
       return;
     }
 
-    socket.emit("typing", {
-      chatRoom,
-      user: {
-        _id: currentUserId,
-        username: user?.username,
-      },
-    });
+    // The server takes the user from the JWT, only the chat is needed.
+    socket.emit("typing", { chatRoom });
 
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
 
     typingTimeoutRef.current = setTimeout(() => {
-      socket.emit("stopTyping", chatRoom);
+      socket.emit("stopTyping", { chatRoom });
     }, 1200);
   };
 
@@ -615,7 +832,7 @@ const Messages = () => {
       const chatRoom = getChatRoom();
 
       if (chatRoom) {
-        socket.emit("stopTyping", chatRoom);
+        socket.emit("stopTyping", { chatRoom });
       }
 
       const { data } = await api.post("/messages", {
@@ -788,7 +1005,7 @@ const Messages = () => {
                   <strong>{chat.user.username}</strong>
 
                   <span>
-                    {typingUser?._id === chatUserId
+                    {typingUsers[chatUserId]
                       ? "typing..."
                       : `${lastMessageText}${
                           chat.lastMessageDate
@@ -881,7 +1098,7 @@ const Messages = () => {
                   <strong>{activeChat.user.username}</strong>
 
                   <span>
-                    {typingUser?._id === activeChat.user._id
+                    {isActiveUserTyping
                       ? "typing..."
                       : onlineUsers.includes(activeChat.user._id)
                         ? "Active now"
@@ -1035,7 +1252,7 @@ const Messages = () => {
                       );
                     })}
 
-                    {typingUser?._id === activeChat.user._id && (
+                    {isActiveUserTyping && (
                       <div className="message-row other">
                         <Avatar
                           src={activeChat.user.avatar}

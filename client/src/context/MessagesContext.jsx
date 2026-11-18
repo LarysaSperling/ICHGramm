@@ -153,6 +153,20 @@ export const MessagesProvider = ({
         }, 3500);
     };
 
+    // Notifications created while the socket was offline never arrive
+    // as events, so reload the unread counter after a reconnect
+    // (REVIEW H-11). The very first connect is skipped: the counter is
+    // loaded on mount anyway.
+    let hasConnected = socket.connected;
+
+    const handleConnect = () => {
+      if (hasConnected) {
+        loadUnreadNotifications();
+      }
+
+      hasConnected = true;
+    };
+
     const handleNewNotification = () => {
       if (
         pathnameRef.current ===
@@ -181,6 +195,8 @@ export const MessagesProvider = ({
       handleConnectError,
     );
 
+    socket.on("connect", handleConnect);
+
     socket.on(
       "newMessageNotification",
       handleNewMessageNotification,
@@ -201,6 +217,8 @@ export const MessagesProvider = ({
         handleConnectError,
       );
 
+      socket.off("connect", handleConnect);
+
       socket.off(
         "newMessageNotification",
         handleNewMessageNotification,
@@ -213,7 +231,7 @@ export const MessagesProvider = ({
 
       clearToastTimeout();
     };
-  }, [user?._id, clearToastTimeout]);
+  }, [user?._id, clearToastTimeout, loadUnreadNotifications]);
 
   const clearUnreadMessages =
     useCallback(() => {
