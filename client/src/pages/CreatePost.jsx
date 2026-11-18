@@ -194,14 +194,23 @@ const CreatePost = () => {
       setError("");
       setIsEmojiOpen(false);
 
-      await api.post("/posts", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
+      const { data: createdPost } = await api.post(
+        "/posts",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
         },
-      });
+      );
 
+      // When the modal was opened over /home, Home stays mounted and
+      // the feed does not reload: Feed adds the post from this state.
       navigate("/home", {
         replace: true,
+        state: {
+          createdPost,
+        },
       });
     } catch (err) {
       setError(err.response?.data?.message || "Failed to create post");
