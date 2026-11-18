@@ -490,6 +490,65 @@ const Messages = () => {
     };
   }, [currentUserId, activeUserId]);
 
+  // After a reconnect, load what was missed while the socket was offline
+  // (REVIEW H-11: e.g. the phone switched from Wi-Fi to mobile data).
+  // Events are not replayed, so new messages, edits and deletions from that
+  // gap would otherwise show up only after a page reload.
+  // "connect" fires on every (re)connect of the socket, after the server
+  // has put it into the personal room again, so nothing sent after this
+  // request can be missed. If the page opens with the socket already
+  // connected, it does not fire: the normal load above covers that.
+  useEffect(() => {
+    if (!currentUserId) return undefined;
+
+    // Ignore a slow response if the user has switched chats meanwhile.
+    let isCurrent = true;
+
+    const reloadAfterReconnect = async () => {
+      // A "typing..." from before the gap may never get its stopTyping.
+      setTypingUsers({});
+
+      try {
+        const [chatsResponse, messagesResponse] = await Promise.all([
+          api.get("/messages"),
+          activeUserId ? api.get(`/messages/${activeUserId}`) : null,
+        ]);
+
+        if (!isCurrent) return;
+
+        if (messagesResponse) {
+          setMessages(
+            Array.isArray(messagesResponse.data) ? messagesResponse.data : [],
+          );
+        }
+
+        setChats(
+          (Array.isArray(chatsResponse.data) ? chatsResponse.data : []).map(
+            (chat) =>
+              chat.user?._id === activeUserId
+                ? { ...chat, unreadCount: 0 }
+                : chat,
+          ),
+        );
+
+        // The missed messages of the open chat are on screen now.
+        if (activeUserId) {
+          await api.put(`/messages/${activeUserId}/seen`);
+        }
+      } catch {
+        // Not critical: the next reconnect or a page reload loads it again.
+      }
+    };
+
+    socket.on("connect", reloadAfterReconnect);
+
+    return () => {
+      isCurrent = false;
+
+      socket.off("connect", reloadAfterReconnect);
+    };
+  }, [currentUserId, activeUserId]);
+
   useEffect(() => {
     const typingExpiry = typingExpiryRef.current;
 
