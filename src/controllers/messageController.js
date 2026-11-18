@@ -1,5 +1,16 @@
 import Message from "../models/Message.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import {
+  getChatRoom,
+  emitToParticipants,
+} from "../utils/chatRoom.js";
+
+const betweenUsers = (userIdA, userIdB) => ({
+  $or: [
+    { sender: userIdA, receiver: userIdB },
+    { sender: userIdB, receiver: userIdA },
+  ],
+});
 
 const messagePopulate = [
   {
@@ -40,13 +51,14 @@ const sendMessage = asyncHandler(async (req, res) => {
 
   const populatedMessage = await message.populate(messagePopulate);
 
-  const chatRoom = [req.user._id.toString(), receiver.toString()]
-    .sort()
-    .join("_");
+  emitToParticipants(
+    req.io,
+    [req.user._id, receiver],
+    "newMessage",
+    populatedMessage,
+  );
 
   if (req.io) {
-    req.io.to(chatRoom).emit("newMessage", populatedMessage);
-
     req.io
       .to(receiver.toString())
       .emit("newMessageNotification", populatedMessage);
@@ -92,16 +104,15 @@ const markMessagesAsSeen = asyncHandler(async (req, res) => {
     }
   );
 
-  const chatRoom = [req.user._id.toString(), otherUserId.toString()]
-    .sort()
-    .join("_");
-
-  if (req.io) {
-    req.io.to(chatRoom).emit("messagesSeen", {
+  emitToParticipants(
+    req.io,
+    [req.user._id, otherUserId],
+    "messagesSeen",
+    {
       seenBy: req.user._id,
-      chatRoom,
-    });
-  }
+      chatRoom: getChatRoom(req.user._id, otherUserId),
+    },
+  );
 
   res.json({
     message: "Messages marked as seen",
@@ -188,7 +199,17 @@ const editMessage = asyncHandler(async (req, res) => {
 
   await message.save();
 
+  const participants = [message.sender, message.receiver];
+
   const populatedMessage = await message.populate(messagePopulate);
+
+  // Real-time update for the other participant and the sender's other tabs.
+  emitToParticipants(
+    req.io,
+    participants,
+    "messageUpdated",
+    populatedMessage,
+  );
 
   res.json(populatedMessage);
 });
@@ -210,7 +231,36 @@ const deleteMessage = asyncHandler(async (req, res) => {
     });
   }
 
+  const { sender, receiver, isSeen } = message;
+
   await message.deleteOne();
+
+  // The chat list shows the last message of every chat, so send the new
+  // last message along (without images: only what the list needs).
+  // null = the chat has no messages left.
+  const lastMessage = await Message.findOne(
+    betweenUsers(sender, receiver),
+  )
+    .sort({ createdAt: -1 })
+    .select("text messageType sharedPost createdAt isSeen sender")
+    .lean();
+
+  emitToParticipants(req.io, [sender, receiver], "messageDeleted", {
+    messageId,
+    chatRoom: getChatRoom(sender, receiver),
+    sender,
+    receiver,
+    // lets the receiver decrease the unread counter
+    wasSeen: isSeen,
+    lastMessage: lastMessage && {
+      text: lastMessage.text,
+      messageType: lastMessage.messageType,
+      hasSharedPost: Boolean(lastMessage.sharedPost),
+      createdAt: lastMessage.createdAt,
+      isSeen: lastMessage.isSeen,
+      sender: lastMessage.sender,
+    },
+  });
 
   res.json({
     message: "Message deleted",
