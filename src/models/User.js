@@ -55,19 +55,10 @@ const userSchema = new mongoose.Schema(
       select: false,
     },
 
-    followers: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-      },
-    ],
-
-    following: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-      },
-    ],
+    // Follows live only in the Follow collection (REVIEW H-7).
+    // Old documents may still contain legacy `followers` / `following`
+    // arrays; they are not used and are excluded from queries
+    // (LEGACY_FOLLOW_FIELDS).
 
     savedPosts: [
       {
@@ -80,5 +71,9 @@ const userSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+// Projection that hides the legacy follow arrays still stored in old
+// user documents. Use it wherever a query selects "everything".
+export const LEGACY_FOLLOW_FIELDS = "-followers -following";
 
 export default mongoose.model("User", userSchema);

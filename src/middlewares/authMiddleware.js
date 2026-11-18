@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 
-import User from "../models/User.js";
+import User, { LEGACY_FOLLOW_FIELDS } from "../models/User.js";
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
 
@@ -32,7 +32,9 @@ const authMiddleware = asyncHandler(async (req, res, next) => {
     );
   }
 
-  const user = await User.findById(decoded.userId).select("-password");
+  const user = await User.findById(decoded.userId).select(
+    `-password ${LEGACY_FOLLOW_FIELDS}`,
+  );
 
   if (!user) {
     throw new ApiError(401, "Not authorized");
