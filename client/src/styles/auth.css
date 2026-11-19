@@ -136,6 +136,19 @@
   text-align: center;
 }
 
+/* REVIEW M-10: shown under the button while the server wakes up. */
+.auth-hint {
+  width: 100%;
+  margin: 8px 0 0;
+
+  /* Fixed colour: auth pages stay light in the dark theme too. */
+  color: #737373;
+
+  font-size: 12px;
+  line-height: 16px;
+  text-align: center;
+}
+
 .auth-divider {
   width: 100%;
   margin: 24px 0;
