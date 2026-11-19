@@ -6,15 +6,40 @@ import {
 
 import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
+import useServerStatus from "../hooks/useServerStatus";
 
 import logo from "../assets/logos/ichgram-logo.svg";
 import loginPhone from "../assets/images/login-phone.png";
 
 import "../styles/auth.css";
 
+// While Render wakes up its proxy may answer 502-504 without CORS
+// headers, which the browser reports as a network error (no response).
+const WAKING_STATUSES = [502, 503, 504];
+
+const getLoginErrorMessage = (err) => {
+  if (err.code === "ECONNABORTED") {
+    return "The server took too long to respond. Please try again.";
+  }
+
+  if (
+    !err.response ||
+    WAKING_STATUSES.includes(err.response.status)
+  ) {
+    return "The server is still waking up. Please try again in a moment.";
+  }
+
+  return (
+    err.response.data?.message ||
+    "Login failed"
+  );
+};
+
 const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const isServerWaking =
+    useServerStatus() === "waking";
 
   const [formData, setFormData] = useState({
     identifier: "",
@@ -73,10 +98,7 @@ const Login = () => {
         replace: true,
       });
     } catch (err) {
-      setError(
-        err.response?.data?.message ||
-          "Login failed",
-      );
+      setError(getLoginErrorMessage(err));
     } finally {
       setIsLoading(false);
     }
@@ -157,6 +179,13 @@ const Login = () => {
                 ? "Logging in..."
                 : "Log in"}
             </button>
+
+            {isServerWaking && (
+              <p className="auth-hint">
+                The first sign-in may take a little
+                longer while the server wakes up.
+              </p>
+            )}
 
             <div className="auth-divider">
               <span />
