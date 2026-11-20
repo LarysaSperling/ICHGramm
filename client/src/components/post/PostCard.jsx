@@ -8,6 +8,7 @@ import {
   useNavigate,
 } from "react-router-dom";
 import EmojiPicker from "emoji-picker-react";
+import { pluralize } from "../../utils/pluralize";
 import {
   Bookmark,
   Heart,
@@ -822,9 +823,7 @@ const PostCard = ({
       </div>
 
       <p className="post-likes">
-        {likesCount === 1
-          ? "1 like"
-          : `${likesCount} likes`}
+        {pluralize(likesCount, "like")}
       </p>
 
       <p className="post-caption">

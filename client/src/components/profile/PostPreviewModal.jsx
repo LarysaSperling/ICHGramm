@@ -9,6 +9,7 @@ import {
   X,
 } from "lucide-react";
 import EmojiPicker from "emoji-picker-react";
+import { pluralize } from "../../utils/pluralize";
 
 import api from "../../api/axios";
 import Avatar from "../ui/Avatar";
@@ -351,7 +352,7 @@ const PostPreviewModal = ({
               >
                 {showAllComments
                   ? "Hide comments"
-                  : `View all ${comments.length} comments`}
+                  : `View all ${pluralize(comments.length, "comment")}`}
               </button>
             )}
 
@@ -432,7 +433,7 @@ const PostPreviewModal = ({
             </div>
 
             <p className="post-preview-likes">
-              {likesCount === 1 ? "1 like" : `${likesCount} likes`}
+              {pluralize(likesCount, "like")}
             </p>
 
             <p className="post-preview-date">{timeAgo(localPost.createdAt)}</p>

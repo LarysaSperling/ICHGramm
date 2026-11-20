@@ -10,6 +10,7 @@ import {
 } from "react-router-dom";
 
 import api from "../api/axios";
+import { pluralWord } from "../utils/pluralize";
 import Loader from "../components/ui/Loader";
 import PostList from "../components/post/PostList";
 import PostModal from "../components/post/PostModal";
@@ -456,21 +457,21 @@ const UserProfile = () => {
               <strong>
                 {posts.length}
               </strong>{" "}
-              posts
+              {pluralWord(posts.length, "post")}
             </span>
 
             <span>
               <strong>
                 {followers.length}
               </strong>{" "}
-              followers
+              {pluralWord(followers.length, "follower")}
             </span>
 
             <span>
               <strong>
                 {following.length}
               </strong>{" "}
-              following
+              {pluralWord(following.length, "following")}
             </span>
           </div>
 
