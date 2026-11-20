@@ -398,7 +398,19 @@ const resetPassword = asyncHandler(
     user.resetPasswordToken = null;
     user.resetPasswordExpires = null;
 
+    // Every JWT issued before now stops working (REVIEW H-13).
+    user.passwordChangedAt = new Date();
+
     await user.save();
+
+    // Sockets are authenticated only on connect: close the ones that
+    // are already open with an old token (all tabs of this user are in
+    // the room named after the user id). The client logs out on
+    // "sessionExpired".
+    const userRoom = user._id.toString();
+
+    req.io?.to(userRoom).emit("sessionExpired");
+    req.io?.in(userRoom).disconnectSockets(true);
 
     res.status(200).json({
       message:

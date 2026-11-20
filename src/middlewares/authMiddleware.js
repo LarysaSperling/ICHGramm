@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import User, { LEGACY_FOLLOW_FIELDS } from "../models/User.js";
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import isTokenRevoked from "../utils/isTokenRevoked.js";
 
 const authMiddleware = asyncHandler(async (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -33,11 +34,16 @@ const authMiddleware = asyncHandler(async (req, res, next) => {
   }
 
   const user = await User.findById(decoded.userId).select(
-    `-password ${LEGACY_FOLLOW_FIELDS}`,
+    `-password ${LEGACY_FOLLOW_FIELDS} +passwordChangedAt`,
   );
 
   if (!user) {
     throw new ApiError(401, "Not authorized");
+  }
+
+  // Password changed after this token was issued (REVIEW H-13).
+  if (isTokenRevoked(decoded, user)) {
+    throw new ApiError(401, "Session expired");
   }
 
   req.user = user;

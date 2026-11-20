@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import { Server } from "socket.io";
 
 import User from "../models/User.js";
+import isTokenRevoked from "../utils/isTokenRevoked.js";
 
 const onlineUsers = new Map();
 
@@ -38,11 +39,17 @@ const socketAuthMiddleware = async (socket, next) => {
     }
 
     const user = await User.findById(decoded.userId)
-      .select("_id username")
+      .select("_id username +passwordChangedAt")
       .lean();
 
     if (!user) {
       next(new Error("Not authorized"));
+      return;
+    }
+
+    // Password changed after this token was issued (REVIEW H-13).
+    if (isTokenRevoked(decoded, user)) {
+      next(new Error("Session expired"));
       return;
     }
 
