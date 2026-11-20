@@ -39,7 +39,7 @@ A full-stack, Instagram-style social network built as the final project of a ful
 | Layer | Technologies |
 |---|---|
 | Frontend | React 19, Vite, React Router 7, Axios, Context API, Socket.io Client, Lucide React, emoji-picker-react, react-easy-crop |
-| Backend | Node.js 20+, Express 5, Mongoose 9, Socket.io 4, JWT, bcrypt, Multer, express-validator, Helmet, express-rate-limit, Nodemailer |
+| Backend | Node.js 20+, Express 5, Mongoose 9, Socket.io 4, JWT, bcrypt, Multer, express-validator, Helmet, express-rate-limit, Brevo API / Nodemailer |
 | Data & hosting | MongoDB Atlas, Cloudinary, Vercel (client), Render behind Cloudflare (API) |
 
 ## 🏗 Architecture
@@ -120,10 +120,11 @@ Create a `.env` file in the repo root and another in `client/` (see below).
 | `RESET_TOKEN_SECRET` | Secret for password-reset tokens |
 | `RESET_TOKEN_EXPIRES_IN` | Optional reset-token lifetime |
 | `CLIENT_URL` | Frontend URL, used for CORS and reset links |
-| `EMAIL_HOST`, `EMAIL_PORT` | SMTP server |
-| `EMAIL_SECURE` | `true` for TLS (port 465) |
-| `EMAIL_USER`, `EMAIL_PASSWORD` | SMTP credentials |
-| `EMAIL_FROM` | Sender address |
+| `BREVO_API_KEY` | Optional. If set, emails are sent through the [Brevo](https://www.brevo.com/) HTTP API instead of SMTP. **Required on Render:** the free tier blocks outgoing SMTP ports (25/465/587) |
+| `EMAIL_FROM` | Sender, `Name <email>` or just `email`. With Brevo this address must be a verified sender in your Brevo account |
+| `EMAIL_HOST`, `EMAIL_PORT` | SMTP server (SMTP only, used when `BREVO_API_KEY` is not set) |
+| `EMAIL_SECURE` | `true` for TLS on port 465 (SMTP only) |
+| `EMAIL_USER`, `EMAIL_PASSWORD` | SMTP credentials (SMTP only) |
 | `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | Cloudinary credentials (required, the server won't start without them) |
 | `CLOUDINARY_FOLDER` | Upload folder, e.g. `ichgramm` in production and `ichgramm-test` locally |
 
