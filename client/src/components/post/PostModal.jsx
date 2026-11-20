@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import EmojiPicker from "emoji-picker-react";
+import { pluralize } from "../../utils/pluralize";
 
 import api from "../../api/axios";
 import Avatar from "../ui/Avatar";
@@ -668,9 +669,7 @@ const PostModal = ({
 
           <div className="post-modal-meta">
             <strong>
-              {likesCount === 1
-                ? "1 like"
-                : `${likesCount} likes`}
+              {pluralize(likesCount, "like")}
             </strong>
 
             <span>

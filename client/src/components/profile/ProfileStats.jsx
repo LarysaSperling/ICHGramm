@@ -1,3 +1,5 @@
+import { pluralWord } from "../../utils/pluralize";
+
 const ProfileStats = ({
   postsCount = 0,
   followersCount = 0,
@@ -7,17 +9,17 @@ const ProfileStats = ({
     <div className="profile-stats">
       <button type="button">
         <strong>{postsCount}</strong>
-        <span>posts</span>
+        <span>{pluralWord(postsCount, "post")}</span>
       </button>
 
       <button type="button">
         <strong>{followersCount}</strong>
-        <span>followers</span>
+        <span>{pluralWord(followersCount, "follower")}</span>
       </button>
 
       <button type="button">
         <strong>{followingCount}</strong>
-        <span>following</span>
+        <span>{pluralWord(followingCount, "following")}</span>
       </button>
     </div>
   );
