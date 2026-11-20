@@ -334,3 +334,22 @@
 .auth-terms a:hover {
   text-decoration: underline;
 }
+
+/* PasswordInput: the wrapper takes the input's bottom margin, so the
+   toggle stays centred on the input. Fixed colours like the rest of
+   the auth pages, which stay light in the dark theme too. */
+.auth-card .password-input {
+  margin-bottom: 8px;
+}
+
+.auth-card .password-input input {
+  margin-bottom: 0;
+}
+
+.auth-card .password-input .password-input-toggle {
+  color: #737373;
+}
+
+.auth-card .password-input .password-input-toggle:hover:not(:disabled) {
+  color: #262626;
+}
