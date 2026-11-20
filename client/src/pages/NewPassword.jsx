@@ -6,6 +6,7 @@ import api from "../api/axios";
 import logo from "../assets/logos/ichgram-logo.svg";
 import resetPasswordIcon from "../assets/icons/reset-password-icon.svg";
 
+import PasswordInput from "../components/ui/PasswordInput";
 import "../styles/newPassword.css";
 
 const NewPassword = () => {
@@ -123,9 +124,8 @@ const NewPassword = () => {
             <label>
               <span>New password</span>
 
-              <input
+              <PasswordInput
                 id="new-password"
-                type="password"
                 name="password"
                 placeholder="New password"
                 autoComplete="new-password"
@@ -138,9 +138,8 @@ const NewPassword = () => {
             <label>
               <span>Confirm password</span>
 
-              <input
+              <PasswordInput
                 id="confirm-password"
-                type="password"
                 name="confirmPassword"
                 placeholder="Confirm password"
                 autoComplete="new-password"

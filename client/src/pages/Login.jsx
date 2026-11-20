@@ -11,6 +11,7 @@ import useServerStatus from "../hooks/useServerStatus";
 import logo from "../assets/logos/ichgram-logo.svg";
 import loginPhone from "../assets/images/login-phone.png";
 
+import PasswordInput from "../components/ui/PasswordInput";
 import "../styles/auth.css";
 
 // While Render wakes up its proxy may answer 502-504 without CORS
@@ -144,9 +145,8 @@ const Login = () => {
               }
             />
 
-            <input
+            <PasswordInput
               id="login-password"
-              type="password"
               name="password"
               placeholder="Password"
               value={formData.password}

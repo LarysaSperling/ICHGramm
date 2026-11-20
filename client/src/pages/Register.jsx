@@ -6,6 +6,7 @@ import { useAuth } from "../context/AuthContext";
 
 import logo from "../assets/logos/ichgram-logo.svg";
 
+import PasswordInput from "../components/ui/PasswordInput";
 import "../styles/auth.css";
 
 const Register = () => {
@@ -126,8 +127,7 @@ const Register = () => {
             disabled={isLoading}
           />
 
-          <input
-            type="password"
+          <PasswordInput
             name="password"
             placeholder="Password"
             value={formData.password}
