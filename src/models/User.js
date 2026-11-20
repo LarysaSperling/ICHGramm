@@ -63,6 +63,15 @@ const userSchema = new mongoose.Schema(
       select: false,
     },
 
+    // When the password was last changed (REVIEW H-13). JWTs issued
+    // before this moment are rejected. null = never changed (old
+    // accounts): all their tokens stay valid as before.
+    passwordChangedAt: {
+      type: Date,
+      default: null,
+      select: false,
+    },
+
     // Follows live only in the Follow collection (REVIEW H-7).
     // Old documents may still contain legacy `followers` / `following`
     // arrays; they are not used and are excluded from queries
