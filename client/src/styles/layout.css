@@ -274,6 +274,14 @@ body.dark .sidebar-logo img {
     z-index: 2600;
   }
 
+  /* Full-width Search / Notifications panels have their own X in the
+     same corner; the burger would cover it. Classes are set on <body>
+     by Search.jsx and Notifications.jsx. */
+  body.search-open .mobile-menu-button,
+  body.notifications-open .mobile-menu-button {
+    display: none;
+  }
+
   .sidebar {
     width: min(240px, 74vw);
     height: auto;

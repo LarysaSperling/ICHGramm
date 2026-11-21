@@ -16,9 +16,18 @@ export const updateProfileValidator = [
     .withMessage("Bio must be less than 300 characters"),
 ];
 
+export const MAX_SEARCH_LENGTH = 50;
+
+// Empty or missing q is allowed: the controller returns [] for it.
 export const searchUsersValidator = [
   query("q")
+    .optional()
+    .isString()
+    .withMessage("Search keyword must be a string")
+    .bail()
     .trim()
-    .notEmpty()
-    .withMessage("Search keyword is required"),
+    .isLength({ max: MAX_SEARCH_LENGTH })
+    .withMessage(
+      `Search keyword must be at most ${MAX_SEARCH_LENGTH} characters`,
+    ),
 ];

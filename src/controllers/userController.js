@@ -10,7 +10,7 @@ import {
   deleteImageInBackground,
 } from "../services/imageStorage.js";
 
-const MAX_SEARCH_LENGTH = 50;
+const SEARCH_RESULTS_LIMIT = 20;
 
 // Whitelists of fields that are safe to show to other users.
 // Email, saved posts and follow lists stay private.
@@ -136,6 +136,9 @@ const updateProfile = asyncHandler(async (req, res) => {
   });
 });
 
+// Type and max length of q are checked by searchUsersValidator.
+// The trim is repeated here because in Express 5 req.query is
+// read-only, so the validator's .trim() does not reach the controller.
 const searchUsers = asyncHandler(async (req, res) => {
   const keyword =
     typeof req.query.q === "string"
@@ -143,17 +146,8 @@ const searchUsers = asyncHandler(async (req, res) => {
       : "";
 
   if (!keyword) {
-    throw new ApiError(
-      400,
-      "Search keyword is required",
-    );
-  }
-
-  if (keyword.length > MAX_SEARCH_LENGTH) {
-    throw new ApiError(
-      400,
-      `Search keyword must be at most ${MAX_SEARCH_LENGTH} characters`,
-    );
+    res.json([]);
+    return;
   }
 
   const safeKeyword = escapeRegExp(keyword);
@@ -175,6 +169,8 @@ const searchUsers = asyncHandler(async (req, res) => {
     ],
   })
     .select(USER_PREVIEW_FIELDS)
+    .sort({ username: 1 })
+    .limit(SEARCH_RESULTS_LIMIT)
     .lean();
 
   res.json(users);

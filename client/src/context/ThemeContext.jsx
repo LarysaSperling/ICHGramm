@@ -13,7 +13,11 @@ export const ThemeProvider = ({ children }) => {
 
   useEffect(() => {
     localStorage.setItem("theme", theme);
-    document.body.className = theme;
+    // Only swap the theme class: pages add their own classes to <body>
+    // (search-open, notifications-open), and overwriting className
+    // would remove them when the theme effect runs after theirs.
+    document.body.classList.remove("light", "dark");
+    document.body.classList.add(theme);
   }, [theme]);
 
   const value = useMemo(
