@@ -3,3 +3,7 @@ node_modules/
 dist/
 build/
 REVIEW.md
+
+# Local Claude Code settings and notes (personal, not shared)
+.claude/settings.local.json
+CLAUDE.local.md
