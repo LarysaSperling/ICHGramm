@@ -153,9 +153,23 @@ const Notifications = () => {
     return "sent you a notification.";
   };
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     navigate("/home");
-  };
+  }, [navigate]);
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        handleClose();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [handleClose]);
 
   const handleDeleteNotification = async (
     notificationId,

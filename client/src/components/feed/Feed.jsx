@@ -161,9 +161,12 @@ const Feed = () => {
       try {
         setError("");
 
-        const { data } = await api.get(
-          `/posts?page=${pageNumber}&limit=${POSTS_LIMIT}`,
-        );
+        const { data } = await api.get("/posts", {
+          params: {
+            page: pageNumber,
+            limit: POSTS_LIMIT,
+          },
+        });
 
         const nextPosts = Array.isArray(
           data?.posts,

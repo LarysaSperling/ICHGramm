@@ -1,12 +1,16 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Search as SearchIcon, X } from "lucide-react";
+import axios from "axios";
 
 import api from "../api/axios";
 import Avatar from "../components/ui/Avatar";
 import Home from "./Home";
 
 import "../styles/search.css";
+
+// Same limit as searchUsersValidator on the server.
+const MAX_SEARCH_LENGTH = 50;
 
 const Search = () => {
   const navigate = useNavigate();
@@ -15,6 +19,10 @@ const Search = () => {
   const [users, setUsers] = useState([]);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  const handleClose = useCallback(() => {
+    navigate("/home");
+  }, [navigate]);
 
   useEffect(() => {
     document.body.classList.add("search-open");
@@ -25,31 +33,66 @@ const Search = () => {
   }, []);
 
   useEffect(() => {
-    const searchUsers = async () => {
-      if (!query.trim()) {
-        setUsers([]);
-        setError("");
-        return;
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        handleClose();
       }
+    };
 
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [handleClose]);
+
+  useEffect(() => {
+    const keyword = query.trim();
+
+    if (!keyword) {
+      setUsers([]);
+      setError("");
+      setIsLoading(false);
+      return;
+    }
+
+    // Aborted by the cleanup below: when the query changes (a newer
+    // search replaces this one) or when the page unmounts. Without it
+    // a slow older response could overwrite the results of a newer one.
+    const controller = new AbortController();
+
+    const searchUsers = async () => {
       try {
         setIsLoading(true);
         setError("");
 
-        const { data } = await api.get(`/users/search?q=${query.trim()}`);
+        // params lets axios encode &, #, +, % and spaces in the keyword.
+        const { data } = await api.get("/users/search", {
+          params: { q: keyword },
+          signal: controller.signal,
+        });
 
         setUsers(data);
+        setIsLoading(false);
       } catch (err) {
+        // A cancelled search is not an error; the next search (or
+        // unmount) owns the state from here.
+        if (axios.isCancel(err)) {
+          return;
+        }
+
         setUsers([]);
         setError(err.response?.data?.message || "Failed to search users");
-      } finally {
         setIsLoading(false);
       }
     };
 
     const timer = setTimeout(searchUsers, 400);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
   }, [query]);
 
   return (
@@ -58,7 +101,13 @@ const Search = () => {
         <Home />
       </div>
 
-      <div className="search-dark-layer"></div>
+      {/* Sibling of the panel, not its parent, so clicks inside the
+          panel never reach it. */}
+      <div
+        className="search-dark-layer"
+        onClick={handleClose}
+        aria-hidden="true"
+      />
 
       <div className="search-overlay">
         <section className="search-panel">
@@ -67,7 +116,8 @@ const Search = () => {
 
             <button
               type="button"
-              onClick={() => navigate("/home")}
+              onClick={handleClose}
+              aria-label="Close search"
             >
               <X size={22} />
             </button>
@@ -81,6 +131,7 @@ const Search = () => {
               name="search"
               placeholder="Search"
               value={query}
+              maxLength={MAX_SEARCH_LENGTH}
               onChange={(event) => setQuery(event.target.value)}
               autoComplete="off"
               autoFocus

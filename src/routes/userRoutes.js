@@ -3,6 +3,8 @@ import express from "express";
 import authMiddleware from "../middlewares/authMiddleware.js";
 import validateObjectId from "../middlewares/validateObjectId.js";
 import upload from "../middlewares/uploadMiddleware.js";
+import validationMiddleware from "../middlewares/validationMiddleware.js";
+import { searchUsersValidator } from "../validators/userValidator.js";
 
 import {
   getProfile,
@@ -48,6 +50,8 @@ router.get(
 router.get(
   "/search",
   authMiddleware,
+  searchUsersValidator,
+  validationMiddleware,
   searchUsers,
 );
 
