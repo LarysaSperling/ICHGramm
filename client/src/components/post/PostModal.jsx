@@ -164,6 +164,15 @@ const PostModal = ({
     };
   }, []);
 
+  // Hides the mobile burger and locks the page scroll (layout.css).
+  useEffect(() => {
+    document.body.classList.add("post-modal-open");
+
+    return () => {
+      document.body.classList.remove("post-modal-open");
+    };
+  }, []);
+
   useEffect(() => {
     const handleEscape = (event) => {
       if (event.key === "Escape") {
