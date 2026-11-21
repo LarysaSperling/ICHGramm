@@ -76,6 +76,19 @@ const PostPreviewModal = ({
     setLocalPost(post);
   }, [post]);
 
+  // Hides the mobile burger and locks the page scroll (layout.css).
+  useEffect(() => {
+    if (!isOpen) {
+      return undefined;
+    }
+
+    document.body.classList.add("post-modal-open");
+
+    return () => {
+      document.body.classList.remove("post-modal-open");
+    };
+  }, [isOpen]);
+
   useEffect(() => {
     if (!isOpen) {
       return undefined;

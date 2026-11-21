@@ -278,8 +278,15 @@ body.dark .sidebar-logo img {
      same corner; the burger would cover it. Classes are set on <body>
      by Search.jsx and Notifications.jsx. */
   body.search-open .mobile-menu-button,
-  body.notifications-open .mobile-menu-button {
+  body.notifications-open .mobile-menu-button,
+  body.post-modal-open .mobile-menu-button {
     display: none;
+  }
+
+  /* PostModal / PostPreviewModal: the feed under the modal must not
+     scroll; only the modal's comment list does. */
+  body.post-modal-open {
+    overflow: hidden;
   }
 
   .sidebar {

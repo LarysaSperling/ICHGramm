@@ -36,10 +36,13 @@
   height: 42px;
   padding: 0;
 
-  border: none;
+  /* The X sits on the image: the white ring shows on black letterbox
+     bars and dark photos, the dark fill and shadow on light photos. */
+  border: 1px solid rgba(255, 255, 255, 0.45);
   border-radius: 50%;
 
-  background: rgba(0, 0, 0, 0.68);
+  background: rgba(0, 0, 0, 0.55);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
   color: #ffffff;
 
   display: flex;
@@ -390,7 +393,7 @@ body.dark .post-modal-emoji-picker .EmojiPickerReact {
 
   .post-modal {
     width: 96vw;
-    height: 92vh;
+    height: 92dvh;
 
     grid-template-columns: 1fr;
     grid-template-rows: minmax(280px, 1fr) minmax(300px, auto);
@@ -428,15 +431,30 @@ body.dark .post-modal-emoji-picker .EmojiPickerReact {
 }
 
 @media (max-width: 768px) {
+  /* 100dvh, not 100vh: on phones 100vh reaches under the browser bars.
+     The padding keeps the dialog off the status bar and the system
+     buttons; env() adds the notch / home indicator where the browser
+     reports one. */
   .post-modal-backdrop {
-    padding: 10px;
+    inset: 0 auto auto 0;
+    width: 100%;
+    height: 100dvh;
+
+    padding:
+      max(12px, env(safe-area-inset-top))
+      12px
+      max(12px, env(safe-area-inset-bottom));
   }
 
   .post-modal {
     width: min(100%, 460px);
-    height: calc(100dvh - 20px);
+    height: 100%;
 
-    grid-template-rows: 46% 54%;
+    border-radius: 12px;
+
+    grid-template-rows:
+      minmax(160px, 45%)
+      minmax(0, 1fr);
   }
 
   .post-modal-close {
@@ -466,6 +484,11 @@ body.dark .post-modal-emoji-picker .EmojiPickerReact {
     gap: 8px;
   }
 
+  /* 16px: iOS zooms the page in on inputs with a smaller font. */
+  .post-modal-form input {
+    font-size: 16px;
+  }
+
   .post-modal-emoji-picker {
     width: 280px;
     max-width: calc(100vw - 28px);
@@ -474,39 +497,15 @@ body.dark .post-modal-emoji-picker .EmojiPickerReact {
   .post-modal-emoji-picker .EmojiPickerReact {
     height: 350px !important;
   }
-
-  body:has(.post-modal-backdrop) .mobile-menu-button {
-  display: none !important;
-}
-
 }
 
 @media (max-width: 480px) {
-  body:has(.post-modal-backdrop) .mobile-menu-button {
-    display: none;
-  }
-
-  .post-modal-backdrop {
-    padding: 0;
-  }
-
-  .post-modal {
-    width: 100vw;
-    height: 100dvh;
-
-    border-radius: 0;
-
-    grid-template-rows: 43% 57%;
-  }
-
   .post-modal-close {
     top: 8px;
     right: 8px;
 
     width: 40px;
     height: 40px;
-
-    background: rgba(0, 0, 0, 0.76);
   }
 
   .post-modal-content {
@@ -538,7 +537,6 @@ body.dark .post-modal-emoji-picker .EmojiPickerReact {
     padding: 0 10px;
   }
 
-  .post-modal-form input,
   .post-modal-form > button {
     font-size: 13px;
   }
