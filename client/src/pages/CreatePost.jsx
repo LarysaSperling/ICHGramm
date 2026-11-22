@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CloudUpload, Smile, X } from "lucide-react";
-import EmojiPicker from "emoji-picker-react";
+import EmojiPicker, {
+  preloadEmojiPicker,
+} from "../components/ui/LazyEmojiPicker";
 
 import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
@@ -319,6 +321,8 @@ const CreatePost = () => {
                 <button
                   type="button"
                   className="create-post-emoji-button"
+                  onPointerEnter={preloadEmojiPicker}
+                  onFocus={preloadEmojiPicker}
                   onClick={() =>
                     setIsEmojiOpen((previousValue) => !previousValue)
                   }

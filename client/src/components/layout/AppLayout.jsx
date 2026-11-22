@@ -1,14 +1,21 @@
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { Menu, X } from "lucide-react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 
 import Sidebar from "./Sidebar";
 import Footer from "./Footer";
+import ChunkErrorBoundary from "../ui/ChunkErrorBoundary";
+import Loader from "../ui/Loader";
 
 import "../../styles/layout.css";
 
-const AppLayout = () => {
+// modal: the layout of a modal route (backgroundLocation, e.g. /create)
+// that renders over a page. Its page has no loading fallback, so the page
+// underneath stays visible, and an error is shown as an overlay
+// (REVIEW M-15).
+const AppLayout = ({ modal = false }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const location = useLocation();
 
   return (
     <div className="app-layout">
@@ -35,7 +42,15 @@ const AppLayout = () => {
 
       <main className="app-main">
         <div className="page-content">
-          <Outlet />
+          {/* Pages are loaded when opened (REVIEW M-15). */}
+          <ChunkErrorBoundary
+            resetKey={location.pathname}
+            overlay={modal}
+          >
+            <Suspense fallback={modal ? null : <Loader />}>
+              <Outlet />
+            </Suspense>
+          </ChunkErrorBoundary>
         </div>
       </main>
 

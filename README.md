@@ -38,7 +38,7 @@ A full-stack, Instagram-style social network built as the final project of a ful
 
 | Layer | Technologies |
 |---|---|
-| Frontend | React 19, Vite, React Router 7, Axios, Context API, Socket.io Client, Lucide React, emoji-picker-react, react-easy-crop |
+| Frontend | React 19, Vite, React Router 7, Axios, Context API, Socket.io Client, Lucide React, emoji-picker-react |
 | Backend | Node.js 20+, Express 5, Mongoose 9, Socket.io 4, JWT, bcrypt, Multer, express-validator, Helmet, express-rate-limit, Brevo API / Nodemailer |
 | Data & hosting | MongoDB Atlas, Cloudinary, Vercel (client), Render behind Cloudflare (API) |
 
