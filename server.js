@@ -9,6 +9,7 @@ import { configureCloudinary } from "./src/config/cloudinary.js";
 import { ensureStoryIndexes } from "./src/models/Story.js";
 import Message from "./src/models/Message.js";
 import Notification from "./src/models/Notification.js";
+import Comment from "./src/models/Comment.js";
 import { startExpiredStoriesCleanup } from "./src/jobs/cleanupExpiredStories.js";
 import initializeSocket from "./src/socket/socket.js";
 
@@ -51,6 +52,16 @@ const corsOptions = {
     );
   },
   credentials: true,
+  // Every API request carries Authorization, so the browser sends an
+  // OPTIONS preflight first (~180 ms to Render). Without this header
+  // Chrome remembers the answer for 5 s only; 7200 s (2 h) is Chrome's
+  // maximum (Firefox allows 24 h, Safari caps at 10 min). The cache is
+  // per URL, so it helps repeated requests (back to Home, unread count,
+  // likes); REVIEW M-2. Not needed for Socket.io: it sends no custom
+  // headers (the token is in the connect packet), so there is no
+  // preflight. The actual response is still checked against the
+  // allowed origins every time.
+  maxAge: 7200,
 };
 
 // On Render a request passes Cloudflare -> Render load balancer ->
@@ -142,6 +153,16 @@ const startServer = async () => {
       console.log("Notification indexes: ok");
     } catch (error) {
       console.error("Notification indexes failed:", error.message);
+    }
+
+    // Same for the Comment indexes ({ post, createdAt } for the feed,
+    // REVIEW M-2). Not fatal: without it the feed query still works,
+    // only slower.
+    try {
+      await Comment.init();
+      console.log("Comment indexes: ok");
+    } catch (error) {
+      console.error("Comment indexes failed:", error.message);
     }
 
     server.listen(PORT, "0.0.0.0", () => {

@@ -26,6 +26,10 @@ const commentSchema = new mongoose.Schema(
 );
 
 commentSchema.index({ post: 1 });
+// The 2 newest comments of each post in the feed (REVIEW M-2): match by
+// post, sort by date, take 2 - straight from the index. Built by Mongoose
+// autoIndex; server.js waits for it and logs the result.
+commentSchema.index({ post: 1, createdAt: -1 });
 commentSchema.index({ user: 1 });
 commentSchema.index({ createdAt: -1 });
 

@@ -239,9 +239,17 @@ const Feed = () => {
       return;
     }
 
+    // A new post has no comments yet: an empty preview, so its card
+    // does not request them (REVIEW M-2).
     setPosts((previousPosts) =>
       mergeUniquePosts(
-        [createdPost],
+        [
+          {
+            latestComments: [],
+            commentsCount: 0,
+            ...createdPost,
+          },
+        ],
         previousPosts,
       ),
     );
