@@ -446,10 +446,28 @@ const PostModal = ({
       setCommentText("");
       setIsEmojiOpen(false);
 
+      // The feed card under the modal shows the 2 newest comments and
+      // the count from the post (REVIEW M-2). The full list may still be
+      // loading when the comment is sent: then count from the post and
+      // take the preview it came with.
+      const previousCount = Math.max(
+        comments.length,
+        localPost.commentsCount ?? 0,
+      );
+
+      const previousComments =
+        comments.length > 0
+          ? comments
+          : localPost.latestComments ?? [];
+
       const updatedPost = {
         ...localPost,
         commentsCount:
-          nextComments.length,
+          previousCount + 1,
+        latestComments: [
+          data,
+          ...previousComments,
+        ].slice(0, 2),
       };
 
       setLocalPost(updatedPost);

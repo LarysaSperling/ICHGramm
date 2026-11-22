@@ -133,10 +133,34 @@ const PostCard = ({
     setLocalPost,
   ] = useState(post);
 
+  // The feed (GET /posts) brings the 2 newest comments and the count
+  // along (REVIEW M-2), so the card needs no request of its own. The
+  // full list is loaded only on "View all comments". Posts from other
+  // places (a user's profile) have no latestComments: then the card
+  // loads all comments itself, as before.
+  const hasCommentPreview =
+    Array.isArray(
+      post?.latestComments,
+    );
+
   const [
     comments,
     setComments,
-  ] = useState([]);
+  ] = useState(() =>
+    hasCommentPreview
+      ? post.latestComments
+      : [],
+  );
+
+  const [
+    hasAllComments,
+    setHasAllComments,
+  ] = useState(false);
+
+  const [
+    isLoadingComments,
+    setIsLoadingComments,
+  ] = useState(false);
 
   const [
     commentText,
@@ -252,6 +276,15 @@ const PostCard = ({
       ? comments
       : comments.slice(0, 2);
 
+  const totalComments =
+    typeof localPost.commentsCount ===
+    "number"
+      ? Math.max(
+          localPost.commentsCount,
+          comments.length,
+        )
+      : comments.length;
+
   const safeCaption =
     caption || "";
 
@@ -271,6 +304,17 @@ const PostCard = ({
   useEffect(() => {
     setLocalPost(post);
   }, [post]);
+
+  // A new preview from the feed (e.g. a comment added in PostModal).
+  // Once the full list is loaded, the card keeps its own.
+  useEffect(() => {
+    if (
+      !hasAllComments &&
+      Array.isArray(post?.latestComments)
+    ) {
+      setComments(post.latestComments);
+    }
+  }, [post?.latestComments, hasAllComments]);
 
   useEffect(() => {
     if (
@@ -331,10 +375,49 @@ const PostCard = ({
       }
     };
 
-    if (_id) {
+    // Feed posts already brought their comments (REVIEW M-2).
+    if (_id && !hasCommentPreview) {
       getComments();
+      setHasAllComments(true);
     }
-  }, [_id]);
+  }, [_id, hasCommentPreview]);
+
+  const handleToggleAllComments =
+    async () => {
+      if (showAllComments) {
+        setShowAllComments(false);
+        return;
+      }
+
+      if (hasAllComments) {
+        setShowAllComments(true);
+        return;
+      }
+
+      try {
+        setIsLoadingComments(true);
+
+        const { data } =
+          await api.get(
+            `/comments/${_id}`,
+          );
+
+        setComments(
+          Array.isArray(data)
+            ? data
+            : [],
+        );
+        setHasAllComments(true);
+        setShowAllComments(true);
+      } catch (err) {
+        console.error(
+          err.response?.data?.message ||
+            "Failed to load comments",
+        );
+      } finally {
+        setIsLoadingComments(false);
+      }
+    };
 
   useEffect(() => {
     const getFollowingStatus =
@@ -390,11 +473,14 @@ const PostCard = ({
 
   const syncCommentsCount = (
     nextCommentsCount,
+    nextComments,
   ) => {
     const updatedPost = {
       ...localPost,
       commentsCount:
         nextCommentsCount,
+      latestComments:
+        nextComments.slice(0, 2),
     };
 
     setLocalPost(updatedPost);
@@ -572,7 +658,8 @@ const PostCard = ({
         setIsEmojiOpen(false);
 
         syncCommentsCount(
-          nextComments.length,
+          totalComments + 1,
+          nextComments,
         );
       } catch (err) {
         console.error(
@@ -870,20 +957,20 @@ const PostCard = ({
         </div>
       )}
 
-      {comments.length > 2 && (
+      {totalComments > 2 && (
         <button
           type="button"
           className="post-view-comments"
-          onClick={() =>
-            setShowAllComments(
-              (previousValue) =>
-                !previousValue,
-            )
+          onClick={
+            handleToggleAllComments
           }
+          disabled={isLoadingComments}
         >
           {showAllComments
             ? "Show less"
-            : `View all comments (${comments.length})`}
+            : isLoadingComments
+              ? "Loading comments..."
+              : `View all comments (${totalComments})`}
         </button>
       )}
 

@@ -15,6 +15,16 @@ import {
   deleteImageInBackground,
 } from "../services/imageStorage.js";
 
+const USER_PREVIEW_FIELDS = {
+  _id: 1,
+  username: 1,
+  fullName: 1,
+  avatar: 1,
+};
+
+// How many comments each feed post brings along (the card shows 2).
+const LATEST_COMMENTS_LIMIT = 2;
+
 const createPost = asyncHandler(async (req, res) => {
   const { caption } = req.body;
 
@@ -60,15 +70,74 @@ const getAllPosts = asyncHandler(async (req, res) => {
 
   const skip = (page - 1) * limit;
 
+  // One database query for the page, its authors, the 2 newest comments
+  // and the comment count of each post (REVIEW M-2). Before, every card
+  // in the feed loaded all comments of its post with its own request
+  // (plus a CORS preflight): 5 posts = 10 extra HTTP requests.
+  // The post fields are the same as before (author populated the same
+  // way); new: latestComments (newest first, user populated like
+  // GET /comments/:postId) and commentsCount.
   const [totalPosts, posts] = await Promise.all([
     Post.countDocuments(),
 
-    Post.find()
-      .populate("author", "username fullName avatar")
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .lean(),
+    Post.aggregate([
+      { $sort: { createdAt: -1 } },
+      { $skip: skip },
+      { $limit: limit },
+      {
+        $lookup: {
+          from: "users",
+          localField: "author",
+          foreignField: "_id",
+          pipeline: [{ $project: USER_PREVIEW_FIELDS }],
+          as: "author",
+        },
+      },
+      {
+        $lookup: {
+          from: "comments",
+          localField: "_id",
+          foreignField: "post",
+          pipeline: [
+            { $sort: { createdAt: -1 } },
+            { $limit: LATEST_COMMENTS_LIMIT },
+            {
+              $lookup: {
+                from: "users",
+                localField: "user",
+                foreignField: "_id",
+                pipeline: [{ $project: USER_PREVIEW_FIELDS }],
+                as: "user",
+              },
+            },
+            {
+              // populate() gives null for a deleted user
+              $set: {
+                user: { $ifNull: [{ $first: "$user" }, null] },
+              },
+            },
+          ],
+          as: "latestComments",
+        },
+      },
+      {
+        $lookup: {
+          from: "comments",
+          localField: "_id",
+          foreignField: "post",
+          pipeline: [{ $count: "count" }],
+          as: "commentsCount",
+        },
+      },
+      {
+        $set: {
+          author: { $ifNull: [{ $first: "$author" }, null] },
+          commentsCount: {
+            $ifNull: [{ $first: "$commentsCount.count" }, 0],
+          },
+        },
+      },
+    ]),
   ]);
 
   res.json({
