@@ -4,7 +4,10 @@ import User from "../models/User.js";
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
 
-import { createNotification } from "../services/notificationService.js";
+import {
+  createNotification,
+  removeNotifications,
+} from "../services/notificationService.js";
 
 // The Follow collection is the only source of truth for follows (REVIEW H-7).
 // User.followers / User.following are no longer written or read.
@@ -82,6 +85,18 @@ const unfollowUser = asyncHandler(async (req, res) => {
     follower: currentUserId,
     following: targetUserId,
   });
+
+  // Unfollow takes the follow notification back (REVIEW M-4).
+  if (deleted) {
+    await removeNotifications(
+      {
+        recipient: targetUserId,
+        sender: currentUserId,
+        type: "follow",
+      },
+      req.io,
+    );
+  }
 
   res.json({
     message: deleted

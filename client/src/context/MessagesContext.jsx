@@ -63,21 +63,15 @@ export const MessagesProvider = ({
       }
 
       try {
+        // Only the number, not the whole list (REVIEW M-5).
         const { data } = await api.get(
-          "/notifications",
+          "/notifications/unread-count",
         );
 
-        const notifications =
-          Array.isArray(data) ? data : [];
-
-        const unreadCount =
-          notifications.filter(
-            (notification) =>
-              !notification.isRead,
-          ).length;
-
         setUnreadNotifications(
-          unreadCount,
+          Number.isInteger(data?.count)
+            ? data.count
+            : 0,
         );
       } catch (error) {
         console.error(
@@ -167,7 +161,14 @@ export const MessagesProvider = ({
       hasConnected = true;
     };
 
-    const handleNewNotification = () => {
+    // The server sends the current unread count to all tabs whenever
+    // it changes: new notification, unlike / unfollow, read, deleted
+    // (REVIEW M-5). A local +1 per event counted spam and never went
+    // down. On the notifications page the count stays 0: the page marks
+    // everything as read itself.
+    const handleUnreadNotificationsCount = (
+      payload,
+    ) => {
       if (
         pathnameRef.current ===
         "/notifications"
@@ -175,10 +176,11 @@ export const MessagesProvider = ({
         return;
       }
 
-      setUnreadNotifications(
-        (previousCount) =>
-          previousCount + 1,
-      );
+      if (Number.isInteger(payload?.count)) {
+        setUnreadNotifications(
+          payload.count,
+        );
+      }
     };
 
     // The server reads the user from the JWT and joins
@@ -203,8 +205,8 @@ export const MessagesProvider = ({
     );
 
     socket.on(
-      "newNotification",
-      handleNewNotification,
+      "unreadNotificationsCount",
+      handleUnreadNotificationsCount,
     );
 
     if (!socket.connected) {
@@ -225,8 +227,8 @@ export const MessagesProvider = ({
       );
 
       socket.off(
-        "newNotification",
-        handleNewNotification,
+        "unreadNotificationsCount",
+        handleUnreadNotificationsCount,
       );
 
       clearToastTimeout();

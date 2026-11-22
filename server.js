@@ -8,6 +8,7 @@ import connectDB from "./src/config/db.js";
 import { configureCloudinary } from "./src/config/cloudinary.js";
 import { ensureStoryIndexes } from "./src/models/Story.js";
 import Message from "./src/models/Message.js";
+import Notification from "./src/models/Notification.js";
 import { startExpiredStoriesCleanup } from "./src/jobs/cleanupExpiredStories.js";
 import initializeSocket from "./src/socket/socket.js";
 
@@ -130,6 +131,17 @@ const startServer = async () => {
       console.log("Message indexes: ok");
     } catch (error) {
       console.error("Message indexes failed:", error.message);
+    }
+
+    // Same for the Notification indexes (REVIEW M-4). Not fatal either:
+    // without the groupKey index a like / follow notification is still
+    // found by the upsert, only two at the very same moment are not
+    // caught.
+    try {
+      await Notification.init();
+      console.log("Notification indexes: ok");
+    } catch (error) {
+      console.error("Notification indexes failed:", error.message);
     }
 
     server.listen(PORT, "0.0.0.0", () => {

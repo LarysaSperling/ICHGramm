@@ -121,15 +121,47 @@ const Notifications = () => {
       clearUnreadNotifications();
     };
 
+    // Unlike, unfollow, a deleted comment or post take their
+    // notification back (REVIEW M-4).
+    const handleNotificationsRemoved = (payload) => {
+      const removedIds = new Set(
+        Array.isArray(payload?.ids)
+          ? payload.ids
+          : [],
+      );
+
+      if (removedIds.size === 0) {
+        return;
+      }
+
+      setNotifications(
+        (previousNotifications) =>
+          previousNotifications.filter(
+            (notification) =>
+              !removedIds.has(notification._id),
+          ),
+      );
+    };
+
     socket.on(
       "newNotification",
       handleNewNotification,
+    );
+
+    socket.on(
+      "notificationsRemoved",
+      handleNotificationsRemoved,
     );
 
     return () => {
       socket.off(
         "newNotification",
         handleNewNotification,
+      );
+
+      socket.off(
+        "notificationsRemoved",
+        handleNotificationsRemoved,
       );
     };
   }, [

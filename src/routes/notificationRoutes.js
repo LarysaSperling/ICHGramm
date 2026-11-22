@@ -5,6 +5,7 @@ import validateObjectId from "../middlewares/validateObjectId.js";
 
 import {
   getNotifications,
+  getUnreadCount,
   markAsRead,
   markAllAsRead,
   deleteNotification,
@@ -16,6 +17,8 @@ const router = express.Router();
 router.param("id", validateObjectId);
 
 router.get("/", authMiddleware, getNotifications);
+
+router.get("/unread-count", authMiddleware, getUnreadCount);
 
 router.put("/read-all", authMiddleware, markAllAsRead);
 
