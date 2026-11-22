@@ -2,6 +2,11 @@ import Notification from "../models/Notification.js";
 
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import { emitUnreadCount } from "../services/notificationService.js";
+
+// Only the newest ones (REVIEW M-5); loading older ones is a separate
+// item in REVIEW.md.
+const NOTIFICATIONS_LIMIT = 50;
 
 const getNotifications = asyncHandler(async (req, res) => {
   const notifications = await Notification.find({
@@ -10,6 +15,7 @@ const getNotifications = asyncHandler(async (req, res) => {
     .populate("sender", "username fullName avatar")
     .populate("post", "image caption")
     .sort({ createdAt: -1 })
+    .limit(NOTIFICATIONS_LIMIT)
     .lean();
 
   const filteredNotifications = notifications.filter((notification) => {
@@ -21,6 +27,16 @@ const getNotifications = asyncHandler(async (req, res) => {
   });
 
   res.json(filteredNotifications);
+});
+
+// The red badge (REVIEW M-5): a count instead of the whole list.
+const getUnreadCount = asyncHandler(async (req, res) => {
+  const count = await Notification.countDocuments({
+    recipient: req.user._id,
+    isRead: false,
+  });
+
+  res.json({ count });
 });
 
 const markAsRead = asyncHandler(async (req, res) => {
@@ -38,6 +54,9 @@ const markAsRead = asyncHandler(async (req, res) => {
 
   await notification.save();
 
+  // All tabs of the user update their badge (REVIEW M-5).
+  await emitUnreadCount(req.io, req.user._id);
+
   res.json(notification);
 });
 
@@ -46,6 +65,8 @@ const markAllAsRead = asyncHandler(async (req, res) => {
     { recipient: req.user._id, isRead: false },
     { isRead: true }
   );
+
+  await emitUnreadCount(req.io, req.user._id);
 
   res.json({ message: "All notifications marked as read" });
 });
@@ -63,6 +84,8 @@ const deleteNotification = asyncHandler(async (req, res) => {
 
   await notification.deleteOne();
 
+  await emitUnreadCount(req.io, req.user._id);
+
   res.json({ message: "Notification deleted" });
 });
 
@@ -71,11 +94,14 @@ const clearNotifications = asyncHandler(async (req, res) => {
     recipient: req.user._id,
   });
 
+  await emitUnreadCount(req.io, req.user._id);
+
   res.json({ message: "All notifications cleared" });
 });
 
 export {
   getNotifications,
+  getUnreadCount,
   markAsRead,
   markAllAsRead,
   deleteNotification,

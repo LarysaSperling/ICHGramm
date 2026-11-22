@@ -1,12 +1,14 @@
 import Post from "../models/Post.js";
 import Comment from "../models/Comment.js";
-import Notification from "../models/Notification.js";
 import User from "../models/User.js";
 
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import atomicToggle from "../utils/atomicToggle.js";
-import { createNotification } from "../services/notificationService.js";
+import {
+  createNotification,
+  removeNotifications,
+} from "../services/notificationService.js";
 import {
   uploadImage,
   deleteImage,
@@ -169,9 +171,8 @@ const deletePost = asyncHandler(async (req, res) => {
       post: post._id,
     }),
 
-    Notification.deleteMany({
-      post: post._id,
-    }),
+    // Also tells the recipients (unread count, open notifications page).
+    removeNotifications({ post: post._id }, req.io),
 
     User.updateMany(
       {
@@ -240,14 +241,28 @@ const toggleLikePost = asyncHandler(async (req, res) => {
   const isOwnPost =
     authorId?.toString() === req.user._id.toString();
 
-  if (liked && authorId && !isOwnPost) {
-    await createNotification({
-      recipient: authorId,
-      sender: req.user._id,
-      type: "like",
-      post: updatedPost._id,
-      io: req.io,
-    });
+  if (authorId && !isOwnPost) {
+    if (liked) {
+      // At most one like notification per user and post (REVIEW M-4).
+      await createNotification({
+        recipient: authorId,
+        sender: req.user._id,
+        type: "like",
+        post: updatedPost._id,
+        io: req.io,
+      });
+    } else {
+      // Unlike takes the notification back (REVIEW M-4).
+      await removeNotifications(
+        {
+          recipient: authorId,
+          sender: req.user._id,
+          type: "like",
+          post: updatedPost._id,
+        },
+        req.io,
+      );
+    }
   }
 
   res.json({

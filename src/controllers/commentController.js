@@ -3,7 +3,10 @@ import Post from "../models/Post.js";
 
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
-import { createNotification } from "../services/notificationService.js";
+import {
+  createNotification,
+  removeNotifications,
+} from "../services/notificationService.js";
 
 const addComment = asyncHandler(async (req, res) => {
   const { text } = req.body;
@@ -42,6 +45,7 @@ const addComment = asyncHandler(async (req, res) => {
       sender: req.user._id,
       type: "comment",
       post: post._id,
+      comment: comment._id,
       io: req.io,
     });
   }
@@ -138,6 +142,13 @@ const deleteComment = asyncHandler(
       comment.post.toString();
 
     await comment.deleteOne();
+
+    // Its notification goes with it (REVIEW M-4). Notifications from
+    // before M-4 have no comment id and stay.
+    await removeNotifications(
+      { comment: comment._id },
+      req.io,
+    );
 
     res.json({
       message:
