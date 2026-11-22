@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, MoreHorizontal, SendHorizontal, Smile } from "lucide-react";
-import EmojiPicker from "emoji-picker-react";
+import EmojiPicker, {
+  preloadEmojiPicker,
+} from "../components/ui/LazyEmojiPicker";
 
 import api from "../api/axios";
 import socket from "../socket";
@@ -1375,6 +1377,8 @@ const Messages = () => {
                 <button
                   type="button"
                   className="messages-emoji-button"
+                  onPointerEnter={preloadEmojiPicker}
+                  onFocus={preloadEmojiPicker}
                   onClick={() =>
                     setIsEmojiOpen((previousValue) => !previousValue)
                   }

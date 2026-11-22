@@ -8,7 +8,9 @@ import {
   X,
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import EmojiPicker from "emoji-picker-react";
+import EmojiPicker, {
+  preloadEmojiPicker,
+} from "../ui/LazyEmojiPicker";
 import { pluralize } from "../../utils/pluralize";
 
 import api from "../../api/axios";
@@ -697,6 +699,8 @@ const PostModal = ({
               <button
                 type="button"
                 className="post-modal-emoji-button"
+                onPointerEnter={preloadEmojiPicker}
+                onFocus={preloadEmojiPicker}
                 onClick={() =>
                   setIsEmojiOpen(
                     (previousValue) =>

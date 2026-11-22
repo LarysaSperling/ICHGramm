@@ -7,7 +7,9 @@ import {
   Link,
   useNavigate,
 } from "react-router-dom";
-import EmojiPicker from "emoji-picker-react";
+import EmojiPicker, {
+  preloadEmojiPicker,
+} from "../ui/LazyEmojiPicker";
 import { pluralize } from "../../utils/pluralize";
 import {
   Bookmark,
@@ -896,6 +898,8 @@ const PostCard = ({
           <button
             type="button"
             className="post-card-emoji-button"
+            onPointerEnter={preloadEmojiPicker}
+            onFocus={preloadEmojiPicker}
             onClick={() =>
               setIsEmojiOpen(
                 (previousValue) =>
