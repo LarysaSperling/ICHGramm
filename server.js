@@ -7,6 +7,7 @@ import http from "http";
 import connectDB from "./src/config/db.js";
 import { configureCloudinary } from "./src/config/cloudinary.js";
 import { ensureStoryIndexes } from "./src/models/Story.js";
+import Message from "./src/models/Message.js";
 import { startExpiredStoriesCleanup } from "./src/jobs/cleanupExpiredStories.js";
 import initializeSocket from "./src/socket/socket.js";
 
@@ -117,6 +118,19 @@ const startServer = async () => {
 
     const storyIndexes = await ensureStoryIndexes();
     console.log(`Story indexes: ${storyIndexes}`);
+
+    // Mongoose builds the Message indexes itself (autoIndex) and only
+    // reports a failure as a model event that nobody listens to. Wait for
+    // them so a failure shows up in the log. Not fatal: without the
+    // clientId index (REVIEW M-8) a retry is still found by the lookup in
+    // sendMessage, only two copies arriving at the same moment are not
+    // caught.
+    try {
+      await Message.init();
+      console.log("Message indexes: ok");
+    } catch (error) {
+      console.error("Message indexes failed:", error.message);
+    }
 
     server.listen(PORT, "0.0.0.0", () => {
       console.log(

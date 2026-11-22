@@ -37,6 +37,17 @@ const getMessageUserId = (messageUser) => {
 
 const isValidMongoId = (id) => /^[a-f\d]{24}$/i.test(id);
 
+// Id of a new message for the server's retry check (REVIEW M-8).
+// crypto.randomUUID only exists in secure contexts (HTTPS or localhost),
+// not e.g. when the dev server is opened from a phone via a LAN IP.
+const createClientId = () => {
+  if (typeof crypto?.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
+};
+
 const getChatLastMessageText = (message) => {
   if (!message) {
     return "No messages yet";
@@ -60,6 +71,15 @@ const Messages = () => {
   const loadedChatRef = useRef(null);
   const emojiRef = useRef(null);
   const inputRef = useRef(null);
+  // REVIEW M-8. The ref blocks a second submit at once; the state only
+  // disables the button (a second Enter can come before React re-renders).
+  const isSendingRef = useRef(false);
+  // { id, receiver, text } of the last new message that was not confirmed
+  // by the server. Sending the same text to the same user again (e.g.
+  // after a timeout) reuses the id, so the server does not save it twice.
+  const pendingMessageRef = useRef(null);
+  // The chat that is open now, for requests that finish after a switch.
+  const activeUserIdRef = useRef(null);
 
   const [chats, setChats] = useState([]);
   const [activeChat, setActiveChat] = useState(null);
@@ -75,6 +95,7 @@ const Messages = () => {
   const [isLoadingChats, setIsLoadingChats] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [error, setError] = useState("");
+  const [isSending, setIsSending] = useState(false);
 
   const currentUserId = user?._id || getCurrentUserId();
 
@@ -85,6 +106,10 @@ const Messages = () => {
   );
 
   const [currentTime] = useState(() => new Date().getTime());
+
+  useEffect(() => {
+    activeUserIdRef.current = activeUserId;
+  }, [activeUserId]);
 
   const getChatRoom = () => {
     if (!currentUserId || !activeUserId) {
@@ -618,7 +643,21 @@ const Messages = () => {
 
     socket.on("onlineUsers", handleOnlineUsers);
 
+    // The socket is connected for the whole app, so the last "onlineUsers"
+    // event usually came before this page was opened. Ask for the current
+    // list. If the socket is not connected yet, socket.io sends the
+    // request once it is.
+    let isMounted = true;
+
+    socket.emit("getOnlineUsers", (users) => {
+      if (isMounted) {
+        handleOnlineUsers(users);
+      }
+    });
+
     return () => {
+      isMounted = false;
+
       socket.off("onlineUsers", handleOnlineUsers);
     };
   }, []);
@@ -794,18 +833,58 @@ const Messages = () => {
   const handleSendMessage = async (event) => {
     event.preventDefault();
 
+    // A second Enter or click while the first request is still running
+    // (REVIEW M-8: slow network, Render cold start).
+    if (isSendingRef.current) {
+      return;
+    }
+
     const normalizedText = messageText.trim();
 
     if (!normalizedText) {
       return;
     }
 
+    const chatUserId = activeUserId;
+    const messageToEdit = editingMessage;
+
+    if (!messageToEdit && !chatUserId) {
+      return;
+    }
+
+    // The user may switch chats while the request is running; the input
+    // then belongs to the other chat.
+    const isStillInChat = () => activeUserIdRef.current === chatUserId;
+
+    // Clear the input only if it still holds what was sent: it stays
+    // editable, so the user may have typed on meanwhile.
+    const clearSentText = () => {
+      setMessageText((previousText) =>
+        previousText.trim() === normalizedText ? "" : previousText,
+      );
+    };
+
+    // The message itself is saved; a failed list refresh is not worth an
+    // error (the next message or a reload refreshes it).
+    const refreshChats = async () => {
+      try {
+        const chatsResponse = await api.get("/messages");
+
+        setChats(Array.isArray(chatsResponse.data) ? chatsResponse.data : []);
+      } catch {
+        // Ignore.
+      }
+    };
+
+    isSendingRef.current = true;
+    setIsSending(true);
+
     try {
       setError("");
 
-      if (editingMessage) {
+      if (messageToEdit) {
         const { data } = await api.put(
-          `/messages/message/${editingMessage._id}`,
+          `/messages/message/${messageToEdit._id}`,
           {
             text: normalizedText,
           },
@@ -813,21 +892,19 @@ const Messages = () => {
 
         setMessages((previousMessages) =>
           previousMessages.map((message) =>
-            message._id === editingMessage._id ? data : message,
+            message._id === messageToEdit._id ? data : message,
           ),
         );
 
-        const chatsResponse = await api.get("/messages");
+        if (isStillInChat()) {
+          setEditingMessage(null);
+          clearSentText();
+        }
 
-        setChats(Array.isArray(chatsResponse.data) ? chatsResponse.data : []);
-
-        setEditingMessage(null);
-        setMessageText("");
+        await refreshChats();
 
         return;
       }
-
-      if (!activeUserId) return;
 
       const chatRoom = getChatRoom();
 
@@ -835,31 +912,50 @@ const Messages = () => {
         socket.emit("stopTyping", { chatRoom });
       }
 
+      const pendingMessage = pendingMessageRef.current;
+      const clientId =
+        pendingMessage?.receiver === chatUserId &&
+        pendingMessage.text === normalizedText
+          ? pendingMessage.id
+          : createClientId();
+
+      pendingMessageRef.current = {
+        id: clientId,
+        receiver: chatUserId,
+        text: normalizedText,
+      };
+
       const { data } = await api.post("/messages", {
-        receiver: activeUserId,
+        receiver: chatUserId,
         text: normalizedText,
         messageType: "text",
+        clientId,
       });
 
-      setMessages((previousMessages) => {
-        const messageExists = previousMessages.some(
-          (message) => message._id === data._id,
-        );
+      pendingMessageRef.current = null;
 
-        if (messageExists) {
-          return previousMessages;
-        }
+      if (isStillInChat()) {
+        setMessages((previousMessages) => {
+          const messageExists = previousMessages.some(
+            (message) => message._id === data._id,
+          );
 
-        return [...previousMessages, data];
-      });
+          if (messageExists) {
+            return previousMessages;
+          }
 
-      const chatsResponse = await api.get("/messages");
+          return [...previousMessages, data];
+        });
 
-      setChats(Array.isArray(chatsResponse.data) ? chatsResponse.data : []);
+        clearSentText();
+      }
 
-      setMessageText("");
+      await refreshChats();
     } catch (err) {
       setError(err.response?.data?.message || "Failed to save message");
+    } finally {
+      isSendingRef.current = false;
+      setIsSending(false);
     }
   };
 
@@ -1319,7 +1415,7 @@ const Messages = () => {
               <button
                 type="submit"
                 className="messages-send-button"
-                disabled={!messageText.trim()}
+                disabled={!messageText.trim() || isSending}
                 title={editingMessage ? "Save" : "Send"}
                 aria-label={editingMessage ? "Save message" : "Send message"}
               >

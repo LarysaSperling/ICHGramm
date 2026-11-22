@@ -42,6 +42,14 @@ const messageSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+
+    // Random id the client creates for each new message and sends again
+    // when it retries the same message (REVIEW M-8). A retry after a
+    // timeout must not create a second copy if the first request did
+    // reach the server. Not set on older messages.
+    clientId: {
+      type: String,
+    },
   },
   {
     timestamps: true,
@@ -76,5 +84,22 @@ messageSchema.index({
   sender: 1,
   createdAt: -1,
 });
+
+// One message per clientId and sender (REVIEW M-8). Partial: only
+// documents that have a clientId are indexed, so older messages without
+// one never conflict. Built by Mongoose autoIndex on startup; server.js
+// waits for it and logs the result.
+messageSchema.index(
+  {
+    sender: 1,
+    clientId: 1,
+  },
+  {
+    unique: true,
+    partialFilterExpression: {
+      clientId: { $type: "string" },
+    },
+  },
+);
 
 export default mongoose.model("Message", messageSchema);
