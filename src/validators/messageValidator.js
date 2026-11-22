@@ -14,6 +14,7 @@ const getMessageType = (req) => req.body.messageType ?? "text";
 // The client sends two shapes:
 //   text:        { receiver, text, messageType: "text" }
 //   shared post: { receiver, messageType: "post", sharedPost }
+// Both may also carry an optional clientId (REVIEW M-8).
 export const messageValidator = [
   body("receiver").custom((receiver) => {
     if (receiver === undefined || receiver === null || receiver === "") {
@@ -52,6 +53,23 @@ export const messageValidator = [
 
     if (normalizedText.length > MAX_TEXT_LENGTH) {
       throw new Error("Message is too long");
+    }
+
+    return true;
+  }),
+
+  // Optional (REVIEW M-8). The client sends crypto.randomUUID(), or a
+  // fallback made of letters, digits and "-" where randomUUID is missing.
+  body("clientId").custom((clientId) => {
+    if (clientId === undefined || clientId === null) {
+      return true;
+    }
+
+    if (
+      typeof clientId !== "string" ||
+      !/^[A-Za-z0-9-]{8,64}$/.test(clientId)
+    ) {
+      throw new Error("Invalid client id");
     }
 
     return true;

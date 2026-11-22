@@ -5,7 +5,42 @@ import { Server } from "socket.io";
 import User from "../models/User.js";
 import isTokenRevoked from "../utils/isTokenRevoked.js";
 
+// userId -> Set of socket ids. A user can have several tabs or devices
+// open; they are online while at least one of them is connected
+// (REVIEW M-7: with one socket id per user, closing one of two tabs
+// made the user "offline").
 const onlineUsers = new Map();
+
+const getOnlineUserIds = () => [...onlineUsers.keys()];
+
+// Returns true if the user was offline before this socket.
+const addOnlineSocket = (userId, socketId) => {
+  const sockets = onlineUsers.get(userId);
+
+  if (sockets) {
+    sockets.add(socketId);
+    return false;
+  }
+
+  onlineUsers.set(userId, new Set([socketId]));
+  return true;
+};
+
+// Returns true if this was the user's last socket.
+const removeOnlineSocket = (userId, socketId) => {
+  const sockets = onlineUsers.get(userId);
+
+  if (!sockets || !sockets.delete(socketId)) {
+    return false;
+  }
+
+  if (sockets.size > 0) {
+    return false;
+  }
+
+  onlineUsers.delete(userId);
+  return true;
+};
 
 const MAX_TIMEOUT_MS = 2 ** 31 - 1;
 
@@ -152,7 +187,7 @@ const initializeSocket = (
       socket.id,
     );
 
-    onlineUsers.set(userId, socket.id);
+    const cameOnline = addOnlineSocket(userId, socket.id);
 
     socket.join(userId);
 
@@ -170,10 +205,23 @@ const initializeSocket = (
           }, Math.max(msUntilExpiry, 0))
         : null;
 
-    io.emit(
-      "onlineUsers",
-      [...onlineUsers.keys()],
-    );
+    // Everyone needs the new list only if this user was offline before.
+    // This socket always gets it: it may be a new tab, or a reconnect
+    // that missed changes while it was offline.
+    if (cameOnline) {
+      io.emit("onlineUsers", getOnlineUserIds());
+    } else {
+      socket.emit("onlineUsers", getOnlineUserIds());
+    }
+
+    // The Messages page asks for the list when it opens: the socket is
+    // connected for the whole app, so the "onlineUsers" event above has
+    // usually come before the page was there to listen.
+    socket.on("getOnlineUsers", (callback) => {
+      if (typeof callback === "function") {
+        callback(getOnlineUserIds());
+      }
+    });
 
     // "joinChat" from older clients is simply ignored: nothing needs
     // to be joined any more.
@@ -213,14 +261,9 @@ const initializeSocket = (
     socket.on("disconnect", () => {
       clearTimeout(expiryTimer);
 
-      if (onlineUsers.get(userId) === socket.id) {
-        onlineUsers.delete(userId);
+      if (removeOnlineSocket(userId, socket.id)) {
+        io.emit("onlineUsers", getOnlineUserIds());
       }
-
-      io.emit(
-        "onlineUsers",
-        [...onlineUsers.keys()],
-      );
 
       console.log(
         "User disconnected:",

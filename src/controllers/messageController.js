@@ -41,6 +41,16 @@ const sendMessage = asyncHandler(async (req, res) => {
   const isPostMessage = messageType === "post";
   const normalizedText = req.body.text?.trim() ?? "";
   const sharedPost = isPostMessage ? req.body.sharedPost : null;
+  const clientId = req.body.clientId || undefined;
+
+  // A retry of a message that is already saved (REVIEW M-8): return it
+  // as it is, without a second copy and without emitting it again.
+  const findRetriedMessage = () =>
+    clientId
+      ? Message.findOne({ sender: req.user._id, clientId }).populate(
+          messagePopulate,
+        )
+      : null;
 
   if (receiver === req.user._id.toString()) {
     throw new ApiError(400, "You cannot send a message to yourself");
@@ -61,13 +71,38 @@ const sendMessage = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Post not found");
   }
 
-  const message = await Message.create({
-    sender: req.user._id,
-    receiver,
-    text: normalizedText,
-    messageType,
-    sharedPost: sharedPost || null,
-  });
+  const retriedMessage = await findRetriedMessage();
+
+  if (retriedMessage) {
+    res.status(200).json(retriedMessage);
+    return;
+  }
+
+  let message;
+
+  try {
+    message = await Message.create({
+      sender: req.user._id,
+      receiver,
+      text: normalizedText,
+      messageType,
+      sharedPost: sharedPost || null,
+      clientId,
+    });
+  } catch (error) {
+    // Both copies of a retry arrived at the same time: the unique index
+    // let only one of them in.
+    if (error.code === 11000 && clientId) {
+      const savedMessage = await findRetriedMessage();
+
+      if (savedMessage) {
+        res.status(200).json(savedMessage);
+        return;
+      }
+    }
+
+    throw error;
+  }
 
   const populatedMessage = await message.populate(messagePopulate);
 
